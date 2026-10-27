@@ -157,7 +157,8 @@ describe("config/roles", () => {
   it("returns nothing for non-staff", () => {
     expect(rolesFromDiscord(["123", "456"])).toEqual([]);
   });
-  it("contains only placeholders, never real IDs", () => {
-    for (const b of ROLE_BINDINGS) expect(b.discordRoleId).toMatch(/^REPLACE_ME_/);
+  it("binds only role IDs (snowflakes of the JoHood Catalog server), never member IDs or placeholders", () => {
+    for (const b of ROLE_BINDINGS) expect(b.discordRoleId).toMatch(/^\d{17,20}$/);
+    expect(new Set(ROLE_BINDINGS.map((b) => b.discordRoleId)).size).toBe(ROLE_BINDINGS.length);
   });
 });

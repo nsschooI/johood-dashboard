@@ -22,13 +22,13 @@ export interface RoleBinding {
 }
 
 export const ROLE_BINDINGS: readonly RoleBinding[] = [
-  { discordRoleId: "REPLACE_ME_OWNER_ROLE_ID", label: "Owner", role: "owner" },
-  { discordRoleId: "REPLACE_ME_FOUNDER_ROLE_ID", label: "Founder", role: "owner" },
-  { discordRoleId: "REPLACE_ME_HEAD_MANAGERS_ROLE_ID", label: "Head Managers", role: "manager" },
-  { discordRoleId: "REPLACE_ME_MANAGER_ROLE_ID", label: "Manager", role: "manager" },
-  { discordRoleId: "REPLACE_ME_DEV_ROLE_ID", label: "Dev", role: "dev" },
-  { discordRoleId: "REPLACE_ME_HEAD_OF_SUPPORT_ROLE_ID", label: "Head of Support", role: "head_support" },
-  { discordRoleId: "REPLACE_ME_SUPPORT_STAFF_ROLE_ID", label: "Support Staff", role: "support" },
+  { discordRoleId: "1564290421037727925", label: "Owner", role: "owner" },
+  { discordRoleId: "1564290423625621654", label: "Founder", role: "owner" },
+  { discordRoleId: "1564290426243129526", label: "Head Managers", role: "manager" },
+  { discordRoleId: "1564290428927213619", label: "Manager", role: "manager" },
+  { discordRoleId: "1564290435516465152", label: "Dev", role: "dev" },
+  { discordRoleId: "1564303659821432944", label: "Head of Support", role: "head_support" },
+  { discordRoleId: "1564290459365416960", label: "Support Staff", role: "support" },
 ];
 
 /** Map a member's Discord role IDs to dashboard roles (deduplicated, highest first). */
