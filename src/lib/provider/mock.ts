@@ -357,7 +357,7 @@ export class MockProvider implements DataProvider {
     this.tickets.sort((a, b) => a.openedAt.localeCompare(b.openedAt));
     for (const t of this.tickets) {
       const age = now - Date.parse(t.openedAt);
-      if (age > 2 * DAY ? chance(this.rng, 0.92) : age > 6 * HOUR ? chance(this.rng, 0.5) : false) {
+      if (age > 2 * DAY ? true : age > 6 * HOUR ? chance(this.rng, 0.6) : false) {
         const s = pick(this.rng, staff);
         t.claimedBy = { discordId: s.discordId, name: s.name, avatarUrl: null };
         t.status = "closed";

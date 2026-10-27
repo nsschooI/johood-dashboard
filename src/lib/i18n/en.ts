@@ -369,7 +369,7 @@ const en = {
     botDegraded: "{bot} is throwing errors",
     botRestarts: "{bot} restarted {n}× in 24h",
     assistantOffline: "{bot} is offline",
-    ticketsUnclaimed: "{n} unclaimed tickets · oldest {minutes} min",
+    ticketsUnclaimed: "{n} unclaimed tickets · oldest {age}",
     transfersFailed: "{n} failed transfers to review",
     transfersStuck: "{n} transfers stuck in progress",
     lockdownOn: "Server lockdown is ON",

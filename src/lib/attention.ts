@@ -49,6 +49,13 @@ export const ATTENTION_RULES = {
   stuckTransferMinutes: 30,
 } as const;
 
+/** "15 min", "3 h", "2 d" — compact and language-neutral enough for both locales. */
+export function formatAge(minutes: number) {
+  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 48 * 60) return `${Math.round(minutes / 60)} h`;
+  return `${Math.round(minutes / 1440)} d`;
+}
+
 const RANK: Record<AttentionSeverity, number> = { critical: 0, warning: 1, info: 2 };
 
 export function computeAttention(input: AttentionInput, user?: Pick<SessionUser, "roles" | "overrides"> | null): AttentionItem[] {
@@ -90,7 +97,7 @@ export function computeAttention(input: AttentionInput, user?: Pick<SessionUser,
       related: unclaimed.map((t) => `ticket:${t.id}`),
       permission: "tickets.view",
       key: "ticketsUnclaimed",
-      params: { n: unclaimed.length, minutes: age },
+      params: { n: unclaimed.length, minutes: age, age: formatAge(age) },
       since: oldest.openedAt,
     });
   }

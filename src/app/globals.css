@@ -243,6 +243,13 @@
   .needs-attention {
     animation: var(--animate-attention);
   }
+  .anchor-flash {
+    animation: anchor-flash 1.6s var(--ease-out);
+  }
+  @keyframes anchor-flash {
+    0%, 30% { box-shadow: 0 0 0 2px var(--color-accent-400), 0 0 40px -6px var(--color-accent-500); }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
   .skeleton {
     background: linear-gradient(90deg, rgb(255 255 255 / 0.04) 25%, rgb(255 255 255 / 0.09) 37%, rgb(255 255 255 / 0.04) 63%);
     background-size: 400% 100%;

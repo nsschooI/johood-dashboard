@@ -9,20 +9,20 @@ import { canSeeActivity, redactProfile } from "../visibility";
 import { getAllOverrides } from "./store";
 import type { GuildKey } from "../types";
 
-export async function getOverviewData(user: SessionUser) {
+export async function getOverviewData(user: SessionUser, guild: GuildKey = "main") {
   const p = getProvider();
   const [bots, assistants, stats, activity, tickets] = await Promise.all([
     can(user, "bots.view") ? p.getBots() : null,
     can(user, "assistants.view") ? p.getAssistants() : null,
-    can(user, "stats.view") ? p.getServerStats() : null,
-    can(user, "activity.view") ? p.getActivity(80) : null,
-    can(user, "tickets.view") ? p.getTickets({ status: "active", limit: 25 }) : null,
+    can(user, "stats.view") ? p.getServerStats(guild) : null,
+    can(user, "activity.view") ? p.getActivity(120) : null,
+    can(user, "tickets.view") ? p.getTickets({ status: "active", limit: 40, guild }) : null,
   ]);
   return {
     bots,
     assistants,
     stats,
-    activity: activity ? activity.filter((a) => canSeeActivity(user, a)).slice(0, 40) : null,
+    activity: activity ? activity.filter((a) => canSeeActivity(user, a)).slice(0, 80) : null,
     tickets: tickets?.items ?? null,
   };
 }
@@ -38,13 +38,13 @@ export async function getPointsData(user: SessionUser) {
   return { purchases, transfers, redemptions, summary };
 }
 
-export async function getMembersData(user: SessionUser) {
+export async function getMembersData(user: SessionUser, guild: GuildKey = "main") {
   const p = getProvider();
   const [members, ranks, roles, staff, protection] = await Promise.all([
-    can(user, "members.view") ? p.searchMembers("", 12) : null,
-    can(user, "members.view") ? p.getRanks() : null,
-    can(user, "members.view") ? p.getRoles() : null,
-    can(user, "staff.view") ? p.getStaff() : null,
+    can(user, "members.view") ? p.searchMembers("", 12, guild) : null,
+    can(user, "members.view") ? p.getRanks(guild) : null,
+    can(user, "members.view") ? p.getRoles(guild) : null,
+    can(user, "staff.view") ? p.getStaff(guild) : null,
     can(user, "protection.view") ? p.getProtection() : null,
   ]);
   const overrides = staff && can(user, "permissions.manage") ? getAllOverrides() : null;

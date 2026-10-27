@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Command, Languages, LogOut, Volume2, VolumeX, X } from "lucide-react";
+import { Command, Globe2, Languages, LogOut, Volume2, VolumeX, X } from "lucide-react";
 import { useApp, useCan } from "@/components/providers/app-provider";
 import { useAttention } from "@/components/providers/attention-provider";
 import { useGuild } from "@/components/providers/guild-provider";
@@ -126,7 +126,9 @@ export function Shell({ children }: { children: ReactNode }) {
                 <n.icon aria-hidden className={cn("size-[18px] transition", active ? "text-accent-300" : "text-ink-3 group-hover:text-ink-2")} />
                 <span className="truncate">{t(n.label)}</span>
                 {n.global && !badge && (
-                  <span className="ms-auto rounded-full bg-info/10 px-1.5 py-px text-[9px] font-semibold tracking-wide text-info uppercase ring-1 ring-info/20">{t("guild.global")}</span>
+                  <span className="ms-auto text-info/80" title={t("guild.globalHint")}>
+                    <Globe2 aria-label={t("guild.global")} className="size-3.5" />
+                  </span>
                 )}
                 <NavBadge badge={badge} />
               </Link>

@@ -375,7 +375,7 @@ const ar: Messages = {
     botDegraded: "{bot} تظهر عليه أخطاء",
     botRestarts: "{bot} أُعيد تشغيله {n} مرات خلال 24 ساعة",
     assistantOffline: "{bot} غير متصل",
-    ticketsUnclaimed: "{n} تذاكر غير مستلمة · أقدمها {minutes} دقيقة",
+    ticketsUnclaimed: "{n} تذاكر غير مستلمة · أقدمها منذ {age}",
     transfersFailed: "{n} تحويلات فاشلة تحتاج مراجعة",
     transfersStuck: "{n} تحويلات عالقة قيد المعالجة",
     lockdownOn: "قفل السيرفر مفعّل",

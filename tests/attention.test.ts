@@ -45,7 +45,7 @@ describe("computeAttention", () => {
     expect(young).toEqual([]);
     const items = computeAttention({ now: NOW, tickets: [ticket("a", { openedAt: ago(20) }), ticket("b", { openedAt: ago(70) }), ticket("c", { status: "claimed", openedAt: ago(90) })] });
     expect(items).toHaveLength(1);
-    expect(items[0]).toMatchObject({ key: "ticketsUnclaimed", severity: "critical", params: { n: 2, minutes: 70 }, related: ["ticket:a", "ticket:b"] });
+    expect(items[0]).toMatchObject({ key: "ticketsUnclaimed", severity: "critical", params: { n: 2, minutes: 70, age: "1 h" }, related: ["ticket:a", "ticket:b"] });
   });
 
   it("flags failed and stuck transfers", () => {
