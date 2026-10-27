@@ -39,10 +39,27 @@
   --radius-card: 1.25rem;
   --shadow-glass: 0 1px 0 0 rgb(255 255 255 / 0.04) inset, 0 20px 40px -24px rgb(0 0 0 / 0.6);
 
-  --animate-fade-in: fade-in 0.35s ease-out both;
-  --animate-slide-in: slide-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* Motion tokens — mirrored in src/lib/motion.ts. See docs/design-system.md. */
+  --dur-instant: 90ms;
+  --dur-fast: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 420ms;
+  --dur-count: 900ms;
+  --stagger: 45ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Spring with ~8% overshoot, settles by 60%. */
+  --ease-spring: linear(0, 0.21 6%, 0.62 14%, 0.94 23%, 1.07 31%, 1.08 37%, 1.03 47%, 0.99 58%, 1);
+
+  --animate-fade-in: fade-in var(--dur-slow) var(--ease-out) both;
+  --animate-slide-in: slide-in 0.6s var(--ease-out) both;
   --animate-pulse-ring: pulse-ring 2s ease-out infinite;
   --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-rise: rise var(--dur-slow) var(--ease-out) both;
+  --animate-pop: pop var(--dur-slow) var(--ease-spring) both;
+  --animate-shake: shake 0.42s var(--ease-in-out);
+  --animate-flash: flash 0.9s var(--ease-out);
+  --animate-attention: attention 1.8s ease-in-out infinite;
 
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(4px); }
@@ -61,12 +78,65 @@
     from { background-position: 200% 0; }
     to { background-position: -200% 0; }
   }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px) scale(0.985); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.94) translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(2px); }
+  }
+  @keyframes flash {
+    0% { box-shadow: 0 0 0 0 rgb(52 211 153 / 0.6); }
+    100% { box-shadow: 0 0 0 10px rgb(52 211 153 / 0); }
+  }
+  @keyframes attention {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(var(--attention-rgb, 251 113 133) / 0.55); }
+    50% { box-shadow: 0 0 0 5px rgb(var(--attention-rgb, 251 113 133) / 0); }
+  }
 }
 
 @layer base {
   :root {
     color-scheme: dark;
     accent-color: var(--color-accent-500);
+  }
+  /* Lockdown / raid mode: the whole shell shifts to a warning accent. */
+  :root[data-alert="lockdown"] {
+    --color-accent-200: #fde68a;
+    --color-accent-300: #fcd34d;
+    --color-accent-400: #fbbf24;
+    --color-accent-500: #f59e0b;
+    --color-accent-600: #d97706;
+    --color-accent-700: #b45309;
+    --color-blush: #fb923c;
+  }
+  /* Every interactive element feels clickable (Tailwind 4 resets buttons to default). */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="radio"],
+  [role="switch"],
+  [role="menuitem"]:not([aria-disabled="true"]),
+  [role="option"],
+  a[href],
+  summary,
+  select:not(:disabled),
+  label[for],
+  input[type="checkbox"],
+  input[type="date"] {
+    cursor: pointer;
+  }
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
   }
   html {
     background: var(--color-bg);
@@ -80,12 +150,36 @@
   }
   body {
     min-height: 100dvh;
+    /* Transparent so the aurora layers (z-index -1) show over the html background. */
+    background: transparent;
+  }
+  /* Ambient aurora: two blurred layers drifting slowly. Transform-only, GPU-friendly. */
+  body::before,
+  body::after {
+    content: "";
+    position: fixed;
+    inset: -20vmax;
+    z-index: -1;
+    pointer-events: none;
+    will-change: transform;
+  }
+  body::before {
     background:
-      radial-gradient(60rem 40rem at 85% -10%, rgb(176 110 242 / 0.16), transparent 60%),
-      radial-gradient(50rem 36rem at -10% 10%, rgb(240 139 208 / 0.08), transparent 60%),
-      radial-gradient(40rem 30rem at 50% 120%, rgb(122 59 184 / 0.12), transparent 60%),
-      var(--color-bg);
-    background-attachment: fixed;
+      radial-gradient(38vmax 26vmax at 78% 12%, color-mix(in oklab, var(--color-accent-500) 22%, transparent), transparent 70%),
+      radial-gradient(30vmax 22vmax at 12% 22%, color-mix(in oklab, var(--color-blush) 12%, transparent), transparent 70%);
+    animation: aurora-a 28s var(--ease-in-out) infinite alternate;
+  }
+  body::after {
+    background:
+      radial-gradient(34vmax 24vmax at 55% 100%, rgb(20 160 143 / 0.10), transparent 70%),
+      radial-gradient(26vmax 18vmax at 95% 70%, color-mix(in oklab, var(--color-accent-700) 16%, transparent), transparent 70%);
+    animation: aurora-b 34s var(--ease-in-out) infinite alternate;
+  }
+  @keyframes aurora-a {
+    to { transform: translate3d(-4vmax, 3vmax, 0) scale(1.06); }
+  }
+  @keyframes aurora-b {
+    to { transform: translate3d(5vmax, -3vmax, 0) scale(1.04); }
   }
   ::selection {
     background: rgb(176 110 242 / 0.35);
@@ -117,6 +211,38 @@
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
   }
+  /* Staggered entrance for direct children (first 12 stagger, rest share the last delay). */
+  .stagger > * {
+    animation: var(--animate-rise);
+    animation-delay: calc(min(var(--i, 11), 11) * var(--stagger));
+  }
+  .stagger > :nth-child(1) { --i: 0; }
+  .stagger > :nth-child(2) { --i: 1; }
+  .stagger > :nth-child(3) { --i: 2; }
+  .stagger > :nth-child(4) { --i: 3; }
+  .stagger > :nth-child(5) { --i: 4; }
+  .stagger > :nth-child(6) { --i: 5; }
+  .stagger > :nth-child(7) { --i: 6; }
+  .stagger > :nth-child(8) { --i: 7; }
+  .stagger > :nth-child(9) { --i: 8; }
+  .stagger > :nth-child(10) { --i: 9; }
+  .stagger > :nth-child(11) { --i: 10; }
+  /* Cards and rows that respond to the pointer. */
+  .lift {
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out),
+      border-color var(--dur-fast);
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-line-strong);
+    box-shadow: var(--shadow-glass), 0 14px 32px -18px color-mix(in oklab, var(--color-accent-500) 55%, transparent);
+  }
+  /* A control that needs attention: soft pulsing ring (colour via --attention-rgb). */
+  .needs-attention {
+    animation: var(--animate-attention);
+  }
   .skeleton {
     background: linear-gradient(90deg, rgb(255 255 255 / 0.04) 25%, rgb(255 255 255 / 0.09) 37%, rgb(255 255 255 / 0.04) 63%);
     background-size: 400% 100%;
@@ -125,7 +251,21 @@
   }
 }
 
-/* Respect reduced motion everywhere. */
+/* Page transitions (React <ViewTransition>, tagged "nav" by the shell links). */
+::view-transition-old(.page-nav) {
+  animation: var(--dur-fast) var(--ease-in-out) both vt-fade-out;
+}
+::view-transition-new(.page-nav) {
+  animation: var(--dur-slow) var(--ease-out) var(--dur-instant) both vt-rise-in;
+}
+@keyframes vt-fade-out {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes vt-rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+/* Reduced motion: no movement, only short fades. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -134,6 +274,18 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+  body::before,
+  body::after {
+    animation: none !important;
+  }
+  .stagger > * {
+    animation: fade-in 0.2s linear both !important;
+    animation-delay: 0s !important;
+  }
+  ::view-transition-old(.page-nav),
+  ::view-transition-new(.page-nav) {
+    animation: 0.15s linear both fade-in !important;
   }
 }
 

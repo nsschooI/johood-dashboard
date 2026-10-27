@@ -1,5 +1,7 @@
-import Image from "next/image";
+"use client";
+
 import { cn } from "./cn";
+import { Img } from "./img";
 
 const GRADIENTS = [
   "from-accent-400 to-blush",
@@ -16,18 +18,59 @@ function hash(s: string) {
   return Math.abs(h);
 }
 
-export function Avatar({ name, src, size = 32, className }: { name: string; src?: string | null; size?: number; className?: string }) {
+export function Initials({ name, size }: { name: string; size: number }) {
   const initials = [...name.replace(/[^\p{L}\p{N} ]/gu, "").trim()].slice(0, 2).join("").toUpperCase() || "?";
-  if (src) {
-    return <Image src={src} alt="" width={size} height={size} className={cn("shrink-0 rounded-full ring-1 ring-line", className)} />;
-  }
   return (
     <span
       aria-hidden
-      style={{ width: size, height: size, fontSize: Math.max(10, size * 0.36) }}
-      className={cn("grid shrink-0 place-items-center rounded-full bg-gradient-to-br font-semibold text-white/95 ring-1 ring-white/10", GRADIENTS[hash(name) % GRADIENTS.length], className)}
+      style={{ fontSize: Math.max(9, size * 0.36) }}
+      className={cn("absolute inset-0 grid place-items-center bg-gradient-to-br font-semibold text-white/95", GRADIENTS[hash(name) % GRADIENTS.length])}
     >
       {initials}
+    </span>
+  );
+}
+
+/**
+ * Person picture: Discord avatar (any CDN URL or mock art) with a
+ * gradient-initials fallback. `ring` draws a role-coloured ring, `status`
+ * an online dot.
+ */
+export function Avatar({
+  name,
+  src,
+  size = 32,
+  className,
+  ring,
+  status,
+  square,
+}: {
+  name: string;
+  src?: string | null;
+  size?: number;
+  className?: string;
+  ring?: string | null;
+  status?: "online" | "idle" | "offline";
+  square?: boolean;
+}) {
+  return (
+    <span className={cn("relative inline-flex shrink-0", className)} style={{ width: size, height: size }}>
+      <Img
+        src={src}
+        sizes={`${size}px`}
+        className={cn("size-full ring-1 ring-white/10", square ? "rounded-[28%]" : "rounded-full")}
+        fallback={<Initials name={name} size={size} />}
+      />
+      {ring && <span aria-hidden className={cn("pointer-events-none absolute -inset-[3px] border-2", square ? "rounded-[32%]" : "rounded-full")} style={{ borderColor: ring }} />}
+      {status && (
+        <span
+          aria-hidden
+          className={cn(
+            "absolute end-0 bottom-0 size-[30%] max-h-3 max-w-3 min-h-2 min-w-2 rounded-full ring-2 ring-bg",
+            status === "online" ? "bg-good" : status === "idle" ? "bg-warn" : "bg-ink-3",
+          )}
+        />
+      )}
     </span>
   );
 }

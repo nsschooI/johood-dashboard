@@ -484,6 +484,7 @@ export class MockProvider implements DataProvider {
     const t: Transfer = {
       id: this.id("trf"),
       at: iso(at),
+      robloxId: member.robloxId,
       robloxName: member.robloxName,
       robux: Math.floor(points * TRANSFER_RATE),
       points,
@@ -839,10 +840,10 @@ export class MockProvider implements DataProvider {
     const todayTransfers = this.transfers.filter((x) => dayKey(x.at) === todayKey);
     const starred = this.transfers.filter((x) => x.stars && Date.parse(x.at) > now - 30 * DAY);
 
-    const top = new Map<string, { robloxName: string; discordId?: string; robux: number; purchases: number; points: number }>();
+    const top = new Map<string, { robloxId: string; robloxName: string; discordId?: string; robux: number; purchases: number; points: number }>();
     for (const p of this.purchases) {
       if (Date.parse(p.at) < now - 30 * DAY) continue;
-      const cur = top.get(p.robloxId) ?? { robloxName: p.robloxName, discordId: p.discordId, robux: 0, purchases: 0, points: 0 };
+      const cur = top.get(p.robloxId) ?? { robloxId: p.robloxId, robloxName: p.robloxName, discordId: p.discordId, robux: 0, purchases: 0, points: 0 };
       cur.robux += p.robux;
       cur.purchases += 1;
       cur.points += p.points;

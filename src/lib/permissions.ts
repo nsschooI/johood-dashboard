@@ -152,3 +152,23 @@ export type PageKey = keyof typeof PAGE_ACCESS;
 export function canSeePage(user: Pick<SessionUser, "roles" | "overrides"> | null | undefined, page: PageKey) {
   return canAny(user, PAGE_ACCESS[page]);
 }
+
+/** Roles that grant an action, lowest first (for "Needs … role" hints). */
+export function rolesGranting(action: Action): Role[] {
+  return [...ROLES].reverse().filter((r) => ROLE_PERMISSIONS[r].includes(action));
+}
+
+export type DenialReason = { kind: "role"; roles: Role[] } | { kind: "override" } | { kind: "owner_only" };
+
+/**
+ * Why a user can't do something — for tooltips on disabled controls.
+ * null when they can.
+ */
+export function denialReason(user: Pick<SessionUser, "roles" | "overrides"> | null | undefined, action: Action): DenialReason | null {
+  if (can(user, action)) return null;
+  if (user?.overrides?.deny.includes(action)) return { kind: "override" };
+  if (NON_GRANTABLE.includes(action)) return { kind: "owner_only" };
+  const roles = rolesGranting(action);
+  // Suggest the lowest role that would grant it.
+  return { kind: "role", roles: roles.slice(0, 1) };
+}

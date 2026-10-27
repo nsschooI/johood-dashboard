@@ -9,10 +9,14 @@ interface SoundContextValue {
   enabled: boolean;
   toggle: () => void;
   play: (s: SoundName) => void;
+  /** First visit: show a one-time hint next to the speaker. */
+  showHint: boolean;
+  dismissHint: () => void;
 }
 
-const SoundContext = createContext<SoundContextValue>({ enabled: false, toggle: () => {}, play: () => {} });
+const SoundContext = createContext<SoundContextValue>({ enabled: false, toggle: () => {}, play: () => {}, showHint: false, dismissHint: () => {} });
 const KEY = "jh_sound";
+const HINT_KEY = "jh_sound_hint";
 
 /**
  * Sounds are off by default. Turning them on is a click (which unlocks
@@ -20,6 +24,29 @@ const KEY = "jh_sound";
  */
 export function SoundProvider({ initialMuted, children }: { initialMuted: boolean | null; children: ReactNode }) {
   const [enabled, setEnabled] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+
+  useEffect(() => {
+    if (safeStorage.get(HINT_KEY) || safeStorage.get(KEY)) return;
+    const t = setTimeout(() => setShowHint(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+
+  const dismissHint = useCallback(() => {
+    setShowHint(false);
+    safeStorage.set(HINT_KEY, "1");
+  }, []);
+
+  // Tiny tick on every button press while sounds are on.
+  useEffect(() => {
+    if (!enabled) return;
+    const onClick = (e: MouseEvent) => {
+      const el = (e.target as Element | null)?.closest?.("button, [role=button], [role=menuitem], [role=tab], [role=radio], a[href]");
+      if (el && !(el as HTMLButtonElement).disabled) playSound("click");
+    };
+    document.addEventListener("click", onClick, { capture: true });
+    return () => document.removeEventListener("click", onClick, { capture: true });
+  }, [enabled]);
 
   useEffect(() => {
     const stored = safeStorage.get(KEY);
@@ -39,6 +66,8 @@ export function SoundProvider({ initialMuted, children }: { initialMuted: boolea
   }, [initialMuted]);
 
   const toggle = useCallback(() => {
+    setShowHint(false);
+    safeStorage.set(HINT_KEY, "1");
     setEnabled((cur) => {
       const next = !cur;
       if (next) {
@@ -55,7 +84,7 @@ export function SoundProvider({ initialMuted, children }: { initialMuted: boolea
     if (enabled) playSound(s);
   }, [enabled]);
 
-  const value = useMemo(() => ({ enabled, toggle, play }), [enabled, toggle, play]);
+  const value = useMemo(() => ({ enabled, toggle, play, showHint, dismissHint }), [enabled, toggle, play, showHint, dismissHint]);
   return <SoundContext value={value}>{children}</SoundContext>;
 }
 

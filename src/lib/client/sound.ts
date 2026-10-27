@@ -4,7 +4,7 @@
  * before it may play, which is why sounds start off until the speaker is
  * clicked.
  */
-export type SoundName = "purchase" | "success" | "error";
+export type SoundName = "purchase" | "success" | "error" | "click" | "tick" | "alert";
 
 let ctx: AudioContext | null = null;
 
@@ -54,6 +54,16 @@ export function playSound(name: SoundName) {
     case "error": // low falling pair
       note(ac, 392, t, 0.22, 0.06, "triangle");
       note(ac, 293.7, t + 0.12, 0.32, 0.06, "triangle");
+      break;
+    case "click": // barely-there key tick
+      note(ac, 2400, t, 0.03, 0.012, "square");
+      break;
+    case "tick": // copy / toggle confirmation
+      note(ac, 1567.98, t, 0.08, 0.03);
+      break;
+    case "alert": // two soft knocks for attention items
+      note(ac, 880, t, 0.16, 0.05, "triangle");
+      note(ac, 880, t + 0.2, 0.16, 0.05, "triangle");
       break;
   }
 }

@@ -177,6 +177,8 @@ export type TransferStatus = "pending" | "processing" | "completed" | "failed" |
 export interface Transfer {
   id: string;
   at: string;
+  /** Roblox user ID of the receiver (for the headshot), when known. */
+  robloxId?: string;
   robloxName: string;
   robux: number;
   points: number;
@@ -236,6 +238,7 @@ export interface TotalsBucket {
 }
 
 export interface TopBuyer {
+  robloxId?: string;
   robloxName: string;
   discordId?: string;
   robux: number;

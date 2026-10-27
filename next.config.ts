@@ -17,7 +17,14 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   serverExternalPackages: ["better-sqlite3"],
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "cdn.discordapp.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "cdn.discordapp.com" },
+      { protocol: "https", hostname: "media.discordapp.net" },
+      // Roblox thumbnails (headshots, item images) are served from t0–t7 / tr.rbxcdn.com
+      { protocol: "https", hostname: "tr.rbxcdn.com" },
+      { protocol: "https", hostname: "*.rbxcdn.com" },
+    ],
+    minimumCacheTTL: 3600,
   },
   turbopack: {
     rules: {
