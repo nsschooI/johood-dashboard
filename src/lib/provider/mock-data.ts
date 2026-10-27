@@ -18,11 +18,11 @@ export const BOT_META: Record<BotName, { displayName: string; kind: "core" | "as
 
 export const RANK_TABLE: Omit<RankInfo, "members">[] = [
   { rank: "newcomer", minLifetimePoints: 0, cashbackRate: 0.05 },
-  { rank: "bronze", minLifetimePoints: 250, cashbackRate: 0.08 },
-  { rank: "silver", minLifetimePoints: 1_000, cashbackRate: 0.1 },
-  { rank: "gold", minLifetimePoints: 3_000, cashbackRate: 0.12 },
-  { rank: "diamond", minLifetimePoints: 8_000, cashbackRate: 0.15 },
-  { rank: "legend", minLifetimePoints: 20_000, cashbackRate: 0.2 },
+  { rank: "bronze", minLifetimePoints: 50, cashbackRate: 0.08 },
+  { rank: "silver", minLifetimePoints: 200, cashbackRate: 0.1 },
+  { rank: "gold", minLifetimePoints: 600, cashbackRate: 0.12 },
+  { rank: "diamond", minLifetimePoints: 1_500, cashbackRate: 0.15 },
+  { rank: "legend", minLifetimePoints: 3_500, cashbackRate: 0.2 },
 ];
 
 export function rankFor(lifetimePoints: number): Rank {

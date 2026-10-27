@@ -3,9 +3,10 @@ import "server-only";
  * Read-side data access used by pages (initial render) and API routes.
  * Each function only fetches what the user is allowed to see.
  */
-import { can, canAny, type SessionUser } from "../permissions";
+import { can, type SessionUser } from "../permissions";
 import { getProvider } from "../provider";
 import { canSeeActivity, redactProfile } from "../visibility";
+import { getAllOverrides } from "./store";
 
 export async function getOverviewData(user: SessionUser) {
   const p = getProvider();
@@ -43,9 +44,16 @@ export async function getMembersData(user: SessionUser) {
     can(user, "members.view") ? p.getRanks() : null,
     can(user, "members.view") ? p.getRoles() : null,
     can(user, "staff.view") ? p.getStaff() : null,
-    canAny(user, ["protection.view"]) ? p.getProtection() : null,
+    can(user, "protection.view") ? p.getProtection() : null,
   ]);
-  return { members, ranks, roles, staff, protection };
+  const overrides = staff && can(user, "permissions.manage") ? getAllOverrides() : null;
+  return {
+    members,
+    ranks,
+    roles,
+    staff: staff?.map((s) => ({ ...s, overrides: overrides ? (overrides[s.discordId] ?? { allow: [], deny: [] }) : null })) ?? null,
+    protection,
+  };
 }
 
 export async function getMemberFor(user: SessionUser, discordId: string) {
