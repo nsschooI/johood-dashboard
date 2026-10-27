@@ -3,15 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { MOTION, easeOut, prefersReducedMotion } from "@/lib/motion";
 
-/** Animated number: counts from the previous value to the new one. */
+/**
+ * Animated number: counts from the previous value to the new one whenever it
+ * changes (live updates). The first render shows the real value — no flash
+ * of 0 before hydration.
+ */
 export function CountUp({ value, format, className }: { value: number; format: (n: number) => string; className?: string }) {
   const [shown, setShown] = useState(value);
   const from = useRef(value);
-  const first = useRef(true);
 
   useEffect(() => {
-    const start = first.current ? 0 : from.current;
-    first.current = false;
+    const start = from.current;
     from.current = value;
     if (prefersReducedMotion() || start === value) {
       setShown(value);
