@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Crown, Code2, Headset, LifeBuoy, Briefcase, Languages, AlertTriangle } from "lucide-react";
-import { AppProvider, useApp } from "@/components/providers/app-provider";
+import { AppProvider, useApp, useFormat } from "@/components/providers/app-provider";
+import { GuildBannerArt } from "@/components/art/mock-art";
+import { Illustration } from "@/components/art/illustrations";
+import { GuildIcon } from "@/components/shell/guild-mark";
+import { Img } from "@/components/ui/img";
+import type { GuildInfo } from "@/lib/types";
 import { Logo } from "@/components/shell/logo";
 import { Button } from "@/components/ui/button";
 import { type Locale, translateDynamic } from "@/lib/i18n";
@@ -11,11 +16,49 @@ import { ROLES, type Role } from "@/lib/types";
 
 const ROLE_ICON: Record<Role, typeof Crown> = { owner: Crown, manager: Briefcase, dev: Code2, head_support: LifeBuoy, support: Headset };
 
-export function LoginView(props: { locale: Locale; error: string | null; discordEnabled: boolean; mockEnabled: boolean }) {
+export function LoginView(props: { locale: Locale; error: string | null; discordEnabled: boolean; mockEnabled: boolean; guilds: GuildInfo[]; providerKind: "mock" | "real" }) {
   return (
-    <AppProvider user={null} permissions={[]} csrf="" locale={props.locale} providerKind="mock">
+    <AppProvider user={null} permissions={[]} csrf="" locale={props.locale} providerKind={props.providerKind}>
       <Login {...props} />
     </AppProvider>
+  );
+}
+
+/** Left side: the community's identity — banner, icons, live counts. */
+function Hero({ guilds }: { guilds: GuildInfo[] }) {
+  const { t } = useApp();
+  const f = useFormat();
+  const main = guilds.find((g) => g.key === "main") ?? null;
+  return (
+    <section className="relative hidden overflow-hidden rounded-[2rem] ring-1 ring-line lg:flex lg:flex-col">
+      <div aria-hidden className="absolute inset-0">
+        <Img src={main?.bannerUrl} sizes="720px" priority className="size-full" fallback={<GuildBannerArt guild="main" className="absolute inset-0 size-full" />} />
+        <span className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/20" />
+      </div>
+      <div className="relative mt-auto p-10">
+        <Illustration name="people" className="mb-4 h-28 w-auto" />
+        <h2 className="max-w-md text-3xl font-semibold tracking-tight">{t("art.loginTitle")}</h2>
+        <p className="mt-2 max-w-md text-sm text-ink-2">{t("guild.signInNote")}</p>
+        <ul className="stagger mt-8 grid gap-3">
+          {guilds.map((g) => (
+            <li key={g.key} className="glass flex items-center gap-3 rounded-2xl p-3">
+              <GuildIcon guild={g.key} info={g} size={44} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold">{g.name}</p>
+                <p className="truncate text-xs text-ink-3">{g.description}</p>
+              </div>
+              <div className="text-end text-xs">
+                <p className="tabular font-medium text-ink">{t("guild.members", { n: f.compact(g.members) })}</p>
+                <p className="tabular flex items-center justify-end gap-1 text-ink-3">
+                  <span aria-hidden className="size-1.5 rounded-full bg-good" />
+                  {t("guild.online", { n: f.compact(g.online) })}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
 
@@ -27,9 +70,10 @@ function DiscordMark() {
   );
 }
 
-function Login({ error, discordEnabled, mockEnabled }: { error: string | null; discordEnabled: boolean; mockEnabled: boolean }) {
+function Login({ error, discordEnabled, mockEnabled, guilds }: { error: string | null; discordEnabled: boolean; mockEnabled: boolean; guilds: GuildInfo[] }) {
   const { t, locale, setLocale } = useApp();
   const router = useRouter();
+  const catalog = guilds.find((g) => g.key === "catalog") ?? null;
   const [pending, setPending] = useState<Role | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -50,10 +94,21 @@ function Login({ error, discordEnabled, mockEnabled }: { error: string | null; d
   const errorText = error === "expired" ? t("common.sessionExpired") : error ? translateDynamic(t, `login.errors.${error}`, undefined, t("login.errors.oauth")) : null;
 
   return (
-    <main className="grid min-h-dvh place-items-center px-4 py-10">
-      <div className="w-full max-w-md animate-fade-in">
+    <main className="grid min-h-dvh gap-6 p-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:p-6">
+      <Hero guilds={guilds} />
+      <div className="mx-auto flex w-full max-w-md flex-col justify-center py-6 animate-rise">
         <div className="mb-8 flex items-center justify-between">
-          <Logo />
+          {catalog ? (
+            <span className="flex items-center gap-2.5">
+              <GuildIcon guild="catalog" info={catalog} size={36} />
+              <span className="leading-tight">
+                <span className="block text-sm font-semibold">{catalog.name}</span>
+                <span className="block text-[11px] text-ink-3">Dashboard</span>
+              </span>
+            </span>
+          ) : (
+            <Logo />
+          )}
           <Button variant="ghost" size="sm" onClick={() => setLocale(locale === "ar" ? "en" : "ar")} aria-label={t("header.language")}>
             <Languages aria-hidden className="size-4" />
             <span lang={locale === "ar" ? "en" : "ar"}>{locale === "ar" ? "English" : "العربية"}</span>

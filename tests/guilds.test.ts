@@ -108,3 +108,18 @@ describe("real provider guild paths", () => {
     await expect(p.botAction("ops", "restart")).rejects.toMatchObject({ code: "not_implemented", status: 501 });
   });
 });
+
+describe("mock 501 mode", () => {
+  it("answers every mutation with not_implemented and changes nothing", async () => {
+    const p = new MockProvider({ seed: 2, autoTick: false, notImplemented: true });
+    const actor = { discordId: "a", name: "A", avatarUrl: null };
+    const [m] = await p.searchMembers("", 1);
+    const before = (await p.getMember(m.discordId))!.points;
+    await expect(p.botAction("ops", "restart")).rejects.toMatchObject({ code: "not_implemented" });
+    await expect(p.adjustPoints({ discordId: m.discordId, delta: 5, reason: "test", actor })).rejects.toMatchObject({ code: "not_implemented" });
+    await expect(p.setProtection({ lockdown: true })).rejects.toMatchObject({ code: "not_implemented" });
+    expect((await p.getMember(m.discordId))!.points).toBe(before);
+    expect((await p.getProtection()).lockdown).toBe(false);
+    p.stop();
+  });
+});

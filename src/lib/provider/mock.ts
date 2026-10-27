@@ -105,6 +105,11 @@ export interface MockOptions {
   autoTick?: boolean;
   /** PRNG for live events; defaults to Math.random. */
   liveRng?: Rng;
+  /**
+   * Answer every mutation with 501 like the real backend does today
+   * (MOCK_NOT_IMPLEMENTED=true), to try the "not connected yet" UX.
+   */
+  notImplemented?: boolean;
 }
 
 const MAX_ACTIVITY = 300;
@@ -140,11 +145,17 @@ export class MockProvider implements DataProvider {
   private protection!: ProtectionSettings;
   private stats!: Record<GuildKey, ServerStats>;
   private ticketNo = 1000;
+  private notImplemented = false;
+
+  private guardMutation() {
+    if (this.notImplemented) throw new ProviderError("not_implemented", "Not implemented");
+  }
 
   constructor(opts: MockOptions = {}) {
     const now = opts.now ?? Date.now();
     this.rng = createRng(opts.seed ?? 962);
     this.live = opts.liveRng ?? Math.random;
+    this.notImplemented = opts.notImplemented ?? false;
     this.seedMembers(opts.members ?? 260, now);
     this.seedHistory(opts.historyDays ?? 56, now);
     this.seedBots(now);
@@ -713,6 +724,7 @@ export class MockProvider implements DataProvider {
   }
 
   async botAction(name: BotName, action: BotAction) {
+    this.guardMutation();
     const bot = this.bots.get(name);
     if (!bot) throw new ProviderError("not_found", `Unknown bot ${name}`);
     const now = Date.now();
@@ -754,6 +766,7 @@ export class MockProvider implements DataProvider {
   }
 
   async assistantAction(name: BotName, action: AssistantAction) {
+    this.guardMutation();
     const a = this.assistants.get(name);
     if (!a) throw new ProviderError("not_found", `Unknown assistant ${name}`);
     if (action === "disconnect") {
@@ -872,6 +885,7 @@ export class MockProvider implements DataProvider {
   }
 
   async adjustPoints(input: PointsAdjustInput) {
+    this.guardMutation();
     const m = this.byId.get(input.discordId);
     if (!m) throw new ProviderError("not_found", "Unknown member");
     if (!Number.isInteger(input.delta) || input.delta === 0) throw new ProviderError("invalid", "Delta must be a non-zero integer");
@@ -986,6 +1000,7 @@ export class MockProvider implements DataProvider {
   }
 
   async ticketAction(id: string, action: TicketAction) {
+    this.guardMutation();
     const idx = this.tickets.findIndex((t) => t.id === id);
     if (idx === -1) throw new ProviderError("not_found", "Unknown ticket");
     const cur = this.tickets[idx];
@@ -1032,6 +1047,7 @@ export class MockProvider implements DataProvider {
   }
 
   async setProtection(patch: ProtectionPatch) {
+    this.guardMutation();
     const { blockedWords, ...rest } = patch;
     const lists = blockedWords
       ? this.protection.blockedWords.map((b) => {

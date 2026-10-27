@@ -13,6 +13,7 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
   return (
     <div className="glass mx-auto mt-16 max-w-md rounded-[var(--radius-card)]">
       <ErrorState
+        art="plug"
         title={t("errors.crashTitle")}
         hint={t("errors.crashBody")}
         action={

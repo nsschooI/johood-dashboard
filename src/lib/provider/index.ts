@@ -15,7 +15,7 @@ export function getProvider(): DataProvider {
     globalForProvider.__johoodProvider =
       kind === "real"
         ? new RealProvider({ baseUrl: process.env.PROVIDER_API_URL ?? "", token: process.env.PROVIDER_API_TOKEN ?? "" })
-        : new MockProvider();
+        : new MockProvider({ notImplemented: process.env.MOCK_NOT_IMPLEMENTED === "true" });
   }
   return globalForProvider.__johoodProvider;
 }

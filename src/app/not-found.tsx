@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { Illustration } from "@/components/art/illustrations";
 import { getT } from "@/lib/server/i18n";
 
 export default async function NotFound() {
   const t = await getT();
   return (
     <main className="grid min-h-dvh place-items-center px-4">
-      <div className="glass max-w-md rounded-[var(--radius-card)] p-8 text-center">
+      <div className="glass max-w-md rounded-[var(--radius-card)] p-8 text-center animate-rise">
+        <Illustration name="lost" className="mx-auto h-32 w-auto" />
         <p className="bg-gradient-to-br from-accent-300 to-blush bg-clip-text text-5xl font-semibold text-transparent">404</p>
         <h1 className="mt-3 text-lg font-semibold">{t("errors.notFoundTitle")}</h1>
         <p className="mt-1 text-sm text-ink-3">{t("errors.notFoundBody")}</p>
