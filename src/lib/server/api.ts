@@ -44,6 +44,8 @@ export interface RouteCtx<P> {
   ip: string | null;
   /** Write an audit entry as the current user. */
   audit: (e: Omit<AuditInput, "actor" | "ip">) => void;
+  /** Throw 403 (and log the denied attempt) unless the user can do `action`. */
+  require: (action: Action, target?: string) => void;
 }
 
 export function clientIp(req: NextRequest): string | null {
@@ -89,6 +91,11 @@ export function assertSameOrigin(req: NextRequest) {
   if (!sameOrigin(req)) throw new ApiError(403, "bad_origin");
 }
 
+/** 428: the client must repeat the request with `confirm: true` after asking the user. */
+export function requireConfirm(confirmed: boolean | undefined, what: string) {
+  if (!confirmed) throw new ApiError(428, "confirm_required", `Confirm ${what}`);
+}
+
 export function guard<P = Record<string, never>>(opts: GuardOptions, fn: (ctx: RouteCtx<P>) => Promise<unknown>) {
   return async (req: NextRequest, routeCtx: { params: Promise<P> }) => {
     try {
@@ -122,6 +129,11 @@ export function guard<P = Record<string, never>>(opts: GuardOptions, fn: (ctx: R
         params,
         ip,
         audit: (e) => writeAudit({ ...e, actor: user, ip }),
+        require: (action, target) => {
+          if (canAny(user, [action])) return;
+          writeAudit({ actor: user, action, target: target ?? req.nextUrl.pathname, ok: false, ip, reason: "forbidden" });
+          throw new ApiError(403, "forbidden");
+        },
       });
       if (result instanceof Response) return result;
       return NextResponse.json(result ?? { ok: true }, { headers: { "Cache-Control": "no-store" } });
