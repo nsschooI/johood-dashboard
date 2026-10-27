@@ -1,6 +1,10 @@
 import type { Messages } from "./en";
 
-/** Arabic strings (RTL). Must have exactly the same keys as en.ts. */
+/**
+ * Arabic strings (RTL). Must have exactly the same keys as en.ts.
+ * \u2066…\u2069 (LTR isolate) keeps amounts like "180 R$" and "+9" readable
+ * inside right-to-left sentences.
+ */
 const ar: Messages = {
   app: { name: "JoHood", tagline: "مركز التحكم", skip: "انتقل إلى المحتوى" },
   nav: { overview: "نظرة عامة", points: "النقاط والمشتريات", members: "الأعضاء والحماية", menu: "القائمة", close: "إغلاق القائمة" },
@@ -112,11 +116,11 @@ const ar: Messages = {
   },
   stats: { members: "الأعضاء", online: "متصلون الآن", newToday: "جدد اليوم", ticketsOpen: "تذاكر مفتوحة", inVoice: "في الصوتيات", boosts: "البوستات" },
   activity: {
-    purchase: { bought: "{name} اشترى {item} بـ {robux} R$ (+{points} نقطة)" },
+    purchase: { bought: "{name} اشترى {item} بـ \u2066{robux} R$\u2069 (\u2066+{points}\u2069 نقطة)" },
     transfer: {
-      requested: "{name} طلب تحويل {robux} R$",
-      completed: "اكتمل تحويل {robux} R$ إلى {name}",
-      failed: "فشل تحويل {robux} R$ إلى {name}",
+      requested: "{name} طلب تحويل \u2066{robux} R$\u2069",
+      completed: "اكتمل تحويل \u2066{robux} R$\u2069 إلى {name}",
+      failed: "فشل تحويل \u2066{robux} R$\u2069 إلى {name}",
     },
     redeem: { redeemed: "{name} استبدل {reward} ({points} نقطة)" },
     points_adjust: { added: "{actor} أضاف {points} نقطة إلى {name}", removed: "{actor} خصم {points} نقطة من {name}" },
@@ -171,7 +175,7 @@ const ar: Messages = {
     liveFeed: "المشتريات المباشرة",
     feedEmpty: "بانتظار أول عملية شراء…",
     newPurchase: "عملية شراء جديدة",
-    purchaseToast: "{name} اشترى {item} · {robux} R$",
+    purchaseToast: "{name} اشترى {item} · \u2066{robux} R$\u2069",
     kpi: {
       robuxToday: "روبكس اليوم",
       pointsEarned: "نقاط مكتسبة اليوم",

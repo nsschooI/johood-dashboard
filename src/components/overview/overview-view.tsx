@@ -56,14 +56,14 @@ export function OverviewView({ data }: { data: OverviewData }) {
         </section>
       )}
 
-      <div className={side ? "grid gap-8 xl:grid-cols-[minmax(0,1fr)_380px]" : ""}>
-        <div className="min-w-0 space-y-8">
+      <div className={side ? "grid gap-8 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_400px]" : ""}>
+        <div className="@container min-w-0 space-y-8">
           {assistants && (
             <section aria-labelledby="assistants-title">
               <SectionTitle id="assistants-title" icon={<Headphones className="size-4" aria-hidden />}>
                 {t("overview.assistants")}
               </SectionTitle>
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 @lg:grid-cols-2 @4xl:grid-cols-3">
                 {assistants.map((a) => (
                   <AssistantCard key={a.bot} assistant={a} bot={byName.get(a.bot)} />
                 ))}
@@ -76,7 +76,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
               <SectionTitle id="bots-title" icon={<Bot className="size-4" aria-hidden />}>
                 {t("overview.bots")}
               </SectionTitle>
-              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid gap-3 @lg:grid-cols-2 @5xl:grid-cols-3">
                 {core.map((b) => (
                   <BotCard key={b.name} bot={b} onLogs={() => setLogsFor(b.name)} />
                 ))}

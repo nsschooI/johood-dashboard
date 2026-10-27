@@ -67,7 +67,7 @@ export function TicketQueue({ initial }: { initial: TicketSummary[] }) {
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
                     <span className="tabular shrink-0 text-xs text-ink-3">#{tk.number}</span>
-                    <span className="truncate text-sm font-medium text-ink">{tk.subject}</span>
+                    <span dir="auto" className="truncate text-sm font-medium text-ink">{tk.subject}</span>
                   </span>
                   <span className="mt-0.5 flex items-center gap-1.5 text-xs whitespace-nowrap text-ink-3">
                     <bdi className="min-w-0 truncate">{tk.openedBy.name}</bdi>

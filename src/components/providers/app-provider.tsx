@@ -94,7 +94,8 @@ export function useFormat() {
       n: (v: number) => num.format(v),
       compact: (v: number) => compact.format(v),
       pct: (v: number) => pct.format(v),
-      robux: (v: number) => `${num.format(v)} R$`,
+      // Isolated so "R$" keeps its place inside Arabic (RTL) text.
+      robux: (v: number) => `\u2066${num.format(v)} R$\u2069`,
       signed: (v: number) => (v > 0 ? `+${num.format(v)}` : num.format(v)),
       dateTime: (iso: string) => dt.format(new Date(iso)),
       date: (iso: string) => date.format(new Date(iso)),

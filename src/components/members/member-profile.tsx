@@ -158,7 +158,7 @@ function Profile({ id }: { id: string }) {
               <li key={tk.id}>
                 <button type="button" onClick={() => setTicket(tk.id)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm hover:bg-white/[0.04]">
                   <span className="tabular text-xs text-ink-3">#{tk.number}</span>
-                  <span className="min-w-0 flex-1 truncate">{tk.subject}</span>
+                  <span dir="auto" className="min-w-0 flex-1 truncate text-start">{tk.subject}</span>
                   <Badge tone={TICKET_TONE[tk.status]}>{t(`tickets.status.${tk.status}`)}</Badge>
                 </button>
               </li>

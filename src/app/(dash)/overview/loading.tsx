@@ -10,7 +10,7 @@ export default function Loading() {
           <Skeleton key={i} className="h-20 rounded-2xl" />
         ))}
       </div>
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="grid gap-3 sm:grid-cols-2">
           {Array.from({ length: 6 }, (_, i) => (
             <SkeletonCard key={i} lines={4} />
