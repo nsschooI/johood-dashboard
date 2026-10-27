@@ -585,7 +585,7 @@ export class MockProvider implements DataProvider {
     this.scheduled = this.scheduled.filter((s) => s.at > now);
     for (const s of due) s.run(now);
 
-    if (chance(r, 0.2)) this.makePurchase(now, r, true);
+    if (chance(r, 0.08)) this.makePurchase(now, r, true);
     if (chance(r, 0.025)) this.makeTransfer(now, r, true, now);
     if (chance(r, 0.02)) this.makeRedemption(now, r, true);
 

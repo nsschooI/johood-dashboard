@@ -70,7 +70,7 @@ export function TicketQueue({ initial }: { initial: TicketSummary[] }) {
                     <span className="truncate text-sm font-medium text-ink">{tk.subject}</span>
                   </span>
                   <span className="mt-0.5 flex items-center gap-1.5 text-xs whitespace-nowrap text-ink-3">
-                    <span className="min-w-0 truncate">{tk.openedBy.name}</span>
+                    <bdi className="min-w-0 truncate">{tk.openedBy.name}</bdi>
                     <span aria-hidden>·</span>
                     <span className="shrink-0">{t(`tickets.category.${tk.category}`)}</span>
                     <span aria-hidden>·</span>

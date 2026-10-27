@@ -39,7 +39,13 @@ function lookup(dict: Messages, key: string): string | undefined {
 
 export function interpolate(template: string, params?: Params) {
   if (!params) return template;
-  return template.replace(/\{(\w+)\}/g, (m, k: string) => (k in params ? String(params[k]) : m));
+  // String values (names, items) are wrapped in Unicode isolates so an Arabic
+  // name inside an English sentence (or vice versa) doesn't scramble the order.
+  return template.replace(/\{(\w+)\}/g, (m, k: string) => {
+    if (!(k in params)) return m;
+    const v = params[k];
+    return typeof v === "string" ? `\u2068${v}\u2069` : String(v);
+  });
 }
 
 export function createTranslator(locale: Locale): Translate {
