@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ZodError, type ZodType } from "zod";
 import { DASHBOARD_CONFIG } from "@config/dashboard";
 import { canAny, type Action, type SessionUser } from "../permissions";
-import { ProviderError } from "../provider/errors";
+import { isProviderError } from "../provider/errors";
 import { DEFAULT_GUILD, isGuildKey, type GuildKey } from "../types";
 import { env } from "./env";
 import { rateLimit } from "./rate-limit";
@@ -70,10 +70,10 @@ export function errorResponse(err: unknown) {
     if (err.status === 429 && typeof err.extra?.retryAfterMs === "number") headers["Retry-After"] = String(Math.ceil(err.extra.retryAfterMs / 1000));
     return NextResponse.json({ error: err.code, message: err.message, ...err.extra }, { status: err.status, headers });
   }
-  if (err instanceof ZodError) {
-    return NextResponse.json({ error: "invalid_input", issues: err.issues.map((i) => ({ path: i.path.join("."), message: i.message })) }, { status: 400 });
+  if (err instanceof ZodError || (err instanceof Error && err.name === "ZodError" && Array.isArray((err as ZodError).issues))) {
+    return NextResponse.json({ error: "invalid_input", issues: (err as ZodError).issues.map((i) => ({ path: i.path.join("."), message: i.message })) }, { status: 400 });
   }
-  if (err instanceof ProviderError) {
+  if (isProviderError(err)) {
     if (err.code === "not_implemented") {
       return NextResponse.json({ error: "not_implemented", message: "This action is not connected yet" }, { status: 501 });
     }
@@ -164,7 +164,7 @@ export function guard<P = Record<string, never>>(opts: GuardOptions, fn: (ctx: R
       return NextResponse.json(result ?? { ok: true }, { headers: { "Cache-Control": "no-store" } });
     } catch (err) {
       // A mutation the backend didn't perform is logged as an attempt, never as a change.
-      if (attempt?.intent && err instanceof ProviderError && ["not_implemented", "unavailable", "upstream"].includes(err.code)) {
+      if (attempt?.intent && isProviderError(err) && ["not_implemented", "unavailable", "upstream"].includes(err.code)) {
         const { action, target, reason, before } = attempt.intent;
         writeAudit({
           actor: attempt.user,

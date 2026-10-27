@@ -52,7 +52,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     return () => clearTimeout(t);
   }, [feedback]);
 
+  // A reasoned disable stays focusable/hoverable (aria-disabled) so the "why" tooltip is reachable.
+  const reasoned = Boolean(disabledReason) && !disabled;
   const isDisabled = disabled || Boolean(disabledReason);
+  const { onClick, ...restProps } = rest;
   const button = (
     <button
       ref={(node) => {
@@ -61,18 +64,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         else if (ref) ref.current = node;
       }}
       type={type}
-      disabled={isDisabled || loading}
+      disabled={(isDisabled && !reasoned) || loading}
+      aria-disabled={reasoned || undefined}
       aria-busy={loading || undefined}
+      onClick={reasoned ? (e) => e.preventDefault() : onClick}
       className={cn(
         "relative inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,box-shadow,color,transform,opacity] duration-[var(--dur-fast)] ease-[var(--ease-out)] select-none",
-        "enabled:active:scale-[0.97] enabled:active:duration-[var(--dur-instant)] disabled:opacity-45",
+        "enabled:active:scale-[0.97] enabled:active:duration-[var(--dur-instant)] disabled:opacity-45 aria-disabled:opacity-45 aria-disabled:active:scale-100",
         VARIANT[variant],
         SIZE[size],
         attention && "needs-attention",
         attention === "warning" && "[--attention-rgb:251_191_36]",
         className,
       )}
-      {...rest}
+      {...restProps}
     >
       {loading && <Loader2 aria-hidden className="size-4 animate-spin" />}
       {children}

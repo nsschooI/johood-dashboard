@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { BookOpen, Coins, Copy, ExternalLink, KeyRound, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useApp, useCan, useFormat, useWhyNot } from "@/components/providers/app-provider";
@@ -30,8 +31,22 @@ export function PersonAvatar({ person, size = 32, ring, className }: { person: M
 }
 
 export function HoverCard({ person, children, className }: { person: MemberRef; children: ReactNode; className?: string }) {
-  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const anchor = useRef<HTMLSpanElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const open = pos !== null;
+  const setOpen = (v: boolean) => {
+    if (!v) return setPos(null);
+    const r = anchor.current?.getBoundingClientRect();
+    if (!r) return;
+    const w = 288;
+    const vw = document.documentElement.clientWidth;
+    const rtl = getComputedStyle(anchor.current!).direction === "rtl";
+    const left = Math.max(8, Math.min(rtl ? r.right - w : r.left, vw - w - 8));
+    const below = r.bottom + 8;
+    const top = below + 260 > window.innerHeight ? Math.max(8, r.top - 268) : below;
+    setPos({ left, top });
+  };
   const show = () => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setOpen(true), 380);
@@ -41,13 +56,15 @@ export function HoverCard({ person, children, className }: { person: MemberRef; 
     timer.current = setTimeout(() => setOpen(false), 160);
   };
   return (
-    <span className={cn("relative inline-flex", className)} onPointerEnter={show} onPointerLeave={hide} onFocus={show} onBlur={hide}>
+    <span ref={anchor} className={cn("relative inline-flex", className)} onPointerEnter={show} onPointerLeave={hide} onFocus={show} onBlur={hide}>
       {children}
-      {open && (
-        <span onPointerEnter={show} onPointerLeave={hide} className="absolute start-0 top-full z-50 pt-2">
-          <PersonCard person={person} />
-        </span>
-      )}
+      {open &&
+        createPortal(
+          <span onPointerEnter={show} onPointerLeave={hide} className="fixed z-[75]" style={{ left: pos.left, top: pos.top }}>
+            <PersonCard person={person} />
+          </span>,
+          document.body,
+        )}
     </span>
   );
 }
@@ -62,7 +79,7 @@ function PersonCard({ person }: { person: MemberRef }) {
   const top = data?.roles.slice(0, 4) ?? [];
   const color = top[0]?.color ?? "#b06ef2";
   return (
-    <span role="tooltip" className="glass block w-72 overflow-hidden rounded-2xl bg-[#1a1624]/95 text-start shadow-2xl animate-pop">
+    <span role="tooltip" className="block w-72 overflow-hidden rounded-2xl bg-[#1a1624] text-start shadow-2xl ring-1 ring-line-strong animate-pop">
       <span aria-hidden className="block h-12" style={{ background: `linear-gradient(120deg, ${color}66, transparent 75%), radial-gradient(circle at 90% 0, #f08bd033, transparent 60%)` }} />
       <span className="-mt-7 block px-4 pb-4">
         <span className="flex items-end gap-3">

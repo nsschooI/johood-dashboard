@@ -50,7 +50,7 @@ import type {
   Transfer,
   TransferStatus,
 } from "../types";
-import { ProviderError } from "./errors";
+import { ProviderError, isProviderError } from "./errors";
 
 export interface RealProviderOptions {
   baseUrl: string;
@@ -197,7 +197,7 @@ export class RealProvider implements DataProvider {
     try {
       return await this.get<MemberProfile>(`/members/${encodeURIComponent(discordId)}`, { guild });
     } catch (err) {
-      if (err instanceof ProviderError && err.code === "not_found") return null;
+      if (isProviderError(err) && err.code === "not_found") return null;
       throw err;
     }
   }
@@ -222,7 +222,7 @@ export class RealProvider implements DataProvider {
     try {
       return await this.get<Ticket>(`/tickets/${encodeURIComponent(id)}`);
     } catch (err) {
-      if (err instanceof ProviderError && err.code === "not_found") return null;
+      if (isProviderError(err) && err.code === "not_found") return null;
       throw err;
     }
   }

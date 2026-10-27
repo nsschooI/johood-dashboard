@@ -22,3 +22,18 @@ export class ProviderError extends Error {
     this.status = STATUS[code];
   }
 }
+
+/**
+ * Structural check instead of `instanceof`: the provider instance is shared
+ * through globalThis, and a production build can bundle this module into
+ * several server chunks, so the class identity isn't reliable across them.
+ */
+export function isProviderError(err: unknown): err is ProviderError {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    (err as { name?: unknown }).name === "ProviderError" &&
+    typeof (err as { code?: unknown }).code === "string" &&
+    typeof (err as { status?: unknown }).status === "number"
+  );
+}

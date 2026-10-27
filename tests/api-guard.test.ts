@@ -218,3 +218,13 @@ describe("backend answers 501 (action not built yet)", () => {
     }
   });
 });
+
+describe("provider errors across bundles", () => {
+  it("recognises a ProviderError from another module copy (no instanceof)", async () => {
+    const { errorResponse } = await import("@/lib/server/api");
+    const foreign = Object.assign(new Error("nope"), { name: "ProviderError", code: "not_implemented", status: 501 });
+    const res = errorResponse(foreign);
+    expect(res.status).toBe(501);
+    expect((await res.json()).error).toBe("not_implemented");
+  });
+});

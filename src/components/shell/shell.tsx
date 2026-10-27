@@ -99,7 +99,7 @@ export function Shell({ children }: { children: ReactNode }) {
   }, [items, router, href, switchLocale, sound, setGuild, guild]);
 
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-dvh overflow-x-clip">
       <a href="#main" className="sr-only z-50 rounded-lg bg-accent-500 px-3 py-2 text-sm text-white focus:not-sr-only focus:fixed focus:start-4 focus:top-4">
         {t("app.skip")}
       </a>
@@ -202,13 +202,13 @@ function Header({ onPalette, onSignOut, switchLocale }: { onPalette: () => void;
 
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-bg/65 backdrop-blur-xl" style={{ viewTransitionName: "site-header" }}>
-      <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-2 px-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-1 px-2 sm:gap-2 sm:px-6 lg:px-8">
         <div className="lg:hidden">
           <ServerSwitcher compact />
         </div>
         {title && <p className="hidden truncate text-sm font-medium text-ink-2 sm:block lg:hidden">{t(title)}</p>}
         <Tooltip content={status === "live" ? t("common.live") : t("common.reconnecting")} side="bottom">
-          <span tabIndex={0} className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-xs text-ink-3" aria-live="polite">
+          <span tabIndex={0} className="flex items-center gap-2 rounded-lg px-1 py-1 text-xs text-ink-3" aria-live="polite">
             <Dot tone={status === "live" ? "good" : "warn"} pulse={status === "live"} />
             <span className="hidden xl:inline">{status === "live" ? t("common.live") : t("common.reconnecting")}</span>
           </span>
@@ -272,7 +272,7 @@ function Header({ onPalette, onSignOut, switchLocale }: { onPalette: () => void;
             )}
           </div>
           {user && (
-            <span className="ms-1 lg:hidden">
+            <span className="ms-1 hidden sm:inline-flex lg:hidden">
               <Avatar name={user.name} src={user.avatarUrl} size={28} />
             </span>
           )}
