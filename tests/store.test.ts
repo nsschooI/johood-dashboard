@@ -107,6 +107,16 @@ describe("audit log", () => {
     expect(p2.items.map((x) => x.target)).toEqual(["t2", "t1"]);
   });
 
+  it("records outcomes, including attempts the backend did not perform", () => {
+    writeAudit({ actor: user, action: "bots.restart", target: "bot:ops", outcome: "not_connected" });
+    writeAudit({ actor: user, action: "bots.stop", outcome: "denied" });
+    writeAudit({ actor: user, action: "tickets.claim" });
+    const items = queryAudit().items;
+    expect(items.map((i) => i.outcome)).toEqual(["ok", "denied", "not_connected"]);
+    expect(items.map((i) => i.ok)).toEqual([true, false, false]);
+    expect(queryAudit({ outcome: "not_connected" }).items).toHaveLength(1);
+  });
+
   it("is append-only", () => {
     writeAudit({ actor: user, action: "x" });
     expect(() => db.prepare("UPDATE audit_log SET action = 'y'").run()).toThrow(/append-only/);
@@ -116,10 +126,11 @@ describe("audit log", () => {
 
 describe("prefs", () => {
   it("defaults to null and merges patches", () => {
-    expect(getPrefs("a")).toEqual({ locale: null, muted: null });
+    expect(getPrefs("a")).toEqual({ locale: null, muted: null, guild: null });
     setPrefs("a", { locale: "ar" });
     setPrefs("a", { muted: false });
-    expect(getPrefs("a")).toEqual({ locale: "ar", muted: false });
+    setPrefs("a", { guild: "catalog" });
+    expect(getPrefs("a")).toEqual({ locale: "ar", muted: false, guild: "catalog" });
   });
 });
 

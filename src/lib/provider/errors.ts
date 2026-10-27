@@ -1,4 +1,4 @@
-export type ProviderErrorCode = "not_found" | "conflict" | "invalid" | "unavailable" | "upstream";
+export type ProviderErrorCode = "not_found" | "conflict" | "invalid" | "unavailable" | "upstream" | "not_implemented";
 
 const STATUS: Record<ProviderErrorCode, number> = {
   not_found: 404,
@@ -6,6 +6,8 @@ const STATUS: Record<ProviderErrorCode, number> = {
   invalid: 400,
   unavailable: 503,
   upstream: 502,
+  /** The backend knows the action but hasn't built it yet. Nothing changed. */
+  not_implemented: 501,
 };
 
 /** Errors a provider may throw; API routes turn them into JSON responses. */

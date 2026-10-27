@@ -4,7 +4,8 @@ import "server-only";
  * overrides. Pure functions over the DB so they're easy to test.
  */
 import crypto from "node:crypto";
-import type { AuditEntry, AuditQuery, Role } from "../types";
+import type { AuditEntry, AuditOutcome, AuditQuery, GuildKey, Role } from "../types";
+import { isGuildKey } from "../types";
 import { isAction, isRole, type Action, type PermissionOverrides, type SessionUser } from "../permissions";
 import { DASHBOARD_CONFIG } from "@config/dashboard";
 import { getDb } from "./db";
@@ -118,15 +119,17 @@ export interface AuditInput {
   reason?: string | null;
   before?: unknown;
   after?: unknown;
+  /** @deprecated use outcome; ok=false maps to "denied". */
   ok?: boolean;
+  outcome?: AuditOutcome;
   ip?: string | null;
 }
 
 export function writeAudit(e: AuditInput, now = new Date()): number {
   const res = getDb()
     .prepare(
-      `INSERT INTO audit_log (at, actor_id, actor_name, actor_roles, action, target, reason, before_json, after_json, ok, ip)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO audit_log (at, actor_id, actor_name, actor_roles, action, target, reason, before_json, after_json, ok, outcome, ip)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       now.toISOString(),
@@ -138,15 +141,20 @@ export function writeAudit(e: AuditInput, now = new Date()): number {
       e.reason ?? null,
       e.before === undefined ? null : JSON.stringify(e.before),
       e.after === undefined ? null : JSON.stringify(e.after),
-      e.ok === false ? 0 : 1,
+      outcomeOf(e) === "ok" ? 1 : 0,
+      outcomeOf(e),
       e.ip ?? null,
     );
   return Number(res.lastInsertRowid);
 }
 
+function outcomeOf(e: AuditInput): AuditOutcome {
+  return e.outcome ?? (e.ok === false ? "denied" : "ok");
+}
+
 type AuditRow = {
   id: number; at: string; actor_id: string; actor_name: string; actor_roles: string; action: string;
-  target: string | null; reason: string | null; before_json: string | null; after_json: string | null; ok: number; ip: string | null;
+  target: string | null; reason: string | null; before_json: string | null; after_json: string | null; ok: number; outcome: string | null; ip: string | null;
 };
 
 const parse = (s: string | null) => (s === null ? null : (JSON.parse(s) as unknown));
@@ -163,6 +171,7 @@ export function queryAudit(q: AuditQuery = {}): { items: AuditEntry[]; nextCurso
   if (q.from) add("at >= ?", q.from);
   if (q.to) add("at <= ?", q.to);
   if (q.beforeId) add("id < ?", q.beforeId);
+  if (q.outcome) add("outcome = ?", q.outcome);
   if (q.q) {
     const like = `%${escapeLike(q.q)}%`;
     add("(actor_name LIKE ? ESCAPE '\\' OR target LIKE ? ESCAPE '\\' OR reason LIKE ? ESCAPE '\\' OR action LIKE ? ESCAPE '\\')", like, like, like, like);
@@ -183,6 +192,7 @@ export function queryAudit(q: AuditQuery = {}): { items: AuditEntry[]; nextCurso
     before: parse(r.before_json),
     after: parse(r.after_json),
     ok: r.ok === 1,
+    outcome: (r.outcome as AuditOutcome | null) ?? (r.ok === 1 ? "ok" : "denied"),
     ip: r.ip,
   }));
   return { items, nextCursor: items.length === limit ? items[items.length - 1].id : null };
@@ -208,13 +218,17 @@ export function auditFacets() {
 export interface Prefs {
   locale: "en" | "ar" | null;
   muted: boolean | null;
+  guild: GuildKey | null;
 }
 
 export function getPrefs(discordId: string): Prefs {
-  const row = getDb().prepare("SELECT locale, muted FROM user_prefs WHERE discord_id = ?").get(discordId) as { locale: string | null; muted: number | null } | undefined;
+  const row = getDb().prepare("SELECT locale, muted, guild FROM user_prefs WHERE discord_id = ?").get(discordId) as
+    | { locale: string | null; muted: number | null; guild: string | null }
+    | undefined;
   return {
     locale: row?.locale === "ar" || row?.locale === "en" ? row.locale : null,
     muted: row?.muted === null || row?.muted === undefined ? null : row.muted === 1,
+    guild: isGuildKey(row?.guild) ? row.guild : null,
   };
 }
 
@@ -223,9 +237,9 @@ export function setPrefs(discordId: string, patch: Partial<Prefs>) {
   const next = { ...cur, ...patch };
   getDb()
     .prepare(
-      `INSERT INTO user_prefs (discord_id, locale, muted, updated_at) VALUES (?, ?, ?, ?)
-       ON CONFLICT(discord_id) DO UPDATE SET locale = excluded.locale, muted = excluded.muted, updated_at = excluded.updated_at`,
+      `INSERT INTO user_prefs (discord_id, locale, muted, guild, updated_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(discord_id) DO UPDATE SET locale = excluded.locale, muted = excluded.muted, guild = excluded.guild, updated_at = excluded.updated_at`,
     )
-    .run(discordId, next.locale, next.muted === null ? null : next.muted ? 1 : 0, Date.now());
+    .run(discordId, next.locale, next.muted === null ? null : next.muted ? 1 : 0, next.guild, Date.now());
   return next;
 }

@@ -18,7 +18,7 @@ const Body = z.object({
  */
 export const POST = guard(
   { permission: ["points.adjust", "points.adjust_limited"], mutation: true, rateLimit: "points" },
-  async ({ req, user, audit }) => {
+  async ({ req, user, audit, intent }) => {
     const body = await readJson(req, Body);
     const target = `member:${body.discordId}`;
     const max = maxPointAdjust(user);
@@ -32,6 +32,7 @@ export const POST = guard(
     const member = await p.getMember(body.discordId);
     if (!member) throw new ApiError(404, "not_found", "Unknown member");
     const actor = { discordId: user.discordId, name: user.name, avatarUrl: user.avatarUrl };
+    intent({ action: "points.adjust", target, reason: body.reason, before: { balance: member.points }, after: { delta: body.delta } });
     const entry = await p.adjustPoints({ discordId: body.discordId, delta: body.delta, reason: body.reason, actor });
     audit({
       action: "points.adjust",

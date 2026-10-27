@@ -179,3 +179,42 @@ describe("member profile redaction", () => {
     expect(typeof p.points).toBe("number");
   });
 });
+
+describe("backend answers 501 (action not built yet)", () => {
+  it("returns a friendly 501 and audits an attempt, not a change", async () => {
+    const original = provider.botAction.bind(provider);
+    const { ProviderError } = await import("@/lib/provider/errors");
+    provider.botAction = async () => {
+      throw new ProviderError("not_implemented", "not implemented");
+    };
+    try {
+      const res = await botAction(req("POST", "/api/bots/ops/restart", { auth: login("manager"), body: {} }), ctx({ name: "ops", action: "restart" }));
+      expect(res.status).toBe(501);
+      expect((await res.json()).error).toBe("not_implemented");
+      const [entry] = queryAudit({ action: "bots.restart" }).items;
+      expect(entry.outcome).toBe("not_connected");
+      expect(entry.ok).toBe(false);
+      expect(entry.target).toBe("bot:ops");
+      expect(queryAudit({ outcome: "ok", action: "bots.restart" }).items).toHaveLength(0);
+    } finally {
+      provider.botAction = original;
+    }
+  });
+
+  it("does the same for point adjustments, keeping the reason", async () => {
+    const original = provider.adjustPoints.bind(provider);
+    const { ProviderError } = await import("@/lib/provider/errors");
+    provider.adjustPoints = async () => {
+      throw new ProviderError("not_implemented", "nope");
+    };
+    try {
+      const res = await adjust(req("POST", "/api/points/adjust", { auth: login("manager"), body: { discordId: memberId, delta: 20, reason: "Event reward" } }), ctx({}));
+      expect(res.status).toBe(501);
+      const [entry] = queryAudit({ action: "points.adjust" }).items;
+      expect(entry.outcome).toBe("not_connected");
+      expect(entry.reason).toBe("Event reward");
+    } finally {
+      provider.adjustPoints = original;
+    }
+  });
+});

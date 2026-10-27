@@ -2,7 +2,7 @@
  * Static seed material for the mock provider. Every name here is invented;
  * IDs use obviously synthetic patterns so they can't collide with real people.
  */
-import type { BotName, DiscordRole, Rank, RankInfo, Role, TicketCategory } from "../types";
+import type { BotName, DiscordRole, GuildInfo, GuildKey, Rank, RankInfo, Role, TicketCategory } from "../types";
 
 export const BOT_META: Record<BotName, { displayName: string; kind: "core" | "assistant"; memoryLimitMb: number; version: string }> = {
   ops: { displayName: "Ops", kind: "core", memoryLimitMb: 512, version: "3.4.1" },
@@ -56,6 +56,9 @@ export const CATALOG: readonly { item: string; robux: number }[] = [
   { item: "Wadi Rum Cape", robux: 320 },
 ];
 
+/** Fake Roblox asset IDs per catalog item (mock thumbnails are generated art). */
+export const ASSET_IDS: Record<string, string> = Object.fromEntries(CATALOG.map((c, i) => [c.item, String(90_000_000_100 + i * 7919)]));
+
 export const REWARDS: readonly { reward: string; points: number }[] = [
   { reward: "Custom role colour (30d)", points: 300 },
   { reward: "Private voice room", points: 500 },
@@ -90,6 +93,47 @@ export const VOICE_ROOMS = [
 ] as const;
 
 
+/**
+ * The two servers. `mock:` URLs are rendered as designed artwork by the
+ * <Art> component — they never leave the browser and are never used in real mode.
+ */
+export const MOCK_GUILDS: Record<GuildKey, Omit<GuildInfo, "members" | "online">> = {
+  main: {
+    key: "main",
+    id: "mock-guild-main",
+    name: "JoHood",
+    description: "مجتمع جوهود — Jordan's Roblox & gaming hangout",
+    iconUrl: "mock:guild:main",
+    bannerUrl: "mock:banner:main",
+    boosts: 14,
+    boostLevel: 2,
+  },
+  catalog: {
+    key: "catalog",
+    id: "mock-guild-catalog",
+    name: "JoHood Catalog",
+    description: "Shop, tickets and ranks for the JoHood Catalog map",
+    iconUrl: "mock:guild:catalog",
+    bannerUrl: "mock:banner:catalog",
+    boosts: 7,
+    boostLevel: 1,
+  },
+};
+
+/** Community roles of the main server. */
+export const MAIN_ROLES: DiscordRole[] = [
+  { id: "main-owner", name: "Owner", color: "#f472b6" },
+  { id: "main-admin", name: "Admins", color: "#c084fc" },
+  { id: "main-mod", name: "Moderators", color: "#60a5fa" },
+  { id: "main-events", name: "Event Team", color: "#f59e0b" },
+  { id: "main-booster", name: "Server Booster", color: "#f9a8d4" },
+  { id: "main-vip", name: "VIP", color: "#fbbf24" },
+  { id: "main-gamer", name: "Gamer", color: "#34d399" },
+  { id: "main-active", name: "Active", color: "#22d3ee" },
+  { id: "main-member", name: "Member", color: "#94a3b8" },
+];
+
+/** Roles of JoHood Catalog (staff roles live here). */
 export const SERVER_ROLES: DiscordRole[] = [
   { id: "role-owner", name: "Owner", color: "#f472b6" },
   { id: "role-founder", name: "Founder", color: "#e879f9" },

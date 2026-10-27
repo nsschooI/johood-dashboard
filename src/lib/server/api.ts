@@ -10,6 +10,7 @@ import { ZodError, type ZodType } from "zod";
 import { DASHBOARD_CONFIG } from "@config/dashboard";
 import { canAny, type Action, type SessionUser } from "../permissions";
 import { ProviderError } from "../provider/errors";
+import { DEFAULT_GUILD, isGuildKey, type GuildKey } from "../types";
 import { env } from "./env";
 import { rateLimit } from "./rate-limit";
 import { sessionCookieName } from "./session";
@@ -46,6 +47,14 @@ export interface RouteCtx<P> {
   audit: (e: Omit<AuditInput, "actor" | "ip">) => void;
   /** Throw 403 (and log the denied attempt) unless the user can do `action`. */
   require: (action: Action, target?: string) => void;
+  /**
+   * Declare what this mutation is about to do. If the backend then answers
+   * 501 (not built yet) or fails, the guard records the attempt with that
+   * action/target instead of a change that never happened.
+   */
+  intent: (e: { action: string; target?: string | null; reason?: string | null; before?: unknown; after?: unknown }) => void;
+  /** Server selected by `?guild=` (default: main). */
+  guild: GuildKey;
 }
 
 export function clientIp(req: NextRequest): string | null {
@@ -65,6 +74,9 @@ export function errorResponse(err: unknown) {
     return NextResponse.json({ error: "invalid_input", issues: err.issues.map((i) => ({ path: i.path.join("."), message: i.message })) }, { status: 400 });
   }
   if (err instanceof ProviderError) {
+    if (err.code === "not_implemented") {
+      return NextResponse.json({ error: "not_implemented", message: "This action is not connected yet" }, { status: 501 });
+    }
     return NextResponse.json({ error: err.code, message: err.message }, { status: err.status });
   }
   console.error("[api] unhandled error", err);
@@ -96,8 +108,15 @@ export function requireConfirm(confirmed: boolean | undefined, what: string) {
   if (!confirmed) throw new ApiError(428, "confirm_required", `Confirm ${what}`);
 }
 
+/** `?guild=main|catalog`, defaulting to the main server. */
+export function readGuild(req: NextRequest): GuildKey {
+  const g = req.nextUrl.searchParams.get("guild");
+  return isGuildKey(g) ? g : DEFAULT_GUILD;
+}
+
 export function guard<P = Record<string, never>>(opts: GuardOptions, fn: (ctx: RouteCtx<P>) => Promise<unknown>) {
   return async (req: NextRequest, routeCtx: { params: Promise<P> }) => {
+    let attempt: { user: SessionUser; ip: string | null; intent: Parameters<RouteCtx<P>["intent"]>[0] | null } | null = null;
     try {
       const session = resolveSession(req.cookies.get(sessionCookieName())?.value);
       if (!session) throw new ApiError(401, "unauthenticated");
@@ -122,22 +141,42 @@ export function guard<P = Record<string, never>>(opts: GuardOptions, fn: (ctx: R
         if (!rl.ok) throw new ApiError(429, "rate_limited", "Too many requests", { retryAfterMs: rl.retryAfterMs });
       }
 
+      if (opts.mutation) attempt = { user, ip, intent: perms[0] ? { action: perms[0], target: req.nextUrl.pathname } : null };
       const result = await fn({
         req,
         user,
         session,
         params,
         ip,
+        guild: readGuild(req),
         audit: (e) => writeAudit({ ...e, actor: user, ip }),
         require: (action, target) => {
+          if (attempt) attempt.intent = { action, target: target ?? req.nextUrl.pathname };
           if (canAny(user, [action])) return;
-          writeAudit({ actor: user, action, target: target ?? req.nextUrl.pathname, ok: false, ip, reason: "forbidden" });
+          writeAudit({ actor: user, action, target: target ?? req.nextUrl.pathname, outcome: "denied", ip, reason: "forbidden" });
           throw new ApiError(403, "forbidden");
+        },
+        intent: (e) => {
+          if (attempt) attempt.intent = { ...attempt.intent, ...e };
         },
       });
       if (result instanceof Response) return result;
       return NextResponse.json(result ?? { ok: true }, { headers: { "Cache-Control": "no-store" } });
     } catch (err) {
+      // A mutation the backend didn't perform is logged as an attempt, never as a change.
+      if (attempt?.intent && err instanceof ProviderError && ["not_implemented", "unavailable", "upstream"].includes(err.code)) {
+        const { action, target, reason, before } = attempt.intent;
+        writeAudit({
+          actor: attempt.user,
+          ip: attempt.ip,
+          action,
+          target: target ?? null,
+          reason: reason ?? null,
+          before,
+          after: attempt.intent.after,
+          outcome: err.code === "not_implemented" ? "not_connected" : "failed",
+        });
+      }
       return errorResponse(err);
     }
   };

@@ -62,6 +62,20 @@ const MIGRATIONS: string[] = [
     PRIMARY KEY (discord_id, action)
   );
   `,
+  // 2: audit outcome (ok / denied / not_connected / failed)
+  `
+  ALTER TABLE audit_log ADD COLUMN outcome TEXT;
+  -- one-off backfill: lift the append-only guard inside this transaction only
+  DROP TRIGGER audit_no_update;
+  UPDATE audit_log SET outcome = CASE WHEN ok = 1 THEN 'ok' ELSE 'denied' END;
+  CREATE TRIGGER audit_no_update BEFORE UPDATE ON audit_log
+    BEGIN SELECT RAISE(ABORT, 'audit log is append-only'); END;
+  CREATE INDEX audit_outcome ON audit_log(outcome);
+  `,
+  // 3: remembered server per user
+  `
+  ALTER TABLE user_prefs ADD COLUMN guild TEXT;
+  `,
 ];
 
 export function migrate(db: DB) {

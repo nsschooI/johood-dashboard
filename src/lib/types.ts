@@ -12,6 +12,41 @@
  */
 
 // ---------------------------------------------------------------------------
+// Servers (guilds)
+// ---------------------------------------------------------------------------
+
+/**
+ * The backend serves two Discord servers. `main` is the community (default);
+ * `catalog` is JoHood Catalog, where tickets, ops and ranks live and where
+ * staff roles (and therefore dashboard sign-in) come from. The economy
+ * (purchases, transfers, points) is global and identical in both.
+ */
+export const GUILD_KEYS = ["main", "catalog"] as const;
+export type GuildKey = (typeof GUILD_KEYS)[number];
+export const DEFAULT_GUILD: GuildKey = "main";
+
+export function isGuildKey(v: unknown): v is GuildKey {
+  return v === "main" || v === "catalog";
+}
+
+export interface GuildRef {
+  key: GuildKey;
+  id: string;
+}
+
+export interface GuildInfo extends GuildRef {
+  name: string;
+  description: string | null;
+  /** Discord CDN URL (cdn.discordapp.com) or null. */
+  iconUrl: string | null;
+  bannerUrl: string | null;
+  members: number;
+  online: number;
+  boosts: number;
+  boostLevel: 0 | 1 | 2 | 3;
+}
+
+// ---------------------------------------------------------------------------
 // Bots & assistants
 // ---------------------------------------------------------------------------
 
@@ -55,6 +90,8 @@ export interface BotStatus {
   pingMs: number | null;
   version: string;
   lastError: BotError | null;
+  /** The bot's Discord avatar; null/absent → the UI draws a glyph tile. */
+  avatarUrl?: string | null;
 }
 
 export type BotAction = "restart" | "stop" | "start";
@@ -91,6 +128,7 @@ export interface Assistant {
   calledBy: MemberRef | null;
   /** When it joined the current room. */
   since: string | null;
+  avatarUrl?: string | null;
 }
 
 export type AssistantAction = "disconnect";
@@ -100,11 +138,14 @@ export type AssistantAction = "disconnect";
 // ---------------------------------------------------------------------------
 
 export interface ServerStats {
+  /** Which server these numbers describe (absent = the default server). */
+  guild?: GuildKey;
   at: string;
   members: number;
   online: number;
   newToday: number;
-  ticketsOpen: number;
+  /** null when the server has no ticket system (tickets live in `catalog`). */
+  ticketsOpen: number | null;
   inVoice: number;
   boosts: number;
 }
@@ -122,6 +163,8 @@ export interface PurchaseEvent {
   robloxId: string;
   robloxName: string;
   item: string;
+  /** Roblox asset ID of the item, when the map reports it (for thumbnails). */
+  assetId?: string;
   robux: number;
   points: number;
   /** Fraction of Robux returned as points, e.g. 0.1 = 10%. */
@@ -276,6 +319,8 @@ export type TicketStatus = "open" | "claimed" | "closed";
 export type TicketCategory = "conversion" | "purchase" | "report" | "support" | "partnership";
 
 export interface TicketSummary {
+  /** Server the ticket lives in (tickets live in `catalog`). */
+  guild?: GuildKey;
   id: string;
   number: number;
   subject: string;
@@ -362,8 +407,12 @@ export interface AuditEntry {
   before: unknown;
   after: unknown;
   ok: boolean;
+  /** ok = applied, denied = refused by permissions, not_connected = backend answered 501, failed = backend error. */
+  outcome: AuditOutcome;
   ip: string | null;
 }
+
+export type AuditOutcome = "ok" | "denied" | "not_connected" | "failed";
 
 export interface AuditQuery {
   actorId?: string;
@@ -373,6 +422,7 @@ export interface AuditQuery {
   to?: string;
   limit?: number;
   beforeId?: number;
+  outcome?: AuditOutcome;
 }
 
 // ---------------------------------------------------------------------------
@@ -395,6 +445,8 @@ export type ActivityKind =
  * `activity.<kind>.<variant>` so the feed is bilingual.
  */
 export interface ActivityItem {
+  /** Set for server-specific lines (joins, tickets); absent = global. */
+  guild?: GuildKey;
   id: string;
   at: string;
   kind: ActivityKind;
@@ -439,6 +491,7 @@ export interface ListQuery {
 
 export interface TicketQuery extends ListQuery {
   status?: TicketStatus | "active";
+  guild?: GuildKey;
 }
 
 /**
@@ -451,6 +504,10 @@ export interface TicketQuery extends ListQuery {
 export interface DataProvider {
   readonly kind: "mock" | "real";
 
+  // Servers ------------------------------------------------------------
+  getGuilds(): Promise<GuildRef[]>;
+  getGuildInfo(guild: GuildKey): Promise<GuildInfo>;
+
   // Bots ---------------------------------------------------------------
   getBots(): Promise<BotStatus[]>;
   getBotLogs(name: BotName, opts?: { limit?: number; level?: LogLevel }): Promise<BotLogLine[]>;
@@ -461,7 +518,7 @@ export interface DataProvider {
   assistantAction(name: BotName, action: AssistantAction): Promise<Assistant>;
 
   // Server -------------------------------------------------------------
-  getServerStats(): Promise<ServerStats>;
+  getServerStats(guild?: GuildKey): Promise<ServerStats>;
   getActivity(limit?: number): Promise<ActivityItem[]>;
 
   // Points & purchases -------------------------------------------------
@@ -473,11 +530,11 @@ export interface DataProvider {
   adjustPoints(input: PointsAdjustInput): Promise<LedgerEntry>;
 
   // Members ------------------------------------------------------------
-  searchMembers(query: string, limit?: number): Promise<MemberSummary[]>;
-  getMember(discordId: string): Promise<MemberProfile | null>;
-  getRanks(): Promise<RankInfo[]>;
-  getRoles(): Promise<RoleInfo[]>;
-  getStaff(): Promise<StaffMember[]>;
+  searchMembers(query: string, limit?: number, guild?: GuildKey): Promise<MemberSummary[]>;
+  getMember(discordId: string, guild?: GuildKey): Promise<MemberProfile | null>;
+  getRanks(guild?: GuildKey): Promise<RankInfo[]>;
+  getRoles(guild?: GuildKey): Promise<RoleInfo[]>;
+  getStaff(guild?: GuildKey): Promise<StaffMember[]>;
 
   // Tickets ------------------------------------------------------------
   getTickets(q?: TicketQuery): Promise<Page<TicketSummary>>;

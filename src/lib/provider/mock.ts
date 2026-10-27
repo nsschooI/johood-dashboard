@@ -33,6 +33,8 @@ import type {
   RankInfo,
   Redemption,
   RoleInfo,
+  GuildInfo,
+  GuildKey,
   ServerStats,
   StaffMember,
   Ticket,
@@ -44,7 +46,7 @@ import type {
   Transfer,
   TransferStatus,
 } from "../types";
-import { BOT_NAMES, RANKS } from "../types";
+import { BOT_NAMES, GUILD_KEYS, RANKS } from "../types";
 import { chance, createRng, int, pick, weighted, type Rng } from "../rng";
 import { DAY, HOUR, MINUTE, dayKey, lastDays, lastWeeks, weekKey } from "../time";
 import { ProviderError } from "./errors";
@@ -57,6 +59,9 @@ import {
   LOG_LINES,
   MOCK_STAFF,
   RANK_TABLE,
+  ASSET_IDS,
+  MAIN_ROLES,
+  MOCK_GUILDS,
   REWARDS,
   SERVER_ROLES,
   STAFF_ROLE_IDS,
@@ -76,8 +81,9 @@ interface MockMember {
   robloxName: string;
   linked: boolean;
   verifiedAt: string;
-  joinedAt: string;
-  roleIds: string[];
+  avatarUrl: string | null;
+  /** Membership per server: join date and role IDs. Everyone is in `main`. */
+  guilds: Partial<Record<GuildKey, { joinedAt: string; roleIds: string[] }>>;
   balance: number;
   lifetime: number;
   totalRobux: number;
@@ -103,7 +109,7 @@ export interface MockOptions {
 
 const MAX_ACTIVITY = 300;
 const MAX_LOGS_PER_BOT = 400;
-const BASE_SERVER_MEMBERS = 4_560;
+const BASE_MEMBERS: Record<GuildKey, number> = { main: 4_560, catalog: 1_180 };
 
 const iso = (t: number) => new Date(t).toISOString();
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
@@ -132,7 +138,7 @@ export class MockProvider implements DataProvider {
   private bots = new Map<BotName, BotStatus>();
   private assistants = new Map<BotName, Assistant>();
   private protection!: ProtectionSettings;
-  private stats!: ServerStats;
+  private stats!: Record<GuildKey, ServerStats>;
   private ticketNo = 1000;
 
   constructor(opts: MockOptions = {}) {
@@ -144,14 +150,28 @@ export class MockProvider implements DataProvider {
     this.seedBots(now);
     this.seedTickets(now);
     this.seedProtection(now);
+    const inGuild = (g: GuildKey) => this.members.filter((m) => m.guilds[g]);
     this.stats = {
-      at: iso(now),
-      members: BASE_SERVER_MEMBERS + this.members.length,
-      online: 640,
-      newToday: this.members.filter((m) => dayKey(m.joinedAt) === dayKey(now)).length + 11,
-      ticketsOpen: this.openTicketCount(),
-      inVoice: this.voiceCount(),
-      boosts: 14,
+      main: {
+        guild: "main",
+        at: iso(now),
+        members: BASE_MEMBERS.main + inGuild("main").length,
+        online: 640,
+        newToday: inGuild("main").filter((m) => dayKey(m.guilds.main!.joinedAt) === dayKey(now)).length + 11,
+        ticketsOpen: null,
+        inVoice: this.voiceCount(),
+        boosts: MOCK_GUILDS.main.boosts,
+      },
+      catalog: {
+        guild: "catalog",
+        at: iso(now),
+        members: BASE_MEMBERS.catalog + inGuild("catalog").length,
+        online: 210,
+        newToday: 4,
+        ticketsOpen: this.openTicketCount(),
+        inVoice: 6,
+        boosts: MOCK_GUILDS.catalog.boosts,
+      },
     };
     if (opts.autoTick ?? true) this.start();
   }
@@ -212,10 +232,20 @@ export class MockProvider implements DataProvider {
       const displayName = arabic && chance(this.rng, 0.45) ? arabic : first;
       const joinedAt = now - int(this.rng, 0, 600) * DAY - int(this.rng, 0, DAY);
       const linked = chance(this.rng, 0.9);
-      const roleIds = ["role-member"];
-      if (linked) roleIds.push("role-verified");
-      if (chance(this.rng, 0.08)) roleIds.push("role-vip");
-      if (chance(this.rng, 0.05)) roleIds.push("role-booster");
+      const mainRoles = ["main-member"];
+      if (chance(this.rng, 0.5)) mainRoles.push("main-gamer");
+      if (chance(this.rng, 0.3)) mainRoles.push("main-active");
+      if (chance(this.rng, 0.08)) mainRoles.push("main-vip");
+      if (chance(this.rng, 0.05)) mainRoles.push("main-booster");
+      if (chance(this.rng, 0.03)) mainRoles.push("main-events");
+      const guilds: MockMember["guilds"] = { main: { joinedAt: iso(joinedAt), roleIds: mainRoles } };
+      // Most buyers also joined the Catalog server (where they link Roblox and open tickets).
+      if (linked && chance(this.rng, 0.7)) {
+        const catalogRoles = ["role-member", "role-verified"];
+        if (chance(this.rng, 0.08)) catalogRoles.push("role-vip");
+        if (chance(this.rng, 0.04)) catalogRoles.push("role-booster");
+        guilds.catalog = { joinedAt: iso(joinedAt + int(this.rng, 0, 40) * DAY), roleIds: catalogRoles };
+      }
       const m: MockMember = {
         discordId: `9000000000${String(100000 + i).padStart(8, "0")}`,
         username: robloxName.toLowerCase(),
@@ -224,8 +254,8 @@ export class MockProvider implements DataProvider {
         robloxName,
         linked,
         verifiedAt: iso(joinedAt + int(this.rng, 1, 30) * HOUR),
-        joinedAt: iso(joinedAt),
-        roleIds,
+        avatarUrl: chance(this.rng, 0.78) ? `mock:avatar:${i}` : null,
+        guilds,
         balance: 0,
         lifetime: 0,
         totalRobux: 0,
@@ -345,6 +375,7 @@ export class MockProvider implements DataProvider {
     this.ticketNo += 1;
     const subject = pick(rng, TICKET_SUBJECTS[category]);
     const t: Ticket = {
+      guild: "catalog",
       id: this.id("tkt"),
       number: this.ticketNo,
       subject,
@@ -385,7 +416,7 @@ export class MockProvider implements DataProvider {
   // -------------------------------------------------------------------------
 
   private ref(m: MockMember): MemberRef {
-    return { discordId: m.discordId, name: m.displayName, avatarUrl: null };
+    return { discordId: m.discordId, name: m.displayName, avatarUrl: m.avatarUrl };
   }
 
   private pushLedger(entry: Omit<LedgerEntry, "id" | "balanceAfter">, member: MockMember): LedgerEntry {
@@ -419,6 +450,7 @@ export class MockProvider implements DataProvider {
       robloxId: member.robloxId,
       robloxName: member.robloxName,
       item,
+      assetId: ASSET_IDS[item],
       robux,
       points,
       cashbackRate: rate,
@@ -554,7 +586,7 @@ export class MockProvider implements DataProvider {
   private setAssistant(next: Assistant) {
     this.assistants.set(next.bot, next);
     this.emit({ type: "assistant", data: next });
-    this.refreshStats(Date.now(), true);
+    this.refreshStats(Date.now(), true, "catalog");
     return next;
   }
 
@@ -566,9 +598,12 @@ export class MockProvider implements DataProvider {
     return 24 + [...this.assistants.values()].reduce((s, a) => s + (a.room?.listeners ?? 0), 0);
   }
 
-  private refreshStats(now: number, emit: boolean) {
-    this.stats = { ...this.stats, at: iso(now), ticketsOpen: this.openTicketCount(), inVoice: this.voiceCount() };
-    if (emit) this.emit({ type: "stats", data: this.stats });
+  private refreshStats(now: number, emit: boolean, only?: GuildKey) {
+    this.stats = {
+      main: { ...this.stats.main, at: iso(now), inVoice: this.voiceCount() },
+      catalog: { ...this.stats.catalog, at: iso(now), ticketsOpen: this.openTicketCount() },
+    };
+    if (emit) for (const g of only ? [only] : GUILD_KEYS) this.emit({ type: "stats", data: this.stats[g] });
   }
 
   // -------------------------------------------------------------------------
@@ -589,17 +624,19 @@ export class MockProvider implements DataProvider {
     if (chance(r, 0.02)) this.makeRedemption(now, r, true);
 
     if (chance(r, 0.04)) {
-      this.stats = { ...this.stats, members: this.stats.members + 1, newToday: this.stats.newToday + 1 };
-      this.pushActivity({ at: iso(now), kind: "member_join", variant: "joined", tone: "neutral", params: { name: `${pick(r, FIRST)}${pick(r, SUFFIX)}` } }, true);
-      this.refreshStats(now, true);
+      const g: GuildKey = chance(r, 0.75) ? "main" : "catalog";
+      const cur = this.stats[g];
+      this.stats = { ...this.stats, [g]: { ...cur, members: cur.members + 1, newToday: cur.newToday + 1 } };
+      this.pushActivity({ guild: g, at: iso(now), kind: "member_join", variant: "joined", tone: "neutral", params: { name: `${pick(r, FIRST)}${pick(r, SUFFIX)}` } }, true);
+      this.refreshStats(now, true, g);
     }
 
     if (chance(r, 0.012)) {
       const cat = weighted<TicketCategory>(r, [["purchase", 3], ["report", 2], ["support", 4], ["conversion", 2]]);
       const t = this.newTicket(cat, pick(r, this.members), now, r);
       this.emit({ type: "ticket", data: summarize(t) });
-      this.pushActivity({ at: t.openedAt, kind: "ticket", variant: "opened", tone: "warning", params: { number: t.number, name: t.openedBy.name, subject: t.subject } }, true);
-      this.refreshStats(now, true);
+      this.pushActivity({ guild: "catalog", at: t.openedAt, kind: "ticket", variant: "opened", tone: "warning", params: { number: t.number, name: t.openedBy.name, subject: t.subject } }, true);
+      this.refreshStats(now, true, "catalog");
     }
 
     if (chance(r, 0.03)) {
@@ -635,7 +672,11 @@ export class MockProvider implements DataProvider {
     }
 
     if (this.tickCount % 5 === 0) {
-      this.stats = { ...this.stats, online: Math.round(clamp(this.stats.online + (r() - 0.5) * 18, 380, 1100)) };
+      const { main, catalog } = this.stats;
+      this.stats = {
+        main: { ...main, online: Math.round(clamp(main.online + (r() - 0.5) * 18, 380, 1100)) },
+        catalog: { ...catalog, online: Math.round(clamp(catalog.online + (r() - 0.5) * 8, 120, 420)) },
+      };
       this.refreshStats(now, true);
     }
 
@@ -723,8 +764,21 @@ export class MockProvider implements DataProvider {
     throw new ProviderError("invalid", `Unknown action ${action}`);
   }
 
-  async getServerStats() {
-    return this.stats;
+  async getServerStats(guild: GuildKey = "main") {
+    return this.stats[guild];
+  }
+
+  // -------------------------------------------------------------------------
+  // Servers
+  // -------------------------------------------------------------------------
+
+  async getGuilds() {
+    return GUILD_KEYS.map((key) => ({ key, id: MOCK_GUILDS[key].id }));
+  }
+
+  async getGuildInfo(guild: GuildKey): Promise<GuildInfo> {
+    const s = this.stats[guild];
+    return { ...MOCK_GUILDS[guild], members: s.members, online: s.online };
   }
 
   async getActivity(limit = 50) {
@@ -840,61 +894,70 @@ export class MockProvider implements DataProvider {
       discordId: m.discordId,
       username: m.username,
       displayName: m.displayName,
-      avatarUrl: null,
+      avatarUrl: m.avatarUrl,
       rank: rankFor(m.lifetime),
       robloxName: m.linked ? m.robloxName : null,
     };
   }
 
-  async searchMembers(query: string, limit = 20) {
+  async searchMembers(query: string, limit = 20, guild: GuildKey = "main") {
     const q = query.trim().toLowerCase();
+    const pool = this.members.filter((m) => m.guilds[guild]);
     const list = q
-      ? this.members.filter(
+      ? pool.filter(
           (m) => m.displayName.toLowerCase().includes(q) || m.username.includes(q) || m.robloxName.toLowerCase().includes(q) || m.discordId === q || m.robloxId === q,
         )
-      : [...this.members].sort((a, b) => b.lifetime - a.lifetime);
+      : [...pool].sort((a, b) => b.lifetime - a.lifetime);
     return list.slice(0, clamp(limit, 1, 50)).map((m) => this.summary(m));
   }
 
-  async getMember(discordId: string): Promise<MemberProfile | null> {
+  async getMember(discordId: string, guild: GuildKey = "main"): Promise<MemberProfile | null> {
     const m = this.byId.get(discordId);
-    if (!m) return null;
-    const roles = SERVER_ROLES.filter((r) => m.roleIds.includes(r.id));
+    const membership = m?.guilds[guild];
+    if (!m || !membership) return null;
+    const pool = guild === "main" ? MAIN_ROLES : SERVER_ROLES;
     return {
       ...this.summary(m),
-      joinedAt: m.joinedAt,
-      roles,
+      joinedAt: membership.joinedAt,
+      roles: pool.filter((r) => membership.roleIds.includes(r.id)),
       roblox: m.linked ? { robloxId: m.robloxId, robloxName: m.robloxName, verifiedAt: m.verifiedAt } : null,
       points: m.balance,
       lifetimePoints: m.lifetime,
       totalRobux: m.totalRobux,
       purchases: this.purchases.filter((p) => p.robloxId === m.robloxId).slice(-20).reverse(),
-      tickets: this.tickets.filter((t) => t.openedBy.discordId === m.discordId).map(summarize).reverse(),
+      tickets: guild === "catalog" ? this.tickets.filter((t) => t.openedBy.discordId === m.discordId).map(summarize).reverse() : [],
     };
   }
 
+  /** Ranks come from lifetime points, so they're the same in both servers. */
   async getRanks(): Promise<RankInfo[]> {
     const counts = new Map(RANKS.map((r) => [r, 0]));
     for (const m of this.members) counts.set(rankFor(m.lifetime), (counts.get(rankFor(m.lifetime)) ?? 0) + 1);
     return RANK_TABLE.map((r) => ({ ...r, members: counts.get(r.rank) ?? 0 }));
   }
 
-  async getRoles(): Promise<RoleInfo[]> {
+  async getRoles(guild: GuildKey = "main"): Promise<RoleInfo[]> {
+    const holders = (roleId: string) => this.members.filter((m) => m.guilds[guild]?.roleIds.includes(roleId)).length;
+    if (guild === "main") {
+      const fixed: Record<string, number> = { "main-owner": 1, "main-admin": 3, "main-mod": 9, "main-member": this.stats.main.members };
+      return MAIN_ROLES.map((r) => ({ ...r, members: fixed[r.id] ?? holders(r.id) * 6 }));
+    }
     const staffCount = (roleId: string) => MOCK_STAFF.filter((s) => s.roles.some((r) => STAFF_ROLE_IDS[r] === roleId)).length;
     return SERVER_ROLES.map((r) => {
-      let members = this.members.filter((m) => m.roleIds.includes(r.id)).length;
-      if (r.id === "role-member") members = this.stats.members;
-      if (r.id.startsWith("role-") && members === 0) members = staffCount(r.id) || (r.id === "role-founder" || r.id === "role-head-managers" ? 1 : 0);
+      let members = holders(r.id);
+      if (r.id === "role-member") members = this.stats.catalog.members;
+      if (members === 0) members = staffCount(r.id) || (r.id === "role-founder" || r.id === "role-head-managers" ? 1 : 0);
       return { ...r, members };
     });
   }
 
+  /** Staff are the same people in both servers (dashboard roles come from Catalog). */
   async getStaff(): Promise<StaffMember[]> {
     const now = Date.now();
     return MOCK_STAFF.map((s, i) => ({
       discordId: s.discordId,
       name: s.name,
-      avatarUrl: null,
+      avatarUrl: i % 3 === 2 ? null : `mock:avatar:staff-${i}`,
       roles: s.roles,
       lastSeenAt: iso(now - (i * 37 + 3) * MINUTE),
     }));
@@ -905,6 +968,8 @@ export class MockProvider implements DataProvider {
   // -------------------------------------------------------------------------
 
   async getTickets(q: TicketQuery = {}) {
+    // Tickets live in the Catalog server; the main server has none.
+    if (q.guild === "main") return { items: [], nextCursor: null };
     const s = q.search?.toLowerCase();
     const sorted = [...this.tickets].sort((a, b) => a.lastMessageAt.localeCompare(b.lastMessageAt));
     const page = paginate(sorted, q, (t) =>
@@ -949,7 +1014,7 @@ export class MockProvider implements DataProvider {
     this.emit({ type: "ticket", data: summarize(next) });
     if (action.type !== "reply") {
       this.pushActivity(
-        { at: now, kind: "ticket", variant: action.type === "claim" ? "claimed" : action.type === "close" ? "closed" : "transferred", tone: "neutral", params: { number: cur.number, actor: action.actor.name, to: action.type === "transfer" ? action.to.name : "" } },
+        { guild: "catalog", at: now, kind: "ticket", variant: action.type === "claim" ? "claimed" : action.type === "close" ? "closed" : "transferred", tone: "neutral", params: { number: cur.number, actor: action.actor.name, to: action.type === "transfer" ? action.to.name : "" } },
         true,
       );
     }

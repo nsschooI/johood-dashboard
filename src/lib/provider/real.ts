@@ -23,6 +23,9 @@ import type {
   BotName,
   BotStatus,
   DataProvider,
+  GuildInfo,
+  GuildKey,
+  GuildRef,
   LedgerEntry,
   ListQuery,
   LiveEvent,
@@ -107,6 +110,8 @@ export class RealProvider implements DataProvider {
     if (res.status === 404) throw new ProviderError("not_found", await errorText(res));
     if (res.status === 409) throw new ProviderError("conflict", await errorText(res));
     if (res.status === 400 || res.status === 422) throw new ProviderError("invalid", await errorText(res));
+    // The backend knows this action but hasn't built it yet: nothing changed.
+    if (res.status === 501) throw new ProviderError("not_implemented", await errorText(res));
     if (!res.ok) throw new ProviderError("upstream", `Bot backend ${res.status}: ${await errorText(res)}`);
     if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
@@ -123,6 +128,14 @@ export class RealProvider implements DataProvider {
   // -------------------------------------------------------------------------
   // Endpoints — TODO(wire): confirm each path & payload with the backend.
   // -------------------------------------------------------------------------
+
+  getGuilds() {
+    return this.get<GuildRef[]>("/server/list");
+  }
+
+  getGuildInfo(guild: GuildKey) {
+    return this.get<GuildInfo>("/server/info", { guild });
+  }
 
   getBots() {
     return this.get<BotStatus[]>("/bots");
@@ -144,8 +157,8 @@ export class RealProvider implements DataProvider {
     return this.request<Assistant>("POST", `/assistants/${encodeURIComponent(name)}/${action}`);
   }
 
-  getServerStats() {
-    return this.get<ServerStats>("/server/stats");
+  getServerStats(guild?: GuildKey) {
+    return this.get<ServerStats>("/server/stats", { guild });
   }
 
   getActivity(limit = 50) {
@@ -176,33 +189,33 @@ export class RealProvider implements DataProvider {
     return this.request<LedgerEntry>("POST", "/points/adjust", { body: input });
   }
 
-  searchMembers(query: string, limit = 20) {
-    return this.get<MemberSummary[]>("/members/search", { q: query, limit });
+  searchMembers(query: string, limit = 20, guild?: GuildKey) {
+    return this.get<MemberSummary[]>("/members/search", { q: query, limit, guild });
   }
 
-  async getMember(discordId: string) {
+  async getMember(discordId: string, guild?: GuildKey) {
     try {
-      return await this.get<MemberProfile>(`/members/${encodeURIComponent(discordId)}`);
+      return await this.get<MemberProfile>(`/members/${encodeURIComponent(discordId)}`, { guild });
     } catch (err) {
       if (err instanceof ProviderError && err.code === "not_found") return null;
       throw err;
     }
   }
 
-  getRanks() {
-    return this.get<RankInfo[]>("/ranks");
+  getRanks(guild?: GuildKey) {
+    return this.get<RankInfo[]>("/ranks", { guild });
   }
 
-  getRoles() {
-    return this.get<RoleInfo[]>("/roles");
+  getRoles(guild?: GuildKey) {
+    return this.get<RoleInfo[]>("/roles", { guild });
   }
 
-  getStaff() {
-    return this.get<StaffMember[]>("/staff");
+  getStaff(guild?: GuildKey) {
+    return this.get<StaffMember[]>("/staff", { guild });
   }
 
   getTickets(q: TicketQuery = {}) {
-    return this.get<Page<TicketSummary>>("/tickets", { ...this.list(q), status: q.status });
+    return this.get<Page<TicketSummary>>("/tickets", { ...this.list(q), status: q.status, guild: q.guild });
   }
 
   async getTicket(id: string) {

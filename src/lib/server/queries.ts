@@ -7,6 +7,7 @@ import { can, type SessionUser } from "../permissions";
 import { getProvider } from "../provider";
 import { canSeeActivity, redactProfile } from "../visibility";
 import { getAllOverrides } from "./store";
+import type { GuildKey } from "../types";
 
 export async function getOverviewData(user: SessionUser) {
   const p = getProvider();
@@ -56,7 +57,7 @@ export async function getMembersData(user: SessionUser) {
   };
 }
 
-export async function getMemberFor(user: SessionUser, discordId: string) {
-  const profile = await getProvider().getMember(discordId);
+export async function getMemberFor(user: SessionUser, discordId: string, guild?: GuildKey) {
+  const profile = await getProvider().getMember(discordId, guild);
   return profile ? redactProfile(user, profile) : null;
 }

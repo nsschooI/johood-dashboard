@@ -9,7 +9,7 @@ const Body = z.object({ confirm: z.boolean().optional() });
 /** POST /api/bots/:name/(restart|stop|start) */
 export const POST = guard<{ name: string; action: string }>(
   { permission: ["bots.restart", "bots.stop"], mutation: true, rateLimit: "control" },
-  async ({ req, params, require, audit }) => {
+  async ({ req, params, require, audit, intent }) => {
     const { name, action } = Params.parse(params);
     const target = `bot:${name}`;
     require(action === "restart" ? "bots.restart" : "bots.stop", target);
@@ -18,6 +18,7 @@ export const POST = guard<{ name: string; action: string }>(
 
     const p = getProvider();
     const before = (await p.getBots()).find((b) => b.name === name);
+    intent({ action: `bots.${action}`, target, before: { state: before?.state } });
     const after = await p.botAction(name, action);
     audit({ action: `bots.${action}`, target, before: { state: before?.state }, after: { state: after.state } });
     return after;

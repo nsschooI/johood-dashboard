@@ -30,7 +30,7 @@ export function StatTiles({ initial }: { initial: ServerStats }) {
             <Icon aria-hidden className="size-3.5" />
             {t(label)}
           </dt>
-          <dd className="tabular mt-1.5 text-2xl font-semibold tracking-tight text-ink">{f.n(stats[key])}</dd>
+          <dd className="tabular mt-1.5 text-2xl font-semibold tracking-tight text-ink">{typeof stats[key] === "number" ? f.n(stats[key] as number) : "—"}</dd>
         </div>
       ))}
     </dl>

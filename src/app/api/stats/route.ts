@@ -3,4 +3,4 @@ import { getProvider } from "@/lib/provider";
 
 export const dynamic = "force-dynamic";
 
-export const GET = guard({ permission: "stats.view" }, () => getProvider().getServerStats());
+export const GET = guard({ permission: "stats.view" }, ({ guild }) => getProvider().getServerStats(guild));

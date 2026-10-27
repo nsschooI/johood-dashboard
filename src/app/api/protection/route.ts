@@ -19,11 +19,12 @@ const Patch = z
   .strict();
 
 /** PATCH /api/protection — lockdown & raid mode changes need confirm. */
-export const PATCH = guard({ permission: "protection.manage", mutation: true, rateLimit: "settings" }, async ({ req, audit }) => {
+export const PATCH = guard({ permission: "protection.manage", mutation: true, rateLimit: "settings" }, async ({ req, audit, intent }) => {
   const { confirm, ...patch } = await readJson(req, Patch);
   if (patch.lockdown !== undefined || patch.raidMode !== undefined) requireConfirm(confirm, "a lockdown / raid mode change");
   const p = getProvider();
   const before = await p.getProtection();
+  intent({ action: "protection.manage", target: "protection", after: patch });
   const after = await p.setProtection(patch);
   const pickChanged = (s: typeof before) => {
     const out: Record<string, unknown> = {};

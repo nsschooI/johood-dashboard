@@ -22,7 +22,7 @@ const PERMISSION: Record<z.infer<typeof Params>["action"], Action> = {
 /** POST /api/tickets/:id/(claim|reply|close|transfer) */
 export const POST = guard<{ id: string; action: string }>(
   { permission: ["tickets.claim", "tickets.reply", "tickets.close", "tickets.transfer"], mutation: true, rateLimit: "tickets" },
-  async ({ req, params, user, require, audit }) => {
+  async ({ req, params, user, require, audit, intent }) => {
     const { id, action } = Params.parse(params);
     const target = `ticket:${id}`;
     require(PERMISSION[action], target);
@@ -47,6 +47,7 @@ export const POST = guard<{ id: string; action: string }>(
       op = { type: "claim", actor };
     }
 
+    intent({ action: PERMISSION[action], target, reason: body.reason ?? null, before: { status: before.status } });
     const after = await p.ticketAction(id, op);
     audit({
       action: PERMISSION[action],
