@@ -1,6 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { PersonAvatar } from "@/components/people/person";
 import { BookOpen, Minus, Plus, ShieldAlert } from "lucide-react";
 import { DASHBOARD_CONFIG } from "@config/dashboard";
 import { useCan, useFormat, useT } from "@/components/providers/app-provider";
@@ -27,13 +29,15 @@ const KIND_TONE: Record<LedgerKind, Tone> = { purchase: "accent", transfer: "inf
 
 export function LedgerPanel() {
   const t = useT();
-  const [member, setMember] = useState<MemberSummary | null>(null);
+  const params = useSearchParams();
+  const preset = params.get("member");
+  const [member, setMember] = useState<Pick<MemberSummary, "discordId"> | null>(preset ? { discordId: preset } : null);
 
   return (
-    <Card aria-labelledby="ledger-title">
+    <Card id="t-ledger" aria-labelledby="ledger-title" className="scroll-mt-24">
       <CardHeader id="ledger-title" title={t("points.ledger")} description={t("points.ledgerHint")} icon={<BookOpen className="size-4" aria-hidden />} />
       <div className="grid gap-6 px-5 pb-5 lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <MemberSearch onSelect={setMember} selectedId={member?.discordId} limit={8} />
+        <MemberSearch onSelect={setMember} selectedId={member?.discordId} limit={8} guild="main" />
         <div className="min-w-0">
           {member ? <MemberLedger key={member.discordId} member={member} /> : <EmptyState title={t("points.ledgerHint")} className="h-full rounded-2xl ring-1 ring-line ring-inset" />}
         </div>
@@ -42,7 +46,7 @@ export function LedgerPanel() {
   );
 }
 
-function MemberLedger({ member }: { member: MemberSummary }) {
+function MemberLedger({ member }: { member: Pick<MemberSummary, "discordId"> }) {
   const t = useT();
   const f = useFormat();
   const can = useCan();
@@ -88,7 +92,7 @@ function MemberLedger({ member }: { member: MemberSummary }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-white/[0.03] p-4 ring-1 ring-inset ring-line">
-        <Avatar name={profile.displayName} src={profile.avatarUrl} size={44} />
+        <Avatar name={profile.displayName} src={profile.avatarUrl} size={48} />
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 truncate font-medium text-ink">
             {profile.displayName} <RankBadge rank={profile.rank} />
@@ -144,10 +148,15 @@ function MemberLedger({ member }: { member: MemberSummary }) {
                     {e.reason ? (
                       <span className="block truncate" title={e.reason}>
                         {e.reason}
-                        {e.actor && <span className="text-ink-3"> — {e.actor.name}</span>}
                       </span>
                     ) : (
                       "—"
+                    )}
+                    {e.actor && (
+                      <span className="mt-1 flex items-center gap-1.5 text-[11px]">
+                        <PersonAvatar person={e.actor} size={16} />
+                        <bdi className="truncate">{e.actor.name}</bdi>
+                      </span>
                     )}
                   </Td>
                 </tr>
@@ -192,6 +201,13 @@ function AdjustForm({ member }: { member: MemberProfile }) {
       "adjust",
       () => api<LedgerEntry>("/api/points/adjust", { method: "POST", body: { discordId: member.discordId, delta, reason: reason.trim(), confirm } }),
       t("points.adjusted"),
+      {
+        undo: () =>
+          api("/api/points/adjust", {
+            method: "POST",
+            body: { discordId: member.discordId, delta: -delta, reason: t("points.undoAdjust", { reason: reason.trim() }).slice(0, 500), confirm: true },
+          }),
+      },
     );
     setConfirming(false);
     if (ok) {

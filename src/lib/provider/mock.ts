@@ -553,7 +553,7 @@ export class MockProvider implements DataProvider {
     const candidates = this.members.filter((m) => m.linked && m.balance >= reward.points);
     if (!candidates.length) return null;
     const member = pick(rng, candidates);
-    const r: Redemption = { id: this.id("rdm"), at: iso(at), discordId: member.discordId, memberName: member.displayName, reward: reward.reward, points: reward.points };
+    const r: Redemption = { id: this.id("rdm"), at: iso(at), discordId: member.discordId, memberName: member.displayName, avatarUrl: member.avatarUrl, reward: reward.reward, points: reward.points };
     this.redemptions.push(r);
     const led = this.pushLedger({ at: r.at, discordId: member.discordId, kind: "redeem", delta: -r.points, refId: r.id }, member);
     this.pushActivity({ at: r.at, kind: "redeem", variant: "redeemed", tone: "neutral", params: { name: member.displayName, reward: r.reward, points: r.points } }, emit);

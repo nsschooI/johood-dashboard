@@ -92,3 +92,17 @@ export async function getShellData(user: SessionUser) {
     activity: (activity ?? []).filter((a) => canSeeActivity(user, a)).slice(0, 30),
   };
 }
+
+/** Access page: staff (with overrides for Owners) and the Catalog roles (names/colours). */
+export async function getAccessData(user: SessionUser) {
+  const p = getProvider();
+  const [staff, roles] = await Promise.all([
+    can(user, "staff.view") ? p.getStaff("catalog").catch(() => null) : null,
+    p.getRoles("catalog").catch(() => []),
+  ]);
+  const overrides = staff && can(user, "permissions.manage") ? getAllOverrides() : null;
+  return {
+    staff: staff?.map((s) => ({ ...s, overrides: overrides ? (overrides[s.discordId] ?? { allow: [], deny: [] }) : null })) ?? null,
+    roles: roles.map((r) => ({ id: r.id, name: r.name, color: r.color })),
+  };
+}

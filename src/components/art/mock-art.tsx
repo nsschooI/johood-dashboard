@@ -15,7 +15,6 @@ import {
   Music2,
   Package,
   Shirt,
-  Sparkles,
   Ticket,
   Wind,
   type LucideIcon,

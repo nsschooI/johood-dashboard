@@ -197,6 +197,7 @@ export interface Redemption {
   at: string;
   discordId: string;
   memberName: string;
+  avatarUrl?: string | null;
   reward: string;
   points: number;
 }

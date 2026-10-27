@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PointsView } from "@/components/points/points-view";
+import { PageTransition } from "@/components/shell/page-transition";
 import { canSeePage } from "@/lib/permissions";
 import { getPointsData } from "@/lib/server/queries";
 import { requireSession } from "@/lib/server/session";
@@ -10,5 +11,9 @@ export const metadata: Metadata = { title: "Points & Purchases" };
 export default async function PointsPage() {
   const { user } = await requireSession();
   if (!canSeePage(user, "points")) return <NoAccess />;
-  return <PointsView data={await getPointsData(user)} />;
+  return (
+    <PageTransition>
+      <PointsView data={await getPointsData(user)} />
+    </PageTransition>
+  );
 }

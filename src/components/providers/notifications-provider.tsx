@@ -43,8 +43,8 @@ export function NotificationsProvider({ seed, children }: { seed: ActivityItem[]
   const [browser, setBrowser] = useState<NotificationsValue["browser"]>("off");
   const seen = useRef<Set<string> | null>(null);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- per-browser prefs can only be read after mount (SSR has no storage) */
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- read per-browser prefs after mount (SSR has no storage)
     // First visit: everything already on screen counts as read.
     const stored = safeStorage.get(READ_KEY);
     const initial = stored ?? new Date().toISOString();
@@ -54,6 +54,7 @@ export function NotificationsProvider({ seed, children }: { seed: ActivityItem[]
     else if (safeStorage.get(BROWSER_KEY) === "on") setBrowser(Notification.permission === "granted" ? "granted" : Notification.permission);
     else setBrowser(Notification.permission === "denied" ? "denied" : "off");
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useLiveEvent("activity", (e) => {
     setNotices((cur) => [{ id: e.data.id, at: e.data.at, type: "activity" as const, item: e.data }, ...cur.filter((n) => n.id !== e.data.id)].slice(0, MAX));

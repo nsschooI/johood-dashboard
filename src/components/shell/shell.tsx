@@ -96,7 +96,7 @@ export function Shell({ children }: { children: ReactNode }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [items, router, href, switchLocale, sound.toggle, setGuild, guild]);
+  }, [items, router, href, switchLocale, sound, setGuild, guild]);
 
   return (
     <div className="min-h-dvh">

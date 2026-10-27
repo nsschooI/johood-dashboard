@@ -4,6 +4,7 @@ import { Fragment, useCallback, useId, useState } from "react";
 import { ChevronDown, RefreshCw, ScrollText, Search } from "lucide-react";
 import { useFormat, useT } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { cn } from "@/components/ui/cn";
@@ -26,7 +27,7 @@ export function AuditCard() {
   const t = useT();
   const f = useFormat();
   const id = useId();
-  const [filters, setFilters] = useState({ q: "", actorId: "", action: "", from: "", to: "" });
+  const [filters, setFilters] = useState({ q: "", actorId: "", action: "", from: "", to: "", outcome: "" });
   const [applied, setApplied] = useState(filters);
   const [facets, setFacets] = useState<AuditPage["facets"]>();
   const [loadingMore, setLoadingMore] = useState(false);
@@ -38,6 +39,7 @@ export function AuditCard() {
         q: applied.q,
         actorId: applied.actorId,
         action: applied.action,
+        outcome: applied.outcome,
         from: applied.from ? new Date(`${applied.from}T00:00:00`).toISOString() : "",
         to: applied.to ? new Date(`${applied.to}T23:59:59.999`).toISOString() : "",
         limit: 30,
@@ -69,7 +71,7 @@ export function AuditCard() {
   const set = (k: keyof typeof filters) => (e: { target: { value: string } }) => setFilters((x) => ({ ...x, [k]: e.target.value }));
 
   return (
-    <Card aria-labelledby="audit-title" className="overflow-hidden">
+    <Card id="t-audit" aria-labelledby="audit-title" className="scroll-mt-24 overflow-hidden">
       <CardHeader
         id="audit-title"
         title={t("audit.title")}
@@ -82,7 +84,7 @@ export function AuditCard() {
         }
       />
       <form
-        className="grid gap-2 px-5 pb-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))_auto]"
+        className="grid gap-2 px-5 pb-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(5,minmax(0,1fr))_auto]"
         onSubmit={(e) => {
           e.preventDefault();
           setApplied(filters);
@@ -114,6 +116,17 @@ export function AuditCard() {
             </option>
           ))}
         </Select>
+        <label className="sr-only" htmlFor={`${id}-outcome`}>
+          {t("audit.result")}
+        </label>
+        <Select id={`${id}-outcome`} value={filters.outcome} onChange={set("outcome")}>
+          <option value="">{t("audit.anyOutcome")}</option>
+          {(["ok", "denied", "not_connected", "failed"] as const).map((o) => (
+            <option key={o} value={o}>
+              {t(`audit.outcome.${o}`)}
+            </option>
+          ))}
+        </Select>
         <label className="sr-only" htmlFor={`${id}-from`}>
           {t("audit.from")}
         </label>
@@ -136,7 +149,7 @@ export function AuditCard() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <EmptyState title={t("audit.empty")} />
+        <EmptyState art="search" title={t("audit.empty")} />
       ) : (
         <Table label={t("audit.title")} className="max-h-[32rem]">
           <thead>
@@ -162,8 +175,13 @@ export function AuditCard() {
                   <tr className="hover:bg-white/[0.02]">
                     <Td className="text-xs whitespace-nowrap text-ink-3">{f.dateTime(e.at)}</Td>
                     <Td>
-                      <span className="block text-sm text-ink">{e.actorName}</span>
-                      {role && <span className="text-[11px] text-ink-3">{t(`roles.${role}`)}</span>}
+                      <span className="flex items-center gap-2">
+                        <Avatar name={e.actorName} size={26} />
+                        <span>
+                          <span className="block text-sm text-ink">{e.actorName}</span>
+                          {role && <span className="text-[11px] text-ink-3">{t(`roles.${role}`)}</span>}
+                        </span>
+                      </span>
                     </Td>
                     <Td>
                       <code className="text-xs text-accent-200" dir="ltr">
@@ -179,7 +197,7 @@ export function AuditCard() {
                       </span>
                     </Td>
                     <Td>
-                      <Badge tone={e.ok ? "good" : "bad"}>{e.ok ? t("audit.ok") : t("audit.denied")}</Badge>
+                      <Badge tone={e.outcome === "ok" ? "good" : e.outcome === "not_connected" ? "info" : e.outcome === "failed" ? "warn" : "bad"}>{t(`audit.outcome.${e.outcome}`)}</Badge>
                     </Td>
                     <Td>
                       {hasDiff && (

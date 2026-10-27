@@ -24,3 +24,23 @@ describe("docs/permissions.md", () => {
     });
   }
 });
+
+import { createTranslator, dictionaries } from "@/lib/i18n";
+
+describe("i18n", () => {
+  it("has a plain-language description of every action in both languages", () => {
+    for (const locale of ["en", "ar"] as const) {
+      const t = createTranslator(locale);
+      for (const a of ACTIONS) {
+        const text = t(`access.action.${a}` as never);
+        expect(text, `${locale} ${a}`).not.toBe(`access.action.${a}`);
+      }
+    }
+  });
+
+  it("en and ar have the same keys", () => {
+    const keys = (o: object, p = ""): string[] =>
+      Object.entries(o).flatMap(([k, v]) => (typeof v === "object" && v ? keys(v, `${p}${k}.`) : [`${p}${k}`]));
+    expect(keys(dictionaries.ar).sort()).toEqual(keys(dictionaries.en).sort());
+  });
+});

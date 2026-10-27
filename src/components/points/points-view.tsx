@@ -6,6 +6,8 @@ import { useLiveEvent } from "@/components/providers/live-provider";
 import { useSound } from "@/components/providers/sound-provider";
 import { useToast } from "@/components/providers/toast-provider";
 import { PageHeader } from "@/components/ui/card";
+import { ServerChip } from "@/components/shell/server-chip";
+import { useHashFocus } from "@/lib/client/anchors";
 import { dayKey } from "@/lib/time";
 import type { Page, PointsSummary, PurchaseEvent, Redemption, Transfer } from "@/lib/types";
 import { Kpis } from "./kpis";
@@ -50,6 +52,7 @@ export function PointsView({ data }: { data: PointsData }) {
   const [summary, setSummary] = useState(data.summary);
   const [fresh, setFresh] = useState<ReadonlySet<string>>(() => new Set());
   const markFresh = (id: string) => setFresh((s) => new Set(s).add(id));
+  useHashFocus();
 
   useLiveEvent("purchase", (e) => {
     const p = e.data;
@@ -89,7 +92,7 @@ export function PointsView({ data }: { data: PointsData }) {
 
   return (
     <>
-      <PageHeader title={t("points.title")} subtitle={t("points.subtitle")} />
+      <PageHeader eyebrow={<ServerChip global />} title={t("points.title")} subtitle={t("points.subtitle")} />
       <div className="space-y-6">
         {summary && <Kpis summary={summary} />}
 

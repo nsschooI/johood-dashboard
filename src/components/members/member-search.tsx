@@ -4,11 +4,14 @@ import { useEffect, useId, useState } from "react";
 import { Search } from "lucide-react";
 import { useT } from "@/components/providers/app-provider";
 import { Avatar } from "@/components/ui/avatar";
+import { RANK_TEXT, RankIcon } from "@/components/art/rank-icon";
 import { cn } from "@/components/ui/cn";
 import { Input } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, qs } from "@/lib/client/api";
 import { useLoad } from "@/lib/client/use-load";
+import { useGuild } from "@/components/providers/guild-provider";
+import type { GuildKey } from "@/lib/types";
 import type { MemberSummary } from "@/lib/types";
 
 /** Debounced member search with a result list. */
@@ -18,13 +21,18 @@ export function MemberSearch({
   initial,
   limit = 8,
   className,
+  guild,
 }: {
   onSelect: (m: MemberSummary) => void;
   selectedId?: string | null;
   initial?: MemberSummary[] | null;
   limit?: number;
   className?: string;
+  /** Which server to search (defaults to the selected one). */
+  guild?: GuildKey;
 }) {
+  const selected = useGuild().guild;
+  const g = guild ?? selected;
   const t = useT();
   const id = useId();
   const [q, setQ] = useState("");
@@ -34,7 +42,7 @@ export function MemberSearch({
     return () => clearTimeout(timer);
   }, [q]);
   const useInitial = !debounced && initial;
-  const url = useInitial ? null : `/api/members${qs({ q: debounced, limit })}`;
+  const url = useInitial ? null : `/api/members${qs({ q: debounced, limit, guild: g })}`;
   const { data, error, loading } = useLoad(url, (signal) => api<MemberSummary[]>(url!, { signal }));
   const results = useInitial ? initial : error ? [] : (data ?? null);
 
@@ -91,15 +99,27 @@ export function MemberSearch({
 }
 
 const RANK_STYLE: Record<MemberSummary["rank"], string> = {
-  newcomer: "text-ink-3 ring-line",
-  bronze: "text-amber-500 ring-amber-500/30",
-  silver: "text-slate-300 ring-slate-300/30",
-  gold: "text-yellow-300 ring-yellow-300/30",
-  diamond: "text-sky-300 ring-sky-300/30",
-  legend: "text-accent-300 ring-accent-400/40 bg-accent-500/10",
+  newcomer: "ring-line",
+  bronze: "ring-orange-400/30 bg-orange-400/[0.06]",
+  silver: "ring-slate-300/30 bg-slate-300/[0.05]",
+  gold: "ring-amber-300/35 bg-amber-300/[0.07]",
+  diamond: "ring-cyan-300/35 bg-cyan-300/[0.07]",
+  legend: "ring-fuchsia-300/40 bg-fuchsia-400/10",
 };
 
-export function RankBadge({ rank }: { rank: MemberSummary["rank"] }) {
+export function RankBadge({ rank, size = "sm" }: { rank: MemberSummary["rank"]; size?: "sm" | "md" }) {
   const t = useT();
-  return <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ring-1 ring-inset", RANK_STYLE[rank])}>{t(`members.rankName.${rank}`)}</span>;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full font-medium whitespace-nowrap ring-1 ring-inset",
+        size === "md" ? "py-0.5 ps-1 pe-2.5 text-xs" : "py-px ps-0.5 pe-2 text-[11px]",
+        RANK_STYLE[rank],
+        RANK_TEXT[rank],
+      )}
+    >
+      <RankIcon rank={rank} size={size === "md" ? 20 : 16} />
+      {t(`members.rankName.${rank}`)}
+    </span>
+  );
 }

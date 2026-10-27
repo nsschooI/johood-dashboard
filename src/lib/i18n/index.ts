@@ -28,13 +28,23 @@ export type MessageKey = Path<Messages>;
 export type Params = Record<string, string | number>;
 export type Translate = (key: MessageKey, params?: Params) => string;
 
-function lookup(dict: Messages, key: string): string | undefined {
-  let cur: unknown = dict;
-  for (const part of key.split(".")) {
-    if (cur && typeof cur === "object" && part in (cur as Record<string, unknown>)) cur = (cur as Record<string, unknown>)[part];
-    else return undefined;
+/** Walk a dotted key; segments may themselves contain dots (e.g. "access.action.bots.view"). */
+function walk(node: unknown, parts: string[]): string | undefined {
+  if (parts.length === 0) return typeof node === "string" ? node : undefined;
+  if (!node || typeof node !== "object") return undefined;
+  const obj = node as Record<string, unknown>;
+  for (let i = parts.length; i >= 1; i--) {
+    const k = parts.slice(0, i).join(".");
+    if (k in obj) {
+      const found = walk(obj[k], parts.slice(i));
+      if (found !== undefined) return found;
+    }
   }
-  return typeof cur === "string" ? cur : undefined;
+  return undefined;
+}
+
+function lookup(dict: Messages, key: string): string | undefined {
+  return walk(dict, key.split("."));
 }
 
 export function interpolate(template: string, params?: Params) {

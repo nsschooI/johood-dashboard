@@ -11,7 +11,10 @@ import { Segmented } from "@/components/ui/segmented";
 import { Stars } from "@/components/ui/stars";
 import { EmptyState } from "@/components/ui/states";
 import { TimeAgo } from "@/components/ui/time-ago";
-import { TicketDrawer } from "@/components/tickets/ticket-drawer";
+import { useOpenTicket } from "@/components/tickets/ticket-drawer-provider";
+import { useAttention } from "@/components/providers/attention-provider";
+import { RobloxHeadshot } from "@/components/ui/roblox";
+import { anchorId } from "@/lib/client/anchors";
 import { api, qs } from "@/lib/client/api";
 import type { Page, Transfer, TransferStatus } from "@/lib/types";
 import { Table, Td, Th } from "./tables";
@@ -28,7 +31,8 @@ export function TransfersTable({ initial, live, fresh }: { initial: Page<Transfe
   const [older, setOlder] = useState<Transfer[]>([]);
   const [cursor, setCursor] = useState(initial.nextCursor);
   const [loading, setLoading] = useState(false);
-  const [ticket, setTicket] = useState<string | null>(null);
+  const openTicket = useOpenTicket();
+  const { targets } = useAttention();
 
   // `live` holds the newest list (initial page merged with stream updates).
   const all = [...live, ...older.filter((o) => !live.some((l) => l.id === o.id))];
@@ -47,7 +51,7 @@ export function TransfersTable({ initial, live, fresh }: { initial: Page<Transfe
   };
 
   return (
-    <Card aria-labelledby="transfers-title" className="flex flex-col overflow-hidden">
+    <Card id={anchorId("transfers:failed")} aria-labelledby="transfers-title" className="flex scroll-mt-24 flex-col overflow-hidden">
       <CardHeader
         id="transfers-title"
         title={t("points.transfers")}
@@ -66,7 +70,7 @@ export function TransfersTable({ initial, live, fresh }: { initial: Page<Transfe
         }
       />
       {rows.length === 0 ? (
-        <EmptyState title={t("common.noResults")} />
+        <EmptyState art="purchases" title={t("points.transfersEmpty")} hint={t("points.transfersEmptyHint")} />
       ) : (
         <Table label={t("points.transfers")} className="max-h-[30rem]">
           <thead>
@@ -82,12 +86,25 @@ export function TransfersTable({ initial, live, fresh }: { initial: Page<Transfe
           </thead>
           <tbody>
             {rows.map((x) => (
-              <tr key={x.id} className={cn("hover:bg-white/[0.02]", fresh.has(x.id) && "motion-safe:animate-slide-in")}>
+              <tr
+                key={x.id}
+                className={cn(
+                  "transition-colors hover:bg-white/[0.025]",
+                  fresh.has(x.id) && "motion-safe:animate-slide-in",
+                  targets.get(`transfer:${x.id}`) === "warning" && "bg-bad/[0.05]",
+                  targets.get(`transfer:${x.id}`) === "info" && "bg-warn/[0.04]",
+                )}
+              >
                 <Td className="text-xs whitespace-nowrap text-ink-3">
                   <TimeAgo at={x.at} />
                 </Td>
                 <Td className="font-medium text-ink">
-                  <span dir="ltr">{x.robloxName}</span>
+                  <span className="flex items-center gap-2">
+                    <RobloxHeadshot userId={x.robloxId} name={x.robloxName} size={26} />
+                    <span dir="ltr" className="truncate">
+                      {x.robloxName}
+                    </span>
+                  </span>
                 </Td>
                 <Td end className="tabular font-medium whitespace-nowrap text-ink">
                   {f.robux(x.robux)}
@@ -110,7 +127,7 @@ export function TransfersTable({ initial, live, fresh }: { initial: Page<Transfe
                 </Td>
                 <Td>
                   {x.ticketId && can("tickets.view") ? (
-                    <Button size="sm" variant="ghost" onClick={() => setTicket(x.ticketId!)} className="text-accent-300">
+                    <Button size="sm" variant="ghost" onClick={() => openTicket(x.ticketId!)} className="text-accent-300">
                       <MessageSquare aria-hidden className="size-3.5" />
                       {t("tickets.title")}
                     </Button>
@@ -130,7 +147,6 @@ export function TransfersTable({ initial, live, fresh }: { initial: Page<Transfe
           </Button>
         </div>
       )}
-      <TicketDrawer ticketId={ticket} onClose={() => setTicket(null)} />
     </Card>
   );
 }

@@ -2,7 +2,8 @@
 
 import { useId, useState } from "react";
 import { Ban, Link2Off, Lock, ShieldAlert, ShieldCheck, Siren } from "lucide-react";
-import { useCan, useT } from "@/components/providers/app-provider";
+import { useCan, useT, useWhyNot } from "@/components/providers/app-provider";
+import { anchorId } from "@/lib/client/anchors";
 import { useLiveEvent } from "@/components/providers/live-provider";
 import { Card, CardHeader } from "@/components/ui/card";
 import { cn } from "@/components/ui/cn";
@@ -16,10 +17,10 @@ import type { ProtectionPatch, ProtectionSettings } from "@/lib/types";
 
 type Dangerous = "lockdown" | "raidMode";
 
-function Row({ icon, title, hint, children, danger }: { icon: React.ReactNode; title: string; hint?: string; children: React.ReactNode; danger?: boolean }) {
+function Row({ icon, title, hint, children, danger, id }: { icon: React.ReactNode; title: string; hint?: string; children: React.ReactNode; danger?: boolean; id?: string }) {
   return (
-    <div className={cn("flex items-center gap-4 rounded-2xl px-4 py-3 ring-1 ring-inset", danger ? "bg-bad/[0.06] ring-bad/20" : "bg-white/[0.025] ring-line")}>
-      <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", danger ? "bg-bad/15 text-bad" : "bg-white/[0.05] text-ink-2")}>{icon}</span>
+    <div id={id} className={cn("flex scroll-mt-24 items-center gap-4 rounded-2xl px-4 py-3 ring-1 ring-inset transition-colors duration-[var(--dur-base)]", danger ? "bg-bad/[0.07] ring-bad/30" : "bg-white/[0.025] ring-line")}>
+      <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", danger ? "bg-bad/15 text-bad needs-attention" : "bg-white/[0.05] text-ink-2")}>{icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-ink">{title}</p>
         {hint && <p className="text-xs text-ink-3">{hint}</p>}
@@ -35,13 +36,25 @@ export function ProtectionCard({ initial }: { initial: ProtectionSettings }) {
   const can = useCan();
   const id = useId();
   const editable = can("protection.manage");
+  const why = useWhyNot();
   const { pending, run } = useAction();
   const [p, setP] = useState(initial);
   const [confirm, setConfirm] = useState<{ key: Dangerous; value: boolean } | null>(null);
   useLiveEvent("protection", (e) => setP(e.data));
 
   const patch = async (body: ProtectionPatch & { confirm?: boolean }, key: string) => {
-    const next = await run(key, () => api<ProtectionSettings>("/api/protection", { method: "PATCH", body }), t("protection.updated"));
+    // Undo restores the previous values of exactly the fields we changed.
+    const previous: ProtectionPatch & { confirm?: boolean } = { confirm: true };
+    for (const k of Object.keys(body) as (keyof ProtectionPatch)[]) {
+      if (k === "blockedWords") previous.blockedWords = body.blockedWords!.map((b) => ({ id: b.id, enabled: !b.enabled }));
+      else if (k in p) (previous as Record<string, unknown>)[k] = p[k as keyof ProtectionSettings];
+    }
+    const next = await run(key, () => api<ProtectionSettings>("/api/protection", { method: "PATCH", body }), t("protection.updated"), {
+      undo: async () => {
+        const back = await api<ProtectionSettings>("/api/protection", { method: "PATCH", body: previous });
+        setP(back);
+      },
+    });
     if (next) setP(next);
     return next;
   };
@@ -58,6 +71,7 @@ export function ProtectionCard({ initial }: { initial: ProtectionSettings }) {
         max={max}
         defaultValue={p[key]}
         disabled={!editable || pending !== null}
+        title={why("protection.manage") ?? undefined}
         className="h-9 w-20 text-center"
         aria-label={key === "raidJoinThreshold" ? t("protection.raidThreshold") : t("protection.minAge")}
         onBlur={(e) => {
@@ -75,7 +89,7 @@ export function ProtectionCard({ initial }: { initial: ProtectionSettings }) {
   );
 
   return (
-    <Card aria-labelledby="protection-title">
+    <Card id="t-protection" aria-labelledby="protection-title" className="scroll-mt-24">
       <CardHeader
         id="protection-title"
         title={t("protection.title")}
@@ -89,11 +103,11 @@ export function ProtectionCard({ initial }: { initial: ProtectionSettings }) {
       <div className="space-y-3 px-5 pb-5">
         {!editable && <p className="rounded-xl bg-white/[0.03] px-3 py-2 text-xs text-ink-3 ring-1 ring-inset ring-line">{t("protection.readOnly")}</p>}
 
-        <Row icon={<Lock className="size-4" aria-hidden />} title={t("protection.lockdown")} hint={t("protection.lockdownHint")} danger={p.lockdown}>
-          <Switch tone="bad" label={t("protection.lockdown")} checked={p.lockdown} disabled={!editable} onChange={(v) => setConfirm({ key: "lockdown", value: v })} />
+        <Row id={anchorId("protection:lockdown")} icon={<Lock className="size-4" aria-hidden />} title={t("protection.lockdown")} hint={t("protection.lockdownHint")} danger={p.lockdown}>
+          <Switch tone="bad" label={t("protection.lockdown")} checked={p.lockdown} disabledReason={why("protection.manage")} onChange={(v) => setConfirm({ key: "lockdown", value: v })} />
         </Row>
-        <Row icon={<Siren className="size-4" aria-hidden />} title={t("protection.raidMode")} hint={t("protection.raidModeHint")} danger={p.raidMode}>
-          <Switch tone="bad" label={t("protection.raidMode")} checked={p.raidMode} disabled={!editable} onChange={(v) => setConfirm({ key: "raidMode", value: v })} />
+        <Row id={anchorId("protection:raidMode")} icon={<Siren className="size-4" aria-hidden />} title={t("protection.raidMode")} hint={t("protection.raidModeHint")} danger={p.raidMode}>
+          <Switch tone="bad" label={t("protection.raidMode")} checked={p.raidMode} disabledReason={why("protection.manage")} onChange={(v) => setConfirm({ key: "raidMode", value: v })} />
         </Row>
         <Row icon={<ShieldAlert className="size-4" aria-hidden />} title={t("protection.raidThreshold")}>
           {numberField("raidJoinThreshold", t("protection.joinsPerMinute"), 2, 200)}
@@ -102,7 +116,7 @@ export function ProtectionCard({ initial }: { initial: ProtectionSettings }) {
           {numberField("minAccountAgeDays", t("protection.days"), 0, 365)}
         </Row>
         <Row icon={<Link2Off className="size-4" aria-hidden />} title={t("protection.antiLinks")} hint={t("protection.antiLinksHint")}>
-          <Switch label={t("protection.antiLinks")} checked={p.antiLinks} disabled={!editable || pending !== null} onChange={(v) => patch({ antiLinks: v }, "antiLinks")} />
+          <Switch label={t("protection.antiLinks")} checked={p.antiLinks} disabled={pending !== null} disabledReason={why("protection.manage")} onChange={(v) => patch({ antiLinks: v }, "antiLinks")} />
         </Row>
 
         <h3 className="flex items-center gap-2 pt-2 text-xs font-semibold tracking-wide text-ink-3 uppercase">
@@ -119,7 +133,7 @@ export function ProtectionCard({ initial }: { initial: ProtectionSettings }) {
               <Switch
                 label={t(`protection.category.${b.category}`)}
                 checked={b.enabled}
-                disabled={!editable || pending !== null}
+                disabled={pending !== null} disabledReason={why("protection.manage")}
                 onChange={(v) => patch({ blockedWords: [{ id: b.id, enabled: v }] }, b.id)}
               />
             </li>

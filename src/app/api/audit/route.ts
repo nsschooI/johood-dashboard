@@ -12,6 +12,7 @@ const Query = z.object({
   to: z.string().max(40).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
   beforeId: z.coerce.number().int().positive().optional(),
+  outcome: z.enum(["ok", "denied", "not_connected", "failed"]).optional(),
   facets: z.literal("1").optional(),
 });
 
