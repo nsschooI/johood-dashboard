@@ -33,6 +33,8 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     };
     es.addEventListener("session", () => {
       es.close();
+      // Full reload on purpose: drop all client state of the expired session.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign("/login?error=expired");
     });
     return () => es.close();

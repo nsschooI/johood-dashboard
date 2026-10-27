@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMemo, type ReactNode } from "react";
 import { LogOut, Volume2, VolumeX, Languages } from "lucide-react";
 import { useApp, useCan } from "@/components/providers/app-provider";
@@ -99,6 +99,7 @@ function Header() {
   const { t, user, locale, setLocale, providerKind } = useApp();
   const status = useLiveStatus();
   const sound = useSound();
+  const router = useRouter();
 
   const switchLocale = () => {
     const next = locale === "ar" ? "en" : "ar";
@@ -108,7 +109,8 @@ function Header() {
 
   const signOut = async () => {
     await api("/api/auth/logout", { method: "POST" }).catch(() => {});
-    window.location.assign("/login");
+    router.replace("/login");
+    router.refresh();
   };
 
   return (

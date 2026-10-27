@@ -89,7 +89,6 @@ export const VOICE_ROOMS = [
   { id: "vc-events", name: "🎉 Events" },
 ] as const;
 
-export const TRACKS = ["Lo-fi beats", "Nasheed mix", "Top hits", "Quran — Al-Mulk", "Gaming radio"] as const;
 
 export const SERVER_ROLES: DiscordRole[] = [
   { id: "role-owner", name: "Owner", color: "#f472b6" },

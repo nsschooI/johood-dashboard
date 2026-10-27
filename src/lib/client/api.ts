@@ -46,6 +46,8 @@ export async function api<T>(path: string, opts: { method?: "GET" | "POST" | "PU
     // non-JSON error
   }
   if (res.status === 401 && typeof window !== "undefined") {
+    // Called outside React (no router); a full reload also drops stale state.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.assign("/login?error=expired");
   }
   throw new ApiClientError(res.status, String(body.error ?? "error"), String(body.message ?? res.statusText), body);

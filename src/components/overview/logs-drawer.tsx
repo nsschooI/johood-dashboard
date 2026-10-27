@@ -10,6 +10,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { api, qs } from "@/lib/client/api";
+import { useLoad } from "@/lib/client/use-load";
 import type { BotLogLine, BotStatus, LogLevel } from "@/lib/types";
 
 const LEVEL_CLASS: Record<LogLevel, string> = {
@@ -24,26 +25,14 @@ export function LogsDrawer({ bot, onClose }: { bot: BotStatus | null; onClose: (
   const t = useT();
   const f = useFormat();
   const [level, setLevel] = useState<LogLevel>("info");
-  const [lines, setLines] = useState<BotLogLine[] | null>(null);
-  const [error, setError] = useState(false);
-  const [reload, setReload] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
   const name = bot?.name;
-
-  useEffect(() => {
-    if (!name) return;
-    const ctrl = new AbortController();
-    setLines(null);
-    setError(false);
-    api<BotLogLine[]>(`/api/bots/${name}/logs${qs({ level, limit: 300 })}`, { signal: ctrl.signal })
-      .then(setLines)
-      .catch((e) => !ctrl.signal.aborted && (console.error(e), setError(true)));
-    return () => ctrl.abort();
-  }, [name, level, reload]);
+  const url = name ? `/api/bots/${name}/logs${qs({ level, limit: 300 })}` : null;
+  const { data: lines, error, reload, setData } = useLoad(url, (signal) => api<BotLogLine[]>(url!, { signal }));
 
   useLiveEvent("log", (e) => {
     if (e.data.bot !== name || ORDER.indexOf(e.data.level) < ORDER.indexOf(level)) return;
-    setLines((cur) => (cur ? [...cur.slice(-399), e.data] : cur));
+    setData((cur) => [...cur.slice(-399), e.data]);
   });
 
   useEffect(() => {
@@ -67,8 +56,8 @@ export function LogsDrawer({ bot, onClose }: { bot: BotStatus | null; onClose: (
       }
     >
       {error ? (
-        <ErrorState title={t("common.error")} action={<Button onClick={() => setReload((n) => n + 1)}>{t("common.retry")}</Button>} />
-      ) : lines === null ? (
+        <ErrorState title={t("common.error")} action={<Button onClick={reload}>{t("common.retry")}</Button>} />
+      ) : !lines ? (
         <div className="space-y-2">
           {Array.from({ length: 12 }, (_, i) => (
             <Skeleton key={i} className="h-3.5" />

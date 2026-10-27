@@ -96,8 +96,13 @@ export function setOverrides(discordId: string, next: PermissionOverrides, setBy
     db.prepare("DELETE FROM permission_overrides WHERE discord_id = ?").run(discordId);
     const ins = db.prepare("INSERT INTO permission_overrides (discord_id, action, effect, set_by, set_at) VALUES (?, ?, ?, ?, ?)");
     const seen = new Set<Action>();
-    for (const a of next.deny) if (!seen.has(a)) (seen.add(a), ins.run(discordId, a, "deny", setBy, at));
-    for (const a of next.allow) if (!seen.has(a)) (seen.add(a), ins.run(discordId, a, "allow", setBy, at));
+    const write = (a: Action, effect: "allow" | "deny") => {
+      if (seen.has(a)) return;
+      seen.add(a);
+      ins.run(discordId, a, effect, setBy, at);
+    };
+    for (const a of next.deny) write(a, "deny");
+    for (const a of next.allow) write(a, "allow");
   })();
   return before;
 }
@@ -149,15 +154,18 @@ const parse = (s: string | null) => (s === null ? null : (JSON.parse(s) as unkno
 export function queryAudit(q: AuditQuery = {}): { items: AuditEntry[]; nextCursor: number | null } {
   const where: string[] = [];
   const args: (string | number)[] = [];
-  if (q.actorId) (where.push("actor_id = ?"), args.push(q.actorId));
-  if (q.action) (where.push("action LIKE ? ESCAPE '\\'"), args.push(`${escapeLike(q.action)}%`));
-  if (q.from) (where.push("at >= ?"), args.push(q.from));
-  if (q.to) (where.push("at <= ?"), args.push(q.to));
-  if (q.beforeId) (where.push("id < ?"), args.push(q.beforeId));
+  const add = (clause: string, ...values: (string | number)[]) => {
+    where.push(clause);
+    args.push(...values);
+  };
+  if (q.actorId) add("actor_id = ?", q.actorId);
+  if (q.action) add("action LIKE ? ESCAPE '\\'", `${escapeLike(q.action)}%`);
+  if (q.from) add("at >= ?", q.from);
+  if (q.to) add("at <= ?", q.to);
+  if (q.beforeId) add("id < ?", q.beforeId);
   if (q.q) {
     const like = `%${escapeLike(q.q)}%`;
-    where.push("(actor_name LIKE ? ESCAPE '\\' OR target LIKE ? ESCAPE '\\' OR reason LIKE ? ESCAPE '\\' OR action LIKE ? ESCAPE '\\')");
-    args.push(like, like, like, like);
+    add("(actor_name LIKE ? ESCAPE '\\' OR target LIKE ? ESCAPE '\\' OR reason LIKE ? ESCAPE '\\' OR action LIKE ? ESCAPE '\\')", like, like, like, like);
   }
   const limit = Math.min(Math.max(q.limit ?? 50, 1), 200);
   const rows = getDb()

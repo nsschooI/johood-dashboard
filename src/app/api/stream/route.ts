@@ -1,4 +1,3 @@
-import type { NextRequest } from "next/server";
 import { guard } from "@/lib/server/api";
 import { getProvider } from "@/lib/provider";
 import { sessionCookieName } from "@/lib/server/session";

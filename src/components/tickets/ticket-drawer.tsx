@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowLeftRight, CheckCircle2, Hand, Send } from "lucide-react";
 import { useApp, useCan, useFormat, useT } from "@/components/providers/app-provider";
 import { useLiveEvent } from "@/components/providers/live-provider";
@@ -15,6 +15,7 @@ import { ErrorState } from "@/components/ui/states";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { api } from "@/lib/client/api";
 import { useAction } from "@/lib/client/use-action";
+import { useLoad } from "@/lib/client/use-load";
 import type { MemberRef, Ticket, TicketStatus } from "@/lib/types";
 
 export const TICKET_TONE: Record<TicketStatus, "warn" | "accent" | "neutral"> = { open: "warn", claimed: "accent", closed: "neutral" };
@@ -25,44 +26,31 @@ export function TicketDrawer({ ticketId, onClose }: { ticketId: string | null; o
   const can = useCan();
   const { user } = useApp();
   const { pending, run } = useAction();
-  const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [error, setError] = useState(false);
   const [reply, setReply] = useState("");
   const [confirmClose, setConfirmClose] = useState(false);
-  const [assignees, setAssignees] = useState<MemberRef[] | null>(null);
   const [handTo, setHandTo] = useState("");
-  const [reload, setReload] = useState(0);
+  const { data: ticket, error, reload, setData } = useLoad(ticketId, (signal) => api<Ticket>(`/api/tickets/${ticketId}`, { signal }));
+  const { data: assignees } = useLoad(ticketId && can("tickets.transfer") ? "assignees" : null, (signal) =>
+    api<MemberRef[]>("/api/tickets/assignees", { signal }),
+  );
 
-  useEffect(() => {
-    if (!ticketId) return;
-    const ctrl = new AbortController();
-    setError(false);
-    api<Ticket>(`/api/tickets/${ticketId}`, { signal: ctrl.signal })
-      .then(setTicket)
-      .catch(() => !ctrl.signal.aborted && setError(true));
-    return () => ctrl.abort();
-  }, [ticketId, reload]);
-
-  useEffect(() => {
-    if (!ticketId) {
-      setTicket(null);
-      setReply("");
-      setHandTo("");
-    }
-  }, [ticketId]);
-
-  useEffect(() => {
-    if (!ticketId || !can("tickets.transfer") || assignees) return;
-    api<MemberRef[]>("/api/tickets/assignees").then(setAssignees).catch(() => setAssignees([]));
-  }, [ticketId, can, assignees]);
-
+  // Someone else acted on this ticket: refresh it quietly.
   useLiveEvent("ticket", (e) => {
-    if (e.data.id === ticketId) setReload((n) => n + 1);
+    if (e.data.id !== ticketId) return;
+    api<Ticket>(`/api/tickets/${ticketId}`)
+      .then((next) => setData(() => next))
+      .catch(() => {});
   });
+
+  const close = () => {
+    setReply("");
+    setHandTo("");
+    onClose();
+  };
 
   const act = async (action: "claim" | "reply" | "close" | "transfer", body: Record<string, unknown>, success: string) => {
     const next = await run(action, () => api<Ticket>(`/api/tickets/${ticketId}/${action}`, { method: "POST", body }), success);
-    if (next) setTicket(next);
+    if (next) setData(() => next);
     return next;
   };
 
@@ -71,7 +59,7 @@ export function TicketDrawer({ ticketId, onClose }: { ticketId: string | null; o
   return (
     <Modal
       open={ticketId !== null}
-      onClose={onClose}
+      onClose={close}
       variant="drawer"
       title={ticket ? `#${ticket.number} · ${ticket.subject}` : t("common.loading")}
       description={
@@ -160,7 +148,7 @@ export function TicketDrawer({ ticketId, onClose }: { ticketId: string | null; o
       }
     >
       {error ? (
-        <ErrorState title={t("common.error")} action={<Button onClick={() => setReload((n) => n + 1)}>{t("common.retry")}</Button>} />
+        <ErrorState title={t("common.error")} action={<Button onClick={reload}>{t("common.retry")}</Button>} />
       ) : !ticket ? (
         <div className="space-y-4">
           {Array.from({ length: 4 }, (_, i) => (

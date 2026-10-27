@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { BookOpen, Minus, Plus, ShieldAlert } from "lucide-react";
 import { DASHBOARD_CONFIG } from "@config/dashboard";
 import { useCan, useFormat, useT } from "@/components/providers/app-provider";
@@ -19,6 +19,7 @@ import { TimeAgo } from "@/components/ui/time-ago";
 import { MemberSearch, RankBadge } from "@/components/members/member-search";
 import { api, qs } from "@/lib/client/api";
 import { useAction } from "@/lib/client/use-action";
+import { useLoad } from "@/lib/client/use-load";
 import type { LedgerEntry, LedgerKind, MemberProfile, MemberSummary, Page } from "@/lib/types";
 import { Table, Td, Th } from "./tables";
 
@@ -45,50 +46,36 @@ function MemberLedger({ member }: { member: MemberSummary }) {
   const t = useT();
   const f = useFormat();
   const can = useCan();
-  const [profile, setProfile] = useState<MemberProfile | null>(null);
-  const [entries, setEntries] = useState<LedgerEntry[] | null>(null);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [error, setError] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [reload, setReload] = useState(0);
   const canAdjust = can("points.adjust") || can("points.adjust_limited");
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    setError(false);
-    Promise.all([
-      api<MemberProfile>(`/api/members/${member.discordId}`, { signal: ctrl.signal }),
-      api<Page<LedgerEntry>>(`/api/points/ledger/${member.discordId}${qs({ limit: 20 })}`, { signal: ctrl.signal }),
-    ])
-      .then(([p, l]) => {
-        setProfile(p);
-        setEntries(l.items);
-        setCursor(l.nextCursor);
-      })
-      .catch(() => !ctrl.signal.aborted && setError(true));
-    return () => ctrl.abort();
-  }, [member.discordId, reload]);
+  const { data, error, reload, setData } = useLoad(member.discordId, async (signal) => {
+    const [profile, page] = await Promise.all([
+      api<MemberProfile>(`/api/members/${member.discordId}`, { signal }),
+      api<Page<LedgerEntry>>(`/api/points/ledger/${member.discordId}${qs({ limit: 20 })}`, { signal }),
+    ]);
+    return { profile, entries: page.items, cursor: page.nextCursor };
+  });
 
   useLiveEvent("ledger", (e) => {
     if (e.data.discordId !== member.discordId) return;
-    setEntries((cur) => (cur && !cur.some((x) => x.id === e.data.id) ? [e.data, ...cur] : cur));
-    setProfile((p) => (p ? { ...p, points: e.data.balanceAfter } : p));
+    setData((d) =>
+      d.entries.some((x) => x.id === e.data.id) ? d : { ...d, entries: [e.data, ...d.entries], profile: { ...d.profile, points: e.data.balanceAfter } },
+    );
   });
 
   const loadMore = async () => {
-    if (!cursor) return;
+    if (!data?.cursor) return;
     setLoadingMore(true);
     try {
-      const page = await api<Page<LedgerEntry>>(`/api/points/ledger/${member.discordId}${qs({ limit: 20, cursor })}`);
-      setEntries((cur) => [...(cur ?? []), ...page.items]);
-      setCursor(page.nextCursor);
+      const page = await api<Page<LedgerEntry>>(`/api/points/ledger/${member.discordId}${qs({ limit: 20, cursor: data.cursor })}`);
+      setData((d) => ({ ...d, entries: [...d.entries, ...page.items], cursor: page.nextCursor }));
     } finally {
       setLoadingMore(false);
     }
   };
 
-  if (error) return <ErrorState title={t("common.error")} action={<Button onClick={() => setReload((n) => n + 1)}>{t("common.retry")}</Button>} />;
-  if (!profile || !entries) {
+  if (error) return <ErrorState title={t("common.error")} action={<Button onClick={reload}>{t("common.retry")}</Button>} />;
+  if (!data) {
     return (
       <div className="space-y-3" aria-busy>
         <Skeleton className="h-16 rounded-2xl" />
@@ -97,6 +84,7 @@ function MemberLedger({ member }: { member: MemberSummary }) {
     );
   }
 
+  const { profile, entries, cursor } = data;
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-white/[0.03] p-4 ring-1 ring-inset ring-line">

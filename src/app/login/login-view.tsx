@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Crown, Code2, Headset, LifeBuoy, Briefcase, Languages, AlertTriangle } from "lucide-react";
 import { AppProvider, useApp } from "@/components/providers/app-provider";
 import { Logo } from "@/components/shell/logo";
@@ -28,6 +29,7 @@ function DiscordMark() {
 
 function Login({ error, discordEnabled, mockEnabled }: { error: string | null; discordEnabled: boolean; mockEnabled: boolean }) {
   const { t, locale, setLocale } = useApp();
+  const router = useRouter();
   const [pending, setPending] = useState<Role | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -35,7 +37,10 @@ function Login({ error, discordEnabled, mockEnabled }: { error: string | null; d
     setPending(role);
     setFailed(false);
     const res = await fetch("/api/auth/mock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role }) });
-    if (res.ok) window.location.assign("/overview");
+    if (res.ok) {
+      router.replace("/overview");
+      router.refresh();
+    }
     else {
       setFailed(true);
       setPending(null);

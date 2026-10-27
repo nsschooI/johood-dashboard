@@ -102,7 +102,7 @@ export function TransfersTable({ initial, live, fresh }: { initial: Page<Transfe
                   {x.stars ? (
                     <span className="flex flex-col gap-0.5">
                       <Stars value={x.stars} label={`${x.stars}/5`} />
-                      {x.comment && <bdi className="truncate text-[11px] text-ink-3" title={x.comment}>“{x.comment}”</bdi>}
+                      {x.comment && <bdi className="self-start truncate text-[11px] text-ink-3" title={x.comment}>“{x.comment}”</bdi>}
                     </span>
                   ) : (
                     <span className="text-ink-3">—</span>

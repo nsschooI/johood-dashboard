@@ -8,6 +8,7 @@ import { cn } from "@/components/ui/cn";
 import { Input } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, qs } from "@/lib/client/api";
+import { useLoad } from "@/lib/client/use-load";
 import type { MemberSummary } from "@/lib/types";
 
 /** Debounced member search with a result list. */
@@ -27,27 +28,15 @@ export function MemberSearch({
   const t = useT();
   const id = useId();
   const [q, setQ] = useState("");
-  const [results, setResults] = useState<MemberSummary[] | null>(initial ?? null);
-  const [loading, setLoading] = useState(false);
-
+  const [debounced, setDebounced] = useState("");
   useEffect(() => {
-    if (!q && initial) {
-      setResults(initial);
-      return;
-    }
-    const ctrl = new AbortController();
-    setLoading(true);
-    const timer = setTimeout(() => {
-      api<MemberSummary[]>(`/api/members${qs({ q, limit })}`, { signal: ctrl.signal })
-        .then(setResults)
-        .catch(() => !ctrl.signal.aborted && setResults([]))
-        .finally(() => !ctrl.signal.aborted && setLoading(false));
-    }, 250);
-    return () => {
-      clearTimeout(timer);
-      ctrl.abort();
-    };
-  }, [q, limit, initial]);
+    const timer = setTimeout(() => setDebounced(q.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [q]);
+  const useInitial = !debounced && initial;
+  const url = useInitial ? null : `/api/members${qs({ q: debounced, limit })}`;
+  const { data, error, loading } = useLoad(url, (signal) => api<MemberSummary[]>(url!, { signal }));
+  const results = useInitial ? initial : error ? [] : (data ?? null);
 
   return (
     <div className={className}>
@@ -65,7 +54,7 @@ export function MemberSearch({
         maxLength={64}
       />
       <ul className="mt-2 space-y-0.5" aria-busy={loading}>
-        {results === null || (loading && !results.length)
+        {results === null
           ? Array.from({ length: 4 }, (_, i) => (
               <li key={i} className="flex items-center gap-3 px-2 py-2">
                 <Skeleton className="size-8 rounded-full" />

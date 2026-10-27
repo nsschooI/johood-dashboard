@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Gamepad2, Lock, UserRound } from "lucide-react";
 import { useFormat, useT } from "@/components/providers/app-provider";
 import { Avatar } from "@/components/ui/avatar";
@@ -12,6 +12,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { TICKET_TONE, TicketDrawer } from "@/components/tickets/ticket-drawer";
 import { api } from "@/lib/client/api";
+import { useLoad } from "@/lib/client/use-load";
 import type { MemberProfile, MemberSummary } from "@/lib/types";
 import { MemberSearch, RankBadge } from "./member-search";
 
@@ -34,21 +35,10 @@ export function MembersPanel({ initial }: { initial: MemberSummary[] }) {
 function Profile({ id }: { id: string }) {
   const t = useT();
   const f = useFormat();
-  const [p, setP] = useState<MemberProfile | null>(null);
-  const [error, setError] = useState(false);
-  const [reload, setReload] = useState(0);
   const [ticket, setTicket] = useState<string | null>(null);
+  const { data: p, error, reload } = useLoad(id, (signal) => api<MemberProfile>(`/api/members/${id}`, { signal }));
 
-  useEffect(() => {
-    const ctrl = new AbortController();
-    setError(false);
-    api<MemberProfile>(`/api/members/${id}`, { signal: ctrl.signal })
-      .then(setP)
-      .catch(() => !ctrl.signal.aborted && setError(true));
-    return () => ctrl.abort();
-  }, [id, reload]);
-
-  if (error) return <ErrorState title={t("common.error")} action={<Button onClick={() => setReload((n) => n + 1)}>{t("common.retry")}</Button>} />;
+  if (error) return <ErrorState title={t("common.error")} action={<Button onClick={reload}>{t("common.retry")}</Button>} />;
   if (!p)
     return (
       <div className="space-y-3" aria-busy>

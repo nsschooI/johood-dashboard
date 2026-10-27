@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useId, useState } from "react";
+import { Fragment, useCallback, useId, useState } from "react";
 import { ChevronDown, RefreshCw, ScrollText, Search } from "lucide-react";
 import { useFormat, useT } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/points/tables";
 import { api, qs } from "@/lib/client/api";
+import { useLoad } from "@/lib/client/use-load";
 import { primaryRole } from "@/lib/permissions";
 import type { AuditEntry } from "@/lib/types";
 
@@ -27,13 +28,9 @@ export function AuditCard() {
   const id = useId();
   const [filters, setFilters] = useState({ q: "", actorId: "", action: "", from: "", to: "" });
   const [applied, setApplied] = useState(filters);
-  const [items, setItems] = useState<AuditEntry[] | null>(null);
-  const [cursor, setCursor] = useState<number | null>(null);
   const [facets, setFacets] = useState<AuditPage["facets"]>();
-  const [error, setError] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [open, setOpen] = useState<number | null>(null);
-  const [reload, setReload] = useState(0);
 
   const query = useCallback(
     (beforeId?: number) =>
@@ -50,27 +47,20 @@ export function AuditCard() {
     [applied],
   );
 
-  useEffect(() => {
-    const ctrl = new AbortController();
-    setItems(null);
-    setError(false);
-    api<AuditPage>(`/api/audit${query()}`, { signal: ctrl.signal })
-      .then((p) => {
-        setItems(p.items);
-        setCursor(p.nextCursor);
-        setFacets(p.facets);
-      })
-      .catch(() => !ctrl.signal.aborted && setError(true));
-    return () => ctrl.abort();
-  }, [query, reload]);
+  const { data, error, reload, setData } = useLoad(query(), async (signal) => {
+    const page = await api<AuditPage>(`/api/audit${query()}`, { signal });
+    if (page.facets) setFacets(page.facets);
+    return page;
+  });
+  const items = data?.items ?? null;
+  const cursor = data?.nextCursor ?? null;
 
   const loadMore = async () => {
     if (!cursor) return;
     setLoadingMore(true);
     try {
       const p = await api<AuditPage>(`/api/audit${query(cursor)}`);
-      setItems((cur) => [...(cur ?? []), ...p.items]);
-      setCursor(p.nextCursor);
+      setData((d) => ({ ...d, items: [...d.items, ...p.items], nextCursor: p.nextCursor }));
     } finally {
       setLoadingMore(false);
     }
@@ -85,7 +75,7 @@ export function AuditCard() {
         title={t("audit.title")}
         icon={<ScrollText className="size-4" aria-hidden />}
         actions={
-          <Button size="sm" variant="ghost" onClick={() => setReload((n) => n + 1)} aria-label={t("common.refresh")}>
+          <Button size="sm" variant="ghost" onClick={reload} aria-label={t("common.refresh")}>
             <RefreshCw aria-hidden className="size-3.5" />
             {t("common.refresh")}
           </Button>
@@ -138,7 +128,7 @@ export function AuditCard() {
       </form>
 
       {error ? (
-        <ErrorState title={t("common.error")} action={<Button onClick={() => setReload((n) => n + 1)}>{t("common.retry")}</Button>} />
+        <ErrorState title={t("common.error")} action={<Button onClick={reload}>{t("common.retry")}</Button>} />
       ) : items === null ? (
         <div className="space-y-2 px-5 pb-5">
           {Array.from({ length: 6 }, (_, i) => (
