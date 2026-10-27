@@ -5,6 +5,7 @@ import { createTranslator, dirOf, numberLocale, type Locale, type Translate } fr
 import type { Action } from "@/lib/permissions";
 import type { Role } from "@/lib/types";
 import { setCsrfToken } from "@/lib/client/api";
+import { DASHBOARD_TIMEZONE } from "@/lib/time";
 
 export interface ClientUser {
   discordId: string;
@@ -86,9 +87,12 @@ export function useFormat() {
     const compact = new Intl.NumberFormat(nl, { notation: "compact", maximumFractionDigits: 1 });
     const pct = new Intl.NumberFormat(nl, { style: "percent", maximumFractionDigits: 1 });
     const rtf = new Intl.RelativeTimeFormat(nl, { numeric: "auto", style: "short" });
-    const dt = new Intl.DateTimeFormat(nl, { dateStyle: "medium", timeStyle: "short" });
-    const date = new Intl.DateTimeFormat(nl, { dateStyle: "medium" });
-    const time = new Intl.DateTimeFormat(nl, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    // Absolute times use the dashboard's zone so server and browser agree
+    // and match the "today" / daily buckets.
+    const timeZone = DASHBOARD_TIMEZONE;
+    const dt = new Intl.DateTimeFormat(nl, { dateStyle: "medium", timeStyle: "short", timeZone });
+    const date = new Intl.DateTimeFormat(nl, { dateStyle: "medium", timeZone });
+    const time = new Intl.DateTimeFormat(nl, { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone });
     const dayShort = new Intl.DateTimeFormat(nl, { day: "numeric", month: "short", timeZone: "UTC" });
     return {
       n: (v: number) => num.format(v),
