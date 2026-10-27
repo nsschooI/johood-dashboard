@@ -130,7 +130,7 @@ function ManageAccess({ member, onClose, onSaved }: { member: StaffRow; onClose:
       <div className="space-y-5">
         {groups.map(([group, actions]) => (
           <fieldset key={group}>
-            <legend className="mb-2 text-xs font-semibold tracking-wide text-ink-3 uppercase" dir="ltr">
+            <legend className="rtl:text-right mb-2 text-xs font-semibold tracking-wide text-ink-3 uppercase" dir="ltr">
               {group}
             </legend>
             <ul className="space-y-1.5">

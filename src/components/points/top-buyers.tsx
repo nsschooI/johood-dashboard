@@ -20,7 +20,7 @@ export function TopBuyers({ buyers }: { buyers: TopBuyer[] }) {
           {buyers.map((b, i) => (
             <li key={b.robloxName} className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
               <span className="tabular text-xs font-semibold text-ink-3">{i + 1}</span>
-              <span className="truncate text-sm font-medium text-ink" dir="ltr">
+              <span className="rtl:text-right truncate text-sm font-medium text-ink" dir="ltr">
                 {b.robloxName}
               </span>
               <span className="tabular text-sm font-medium text-ink">{f.robux(b.robux)}</span>

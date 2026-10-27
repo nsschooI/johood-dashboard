@@ -72,7 +72,7 @@ export function VolumeChart({ daily, weekly }: { daily: TotalsBucket[]; weekly: 
             </defs>
             <CartesianGrid vertical={false} stroke="rgb(255 255 255 / 0.06)" />
             <XAxis dataKey="start" tickFormatter={f.day} tick={AXIS} axisLine={false} tickLine={false} reversed={dir === "rtl"} minTickGap={24} />
-            <YAxis tickFormatter={f.compact} tick={AXIS} axisLine={false} tickLine={false} width={44} orientation={dir === "rtl" ? "right" : "left"} />
+            <YAxis tickFormatter={f.compact} tick={AXIS} axisLine={false} tickLine={false} width={dir === "rtl" ? 60 : 44} orientation={dir === "rtl" ? "right" : "left"} />
             <Tooltip
               cursor={{ stroke: "rgb(255 255 255 / 0.2)", strokeWidth: 1 }}
               content={({ active, payload, label: l }) => (
@@ -113,7 +113,7 @@ export function PointsFlowChart({ daily }: { daily: TotalsBucket[] }) {
           <BarChart data={data} margin={{ top: 4, right: 12, left: 12, bottom: 0 }} barGap={2} barCategoryGap="28%">
             <CartesianGrid vertical={false} stroke="rgb(255 255 255 / 0.06)" />
             <XAxis dataKey="start" tickFormatter={f.day} tick={AXIS} axisLine={false} tickLine={false} reversed={dir === "rtl"} minTickGap={16} />
-            <YAxis tickFormatter={f.compact} tick={AXIS} axisLine={false} tickLine={false} width={40} orientation={dir === "rtl" ? "right" : "left"} />
+            <YAxis tickFormatter={f.compact} tick={AXIS} axisLine={false} tickLine={false} width={dir === "rtl" ? 56 : 40} orientation={dir === "rtl" ? "right" : "left"} />
             <Tooltip
               cursor={{ fill: "rgb(255 255 255 / 0.04)" }}
               content={({ active, payload, label }) => (

@@ -58,7 +58,7 @@ function Profile({ id }: { id: string }) {
             {p.displayName}
             <RankBadge rank={p.rank} />
           </h3>
-          <p className="text-xs text-ink-3" dir="ltr">
+          <p className="rtl:text-right text-xs text-ink-3" dir="ltr">
             @{p.username} · {p.discordId}
           </p>
           <p className="mt-1 text-xs text-ink-3">
@@ -84,7 +84,7 @@ function Profile({ id }: { id: string }) {
           </p>
           {p.roblox ? (
             <>
-              <p className="mt-1 font-medium text-ink" dir="ltr">
+              <p className="rtl:text-right mt-1 font-medium text-ink" dir="ltr">
                 {p.roblox.robloxName}
               </p>
               <p className="text-xs text-ink-3">

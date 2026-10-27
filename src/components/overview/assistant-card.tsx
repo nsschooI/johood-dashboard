@@ -36,7 +36,7 @@ export function AssistantCard({ assistant, bot }: { assistant: Assistant; bot?: 
           <div>
             <h3 className="text-sm font-semibold">{assistant.displayName}</h3>
             {bot && (
-              <p className="tabular text-[11px] text-ink-3" dir="ltr">
+              <p className="rtl:text-right tabular text-[11px] text-ink-3" dir="ltr">
                 {bot.pingMs !== null ? `${bot.pingMs} ms` : "—"} · {f.n(bot.memoryMb)} MB
               </p>
             )}

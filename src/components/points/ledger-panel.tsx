@@ -93,7 +93,7 @@ function MemberLedger({ member }: { member: MemberSummary }) {
           <p className="flex items-center gap-2 truncate font-medium text-ink">
             {profile.displayName} <RankBadge rank={profile.rank} />
           </p>
-          <p className="truncate text-xs text-ink-3" dir="ltr">
+          <p className="rtl:text-right truncate text-xs text-ink-3" dir="ltr">
             {profile.roblox?.robloxName ?? t("members.notLinked")} · {profile.discordId}
           </p>
         </div>

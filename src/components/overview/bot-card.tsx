@@ -104,7 +104,7 @@ export function BotCard({ bot, onLogs }: { bot: BotStatus; onLogs: () => void })
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold tracking-tight">{bot.displayName}</h3>
-          <p className="mt-0.5 font-mono text-[11px] text-ink-3" dir="ltr">
+          <p className="rtl:text-right mt-0.5 font-mono text-[11px] text-ink-3" dir="ltr">
             {bot.name} · v{bot.version}
           </p>
         </div>
@@ -141,7 +141,7 @@ export function BotCard({ bot, onLogs }: { bot: BotStatus; onLogs: () => void })
           <div className="flex items-start gap-2">
             <AlertCircle aria-hidden className="mt-px size-3.5 shrink-0 text-bad" />
             <div className="min-w-0">
-              <p className="truncate font-mono text-ink-2" dir="ltr" title={bot.lastError.message}>
+              <p className="rtl:text-right truncate font-mono text-ink-2" dir="ltr" title={bot.lastError.message}>
                 {bot.lastError.message}
               </p>
               <p className="mt-0.5 text-ink-3">

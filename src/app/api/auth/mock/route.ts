@@ -5,7 +5,7 @@ import { ROLES } from "@/lib/types";
 import { ApiError, assertSameOrigin, clientIp, errorResponse, readJson } from "@/lib/server/api";
 import { env } from "@/lib/server/env";
 import { rateLimit } from "@/lib/server/rate-limit";
-import { sessionCookieName, sessionCookieOptions } from "@/lib/server/session";
+import { applySavedLocale, sessionCookieName, sessionCookieOptions } from "@/lib/server/session";
 import { createSession, writeAudit } from "@/lib/server/store";
 import { DASHBOARD_CONFIG } from "@config/dashboard";
 
@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
     writeAudit({ actor: user, action: "auth.login", target: "mock", ip });
     const res = NextResponse.json({ ok: true });
     res.cookies.set(sessionCookieName(), token, sessionCookieOptions(expiresAt));
+    applySavedLocale(res, user.discordId);
     return res;
   } catch (err) {
     return errorResponse(err);

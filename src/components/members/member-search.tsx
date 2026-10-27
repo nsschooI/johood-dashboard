@@ -77,7 +77,7 @@ export function MemberSearch({
                     <Avatar name={m.displayName} src={m.avatarUrl} size={32} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-ink">{m.displayName}</span>
-                      <span className="block truncate text-xs text-ink-3" dir="ltr">
+                      <span className="rtl:text-right block truncate text-xs text-ink-3" dir="ltr">
                         {m.robloxName ?? m.username}
                       </span>
                     </span>

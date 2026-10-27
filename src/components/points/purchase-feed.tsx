@@ -47,7 +47,7 @@ export function PurchaseFeed({ purchases, fresh }: { purchases: PurchaseEvent[];
                   <TimeAgo at={p.at} />
                 </Td>
                 <Td>
-                  <span className="block font-medium text-ink" dir="ltr">
+                  <span className="rtl:text-right block font-medium text-ink" dir="ltr">
                     {p.robloxName}
                   </span>
                   {!p.discordId && <span className="text-[11px] text-ink-3">{t("points.unlinked")}</span>}

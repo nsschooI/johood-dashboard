@@ -4,7 +4,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DASHBOARD_CONFIG } from "@config/dashboard";
 import { env } from "./env";
-import { resolveSession, type SessionRecord } from "./store";
+import type { NextResponse } from "next/server";
+import { getPrefs, resolveSession, type SessionRecord } from "./store";
 
 /** `__Host-` prefix pins the cookie to this exact origin when served over https. */
 export function sessionCookieName() {
@@ -34,4 +35,10 @@ export async function requireSession(): Promise<SessionRecord> {
   const s = await getSession();
   if (!s) redirect("/login");
   return s;
+}
+
+/** On sign-in, restore the language the member picked last time (any device). */
+export function applySavedLocale(res: NextResponse, discordId: string) {
+  const { locale } = getPrefs(discordId);
+  if (locale) res.cookies.set(LOCALE_COOKIE, locale, { path: "/", sameSite: "lax", secure: env.secureCookies, maxAge: 365 * 24 * 3600 });
 }

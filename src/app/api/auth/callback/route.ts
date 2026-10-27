@@ -4,7 +4,7 @@ import { rolesFromDiscord } from "@config/roles";
 import { clientIp } from "@/lib/server/api";
 import { exchangeCode, fetchGuildMember } from "@/lib/server/discord";
 import { env } from "@/lib/server/env";
-import { sessionCookieName, sessionCookieOptions } from "@/lib/server/session";
+import { applySavedLocale, sessionCookieName, sessionCookieOptions } from "@/lib/server/session";
 import { createSession, writeAudit } from "@/lib/server/store";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
 
     const res = NextResponse.redirect(new URL("/overview", env.appUrl));
     res.cookies.set(sessionCookieName(), token, sessionCookieOptions(expiresAt));
+    applySavedLocale(res, user.discordId);
     res.cookies.delete({ name: "jh_oauth_state", path: "/api/auth" });
     return res;
   } catch (err) {
