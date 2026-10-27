@@ -39,6 +39,8 @@ export async function requireSession(): Promise<SessionRecord> {
 
 /** On sign-in, restore the language the member picked last time (any device). */
 export function applySavedLocale(res: NextResponse, discordId: string) {
-  const { locale } = getPrefs(discordId);
-  if (locale) res.cookies.set(LOCALE_COOKIE, locale, { path: "/", sameSite: "lax", secure: env.secureCookies, maxAge: 365 * 24 * 3600 });
+  const { locale, guild } = getPrefs(discordId);
+  const opts = { path: "/", sameSite: "lax" as const, secure: env.secureCookies, maxAge: 365 * 24 * 3600 };
+  if (locale) res.cookies.set(LOCALE_COOKIE, locale, opts);
+  if (guild) res.cookies.set("jh_guild", guild, opts);
 }

@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { createTranslator, dirOf, numberLocale, type Locale, type Translate } from "@/lib/i18n";
-import type { Action } from "@/lib/permissions";
+import { denialReason, type Action, type PermissionOverrides } from "@/lib/permissions";
 import type { Role } from "@/lib/types";
 import { setCsrfToken } from "@/lib/client/api";
 import { DASHBOARD_TIMEZONE } from "@/lib/time";
@@ -17,6 +17,7 @@ export interface ClientUser {
 interface AppContextValue {
   user: ClientUser | null;
   permissions: ReadonlySet<Action>;
+  overrides: PermissionOverrides;
   locale: Locale;
   dir: "ltr" | "rtl";
   t: Translate;
@@ -29,6 +30,7 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({
   user,
   permissions,
+  overrides = { allow: [], deny: [] },
   csrf,
   locale: initialLocale,
   providerKind,
@@ -36,6 +38,7 @@ export function AppProvider({
 }: {
   user: ClientUser | null;
   permissions: Action[];
+  overrides?: PermissionOverrides;
   csrf: string;
   locale: Locale;
   providerKind: "mock" | "real";
@@ -53,13 +56,14 @@ export function AppProvider({
     () => ({
       user,
       permissions: new Set(permissions),
+      overrides,
       locale,
       dir: dirOf(locale),
       t: createTranslator(locale),
       providerKind,
       setLocale,
     }),
-    [user, permissions, locale, providerKind, setLocale],
+    [user, permissions, overrides, locale, providerKind, setLocale],
   );
   return <AppContext value={value}>{children}</AppContext>;
 }
@@ -76,6 +80,25 @@ export const useT = () => useApp().t;
 export function useCan() {
   const { permissions } = useApp();
   return useCallback((a: Action) => permissions.has(a), [permissions]);
+}
+
+/**
+ * "Why can't I?" — a short reason for a disabled control, or null when the
+ * user may do it.
+ */
+export function useWhyNot() {
+  const { user, overrides, t, permissions } = useApp();
+  return useCallback(
+    (a: Action): string | null => {
+      if (permissions.has(a)) return null;
+      const r = denialReason({ roles: user?.roles ?? [], overrides }, a);
+      if (!r) return null;
+      if (r.kind === "override") return t("menu.override");
+      if (r.kind === "owner_only") return t("menu.ownerOnly");
+      return t("menu.needsRole", { role: r.roles.map((x) => t(`roles.${x}`)).join(" / ") });
+    },
+    [user, overrides, t, permissions],
+  );
 }
 
 /** Locale-aware formatters. */

@@ -10,6 +10,8 @@ interface Toast {
   tone: Tone;
   title: string;
   description?: string;
+  /** e.g. Undo. */
+  action?: { label: string; onClick: () => void | Promise<unknown> };
 }
 
 const ToastContext = createContext<(t: Omit<Toast, "id">) => void>(() => {});
@@ -32,7 +34,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     (toast: Omit<Toast, "id">) => {
       const id = ++seq.current;
       setToasts((list) => [...list.slice(-3), { ...toast, id }]);
-      setTimeout(() => dismiss(id), toast.tone === "error" ? 7000 : 4500);
+      setTimeout(() => dismiss(id), toast.action ? 8000 : toast.tone === "error" ? 7000 : 4500);
     },
     [dismiss],
   );
@@ -52,13 +54,25 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <div
               key={toast.id}
               role={toast.tone === "error" ? "alert" : "status"}
-              className="glass pointer-events-auto flex w-full max-w-sm animate-fade-in items-start gap-3 rounded-2xl bg-surface/80 px-4 py-3"
+              className="glass pointer-events-auto flex w-full max-w-sm animate-pop items-start gap-3 rounded-2xl bg-surface/90 px-4 py-3 shadow-2xl"
             >
               <Icon aria-hidden className={`mt-0.5 size-5 shrink-0 ${TONE[toast.tone]}`} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-ink">{toast.title}</p>
-                {toast.description && <p className="mt-0.5 truncate text-sm text-ink-2">{toast.description}</p>}
+                {toast.description && <p className="mt-0.5 text-sm text-ink-2">{toast.description}</p>}
               </div>
+              {toast.action && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    dismiss(toast.id);
+                    void toast.action!.onClick();
+                  }}
+                  className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold text-accent-200 ring-1 ring-accent-400/40 transition hover:bg-accent-500/15 active:scale-95"
+                >
+                  {toast.action.label}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => dismiss(toast.id)}

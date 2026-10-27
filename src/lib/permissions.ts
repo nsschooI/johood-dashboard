@@ -146,11 +146,15 @@ export const PAGE_ACCESS = {
   overview: ["bots.view", "assistants.view", "stats.view", "tickets.view", "activity.view"],
   points: ["purchases.view", "transfers.view", "points.view"],
   members: ["members.view", "staff.view", "protection.view", "audit.view"],
+  /** Everyone signed in may see what they (and others) can do. */
+  access: [],
 } as const satisfies Record<string, readonly Action[]>;
 export type PageKey = keyof typeof PAGE_ACCESS;
 
 export function canSeePage(user: Pick<SessionUser, "roles" | "overrides"> | null | undefined, page: PageKey) {
-  return canAny(user, PAGE_ACCESS[page]);
+  const needs: readonly Action[] = PAGE_ACCESS[page];
+  if (needs.length === 0) return Boolean(user && user.roles.length > 0) || permissionsFor(user).size > 0;
+  return canAny(user, needs);
 }
 
 /** Roles that grant an action, lowest first (for "Needs … role" hints). */
