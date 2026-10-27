@@ -29,12 +29,16 @@ Browser ──https──▶ nginx ──▶ Dashboard (Next.js, :3000) ──ht
 | Lists | Newest first. Paginated lists return `Page<T>` = `{ "items": T[], "nextCursor": string \| null }`. Pass `cursor=<nextCursor>` to get the next (older) page. `limit` defaults to 50, max 100. |
 | Errors | `{ "error": "<code>", "message": "<human text>" }` with status `400`/`422` (invalid), `404` (not found), `409` (conflict, e.g. bot already stopped), `5xx` (failure). The dashboard maps them in `RealProvider.request()`. |
 | Timeout | The dashboard gives up after 8 s per request. |
+| Servers | The backend serves **two Discord servers**, chosen with `?guild=main` (JoHood, the community — default) or `?guild=catalog` (JoHood Catalog — tickets, ops, ranks, staff roles). See [Servers](#servers). |
+| Not built yet | An action the backend knows but hasn't implemented answers **`501`** (`{ "error": "not_implemented" }`). Nothing may change. The dashboard shows "This action is not connected yet" and audits the click as *attempted · not connected*. When the action ships, the UI works with no frontend change. |
 | Authorization | **Not the provider's job.** The dashboard checks `can(user, action)` and writes the audit log before calling you. Mutations include the acting staff member (`actor`) so you can log it on your side too. |
 
 ## Endpoint summary
 
 | Method | Path | Returns | Used for |
 |---|---|---|---|
+| GET | `/server/list` | `GuildRef[]` | Server switcher |
+| GET | `/server/info?guild=` | `GuildInfo` | Server card, sidebar, login, favicon |
 | GET | `/bots` | `BotStatus[]` | Overview bot cards |
 | GET | `/bots/:name/logs?limit&level` | `BotLogLine[]` (oldest → newest) | Logs drawer |
 | POST | `/bots/:name/restart` | `BotStatus` | Restart button |
@@ -42,7 +46,7 @@ Browser ──https──▶ nginx ──▶ Dashboard (Next.js, :3000) ──ht
 | POST | `/bots/:name/start` | `BotStatus` | Start button |
 | GET | `/assistants` | `Assistant[]` | Assistant cards |
 | POST | `/assistants/:name/disconnect` | `Assistant` | Disconnect button |
-| GET | `/server/stats` | `ServerStats` | Server health tiles |
+| GET | `/server/stats?guild=` | `ServerStats` | Server health tiles |
 | GET | `/activity?limit` | `ActivityItem[]` | Live activity feed (initial) |
 | GET | `/purchases?limit&cursor&discordId&search` | `Page<PurchaseEvent>` | Live purchases |
 | GET | `/transfers?limit&cursor&discordId&search&status` | `Page<Transfer>` | Transfers table |
@@ -50,12 +54,12 @@ Browser ──https──▶ nginx ──▶ Dashboard (Next.js, :3000) ──ht
 | GET | `/points/summary` | `PointsSummary` | KPIs, charts, top buyers |
 | GET | `/points/ledger/:discordId?limit&cursor` | `Page<LedgerEntry>` | Member ledger |
 | POST | `/points/adjust` | `LedgerEntry` | Manual adjustment |
-| GET | `/members/search?q&limit` | `MemberSummary[]` | Member search |
-| GET | `/members/:discordId` | `MemberProfile` | Profile |
-| GET | `/ranks` | `RankInfo[]` | Rank overview |
-| GET | `/roles` | `RoleInfo[]` | Role overview |
-| GET | `/staff` | `StaffMember[]` | Staff list, ticket hand-over |
-| GET | `/tickets?status&limit&cursor&discordId&search` | `Page<TicketSummary>` | Ticket queue |
+| GET | `/members/search?q&limit&guild` | `MemberSummary[]` | Member search |
+| GET | `/members/:discordId?guild=` | `MemberProfile` | Profile (404 when not in that server) |
+| GET | `/ranks` | `RankInfo[]` | Rank overview (economy-wide; `guild` accepted, ignored) |
+| GET | `/roles?guild=` | `RoleInfo[]` | Role overview, Access page colours |
+| GET | `/staff` | `StaffMember[]` | Staff list, ticket hand-over (`guild` accepted) |
+| GET | `/tickets?status&limit&cursor&discordId&search&guild` | `Page<TicketSummary>` | Ticket queue (tickets live in `catalog`) |
 | GET | `/tickets/:id` | `Ticket` | Ticket drawer |
 | POST | `/tickets/:id/actions` | `Ticket` | Claim / reply / close / hand over |
 | GET | `/protection` | `ProtectionSettings` | Protection panel |
@@ -66,7 +70,44 @@ Browser ──https──▶ nginx ──▶ Dashboard (Next.js, :3000) ──ht
 `tempvoice`, `network`, `assistant-1`, `assistant-2`, `assistant-3`
 (`BOT_NAMES` in `types.ts`).
 
+**Server-scoped vs global.** `guild` applies to `/server/*`, `/members/*`,
+`/roles`, `/tickets` (and is accepted by `/staff`, `/ranks`). Everything about
+the **economy** — purchases, transfers, redemptions, points, ledger — is
+**global** and must return the same data whatever server is selected; the
+dashboard labels those pages "Global". Sign-in and permissions are **not**
+per server: staff roles always come from JoHood Catalog.
+
 ---
+
+## Servers
+
+### `GET /server/list` → `GuildRef[]`
+
+```json
+[{ "key": "main", "id": "123…" }, { "key": "catalog", "id": "456…" }]
+```
+
+### `GET /server/info?guild=main` → `GuildInfo`
+
+```json
+{
+  "key": "main",
+  "id": "123…",
+  "name": "JoHood",
+  "description": "Jordan's Roblox & gaming hangout",
+  "iconUrl": "https://cdn.discordapp.com/icons/123…/a_abc.png?size=256",
+  "bannerUrl": "https://cdn.discordapp.com/banners/123…/def.png?size=1024",
+  "members": 4821,
+  "online": 640,
+  "boosts": 14,
+  "boostLevel": 2
+}
+```
+
+`iconUrl`/`bannerUrl` may be `null`; the dashboard then draws the JoHood
+mark / an aurora banner. The main server's icon becomes the favicon and
+the banner the social preview image. Only public identity goes here — the
+login page shows it to signed-out visitors.
 
 ## Bots
 
@@ -89,9 +130,13 @@ One entry per process, in `BOT_NAMES` order. Most fields come straight from
   "cpuPct": 3.4,
   "pingMs": 52,
   "version": "2.9.0",
-  "lastError": { "at": "2026-10-27T11:40:00.000Z", "message": "DiscordAPIError[50013]: Missing Permissions" }
+  "lastError": { "at": "2026-10-27T11:40:00.000Z", "message": "DiscordAPIError[50013]: Missing Permissions" },
+  "avatarUrl": "https://cdn.discordapp.com/avatars/…/….png?size=128"
 }
 ```
+
+`avatarUrl` (optional) is the bot's Discord avatar; without it the card shows
+a coloured glyph tile per bot.
 
 `state`: `online` | `degraded` (running but erroring / gateway unhealthy) |
 `restarting` | `offline` (crashed) | `stopped` (stopped on purpose).
@@ -129,6 +174,7 @@ The dashboard only calls `stop` after the user confirmed.
 ```
 
 `state`: `free` | `busy` | `offline`. `room`, `calledBy`, `since` are `null` when free.
+Optional `avatarUrl` as for bots. `calledBy.avatarUrl` should be the caller's Discord avatar.
 
 ### `POST /assistants/:name/disconnect` → `Assistant`
 
@@ -139,8 +185,12 @@ Leave the voice room. `409` if not in a room.
 ### `GET /server/stats` → `ServerStats`
 
 ```json
-{ "at": "2026-10-27T18:00:00.000Z", "members": 4821, "online": 640, "newToday": 31, "ticketsOpen": 9, "inVoice": 44, "boosts": 14 }
+{ "guild": "catalog", "at": "2026-10-27T18:00:00.000Z", "members": 1335, "online": 210, "newToday": 4, "ticketsOpen": 9, "inVoice": 6, "boosts": 7 }
 ```
+
+Include `guild` (the dashboard routes live `stats` events by it).
+`ticketsOpen` is `null` for a server without a ticket system (shown as
+"Not tracked yet", never as 0).
 
 ### `GET /activity?limit=80` → `ActivityItem[]`
 
@@ -181,13 +231,16 @@ What the Roblox map reports for each purchase:
   "robloxId": "4120938812",
   "robloxName": "NourPro",
   "item": "Royal Crown",
+  "assetId": "1234567890",
   "robux": 1200,
   "points": 144,
   "cashbackRate": 0.12
 }
 ```
 
-`discordId` is omitted when the Roblox account isn't linked yet.
+`discordId` is omitted when the Roblox account isn't linked yet. `assetId`
+(optional, the map already sends it) lets the dashboard show the item's
+thumbnail.
 `points` must equal `round(robux × cashbackRate)`. Filters: `discordId`,
 `search` (Roblox name or item).
 
@@ -196,18 +249,20 @@ What the Roblox map reports for each purchase:
 Points converted to Robux and paid to a Roblox account.
 
 ```json
-{ "id": "trf_7c", "at": "…", "robloxName": "Tala_99", "robux": 400, "points": 500, "discordId": "…",
+{ "id": "trf_7c", "at": "…", "robloxId": "2244668800", "robloxName": "Tala_99", "robux": 400, "points": 500, "discordId": "…",
   "status": "completed", "stars": 5, "comment": "سريع جداً، شكراً", "ticketId": "tkt_19" }
 ```
 
 `status`: `pending` | `processing` | `completed` | `failed` | `refunded`.
+`robloxId` (optional) enables the receiver's headshot. Failed transfers and
+ones stuck in pending/processing for 30+ minutes raise attention items.
 `stars` (1–5) and `comment` come from the member's review. `ticketId` links a
 support ticket about this conversion — the dashboard shows it as a link.
 
 ### `GET /redemptions` → `Page<Redemption>`
 
 ```json
-{ "id": "rdm_3", "at": "…", "discordId": "…", "memberName": "Sara", "reward": "Private voice room", "points": 500 }
+{ "id": "rdm_3", "at": "…", "discordId": "…", "memberName": "Sara", "avatarUrl": "https://cdn.discordapp.com/…", "reward": "Private voice room", "points": 500 }
 ```
 
 ### `GET /points/summary` → `PointsSummary`
@@ -220,7 +275,7 @@ start on Monday. `start` is the bucket's date as `YYYY-MM-DD`.
 {
   "daily":  [{ "start": "2026-10-27", "robux": 21840, "pointsEarned": 1810, "pointsRedeemed": 1500, "purchases": 61, "transfers": 7 }],
   "weekly": [{ "start": "2026-10-26", "robux": 40210, "pointsEarned": 3400, "pointsRedeemed": 2900, "purchases": 118, "transfers": 13 }],
-  "topBuyers": [{ "robloxName": "YazanDz", "discordId": "…", "robux": 21847, "purchases": 80, "points": 2381 }],
+  "topBuyers": [{ "robloxId": "2244668800", "robloxName": "YazanDz", "discordId": "…", "robux": 21847, "purchases": 80, "points": 2381 }],
   "today": { "robux": 21840, "pointsEarned": 1810, "pointsRedeemed": 1500, "purchases": 61, "transfersCompleted": 4, "avgStars": 4.6 },
   "outstandingPoints": 19400
 }
@@ -255,6 +310,10 @@ it **atomically** and reject with `409` if the balance would go negative,
 also emit `ledger` and `activity` events.
 
 ## Members
+
+All people (`MemberRef`, `MemberSummary`, `StaffMember`, ticket authors,
+ledger actors) should carry their Discord `avatarUrl` (CDN URL) — the
+dashboard shows faces everywhere and falls back to gradient initials.
 
 ### `GET /members/search?q=nour&limit=10` → `MemberSummary[]`
 
@@ -305,7 +364,7 @@ dashboard — either way the role IDs must match).
 `lastMessageAt`, newest first.
 
 ```json
-{ "id": "tkt_19", "number": 1031, "subject": "Transfer not received", "category": "conversion",
+{ "guild": "catalog", "id": "tkt_19", "number": 1031, "subject": "Transfer not received", "category": "conversion",
   "status": "claimed", "openedAt": "…", "openedBy": { "discordId": "…", "name": "Sara", "avatarUrl": null },
   "claimedBy": { "discordId": "…", "name": "Reem", "avatarUrl": null }, "transferId": "trf_7c", "lastMessageAt": "…" }
 ```
@@ -379,10 +438,37 @@ data: {"name":"ops","state":"restarting", …full BotStatus…}
 | `bot` | `BotStatus` | State change, and periodically (≈ every 3–5 s) for memory/cpu/ping |
 | `log` | `BotLogLine` | Each new log line (rate-limit to a few per second per bot) |
 | `assistant` | `Assistant` | An assistant joins/leaves a room |
-| `stats` | `ServerStats` | Any change, at most every few seconds |
-| `ticket` | `TicketSummary` | Ticket opened, claimed, replied, closed, handed over |
+| `stats` | `ServerStats` (with `guild`) | Any change, at most every few seconds — one event per server |
+| `ticket` | `TicketSummary` (with `guild`) | Ticket opened, claimed, replied, closed, handed over |
 | `protection` | `ProtectionSettings` | Settings changed (from the dashboard or Discord) |
-| `activity` | `ActivityItem` | Anything worth a feed line (see table above) |
+| `activity` | `ActivityItem` | Anything worth a feed line (see table above). Server-specific lines (`member_join`, `ticket`) carry `guild`. |
+
+## Roblox thumbnails
+
+Not a provider endpoint: the dashboard resolves player headshots and item
+thumbnails itself through Roblox's public API
+(`thumbnails.roblox.com/v1/users/avatar-headshot`, `/v1/assets`), batched and
+cached for 6 h on the server (`src/lib/server/roblox.ts`). The provider only
+needs to pass `robloxId` / `assetId` through. The dashboard server needs
+outbound HTTPS to `thumbnails.roblox.com` and `*.rbxcdn.com`.
+
+## Actions that answer 501 today
+
+These exist in the UI and are wired end to end; the backend currently
+answers `501` for them. Implement them and they start working:
+
+| Endpoint | UI |
+|---|---|
+| `POST /bots/:name/{restart,stop,start}` | Restart / Stop / Start buttons and menus (Stop has confirm + Undo) |
+| `POST /assistants/:name/disconnect` | Disconnect on assistant cards |
+| `POST /points/adjust` | Ledger adjustment form (reason, cap, confirm, Undo) |
+| `POST /tickets/:id/actions` | Claim / reply / close / hand over in the ticket drawer |
+| `PATCH /protection` | Lockdown, raid mode, thresholds, link blocking, word lists (Undo) |
+
+While they answer 501 the dashboard: keeps the buttons visible and enabled
+for permitted users, runs the confirm step, shows a calm "not connected yet"
+toast, and writes an audit row with outcome `not_connected` (never a change).
+Set `MOCK_NOT_IMPLEMENTED=true` with the mock provider to preview this.
 
 ## Wiring checklist
 

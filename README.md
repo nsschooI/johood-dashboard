@@ -5,19 +5,35 @@ Assistants ×3, Welcome, System, TempVoice, Network) and the **JoHood Catalog**
 Roblox map. Staff sign in with Discord; what each person sees and can do comes
 from their Discord roles.
 
-- **Overview** — live bot health (state, uptime, restarts, memory, last error,
-  logs), the three assistants (voice room, who called them), server health,
-  ticket queue and a live activity feed. Restart / stop / start per role.
-- **Points & Purchases** — the live purchase stream from the Roblox map (soft
-  chime + toast), daily/weekly charts, top buyers, transfers with reviews and
-  linked tickets, redemptions, and a per-member points ledger with
-  reason-required adjustments.
-- **Members & Security** — member search and profiles, ranks and roles, staff
-  access with Owner-only overrides, protection switches (lockdown, raid mode,
-  blocked words) and the audit log.
+- **Two servers** — JoHood (the community, default) and JoHood Catalog
+  (tickets, ops, ranks, staff roles). A server switcher in the shell (icon,
+  banner, counts, boost level) remembers your choice and lives in `?guild=`.
+  Server-specific pages follow it; the economy is global and labelled so.
+- **Overview** — a *Needs attention* strip, the server card, bot cards with
+  memory/CPU sparklines, the three assistants (room, caller, time in room),
+  the ticket queue and a filterable live activity feed. Restart / stop / start
+  per role, with confirm and Undo.
+- **Points & Purchases** — live purchases with item thumbnails and player
+  headshots (soft chime + toast), KPI tiles with 7-day deltas, Robux and
+  points revenue panels, top buyers, transfers with reviews and linked
+  tickets, redemptions, and a per-member ledger with reason-required
+  adjustments.
+- **Members & Security** — member profiles (avatar, roles in their Discord
+  colours, Roblox account, points, purchases, ticket timeline), rank badges,
+  protection switches and the audit log.
+- **Access** — the role ladder, a plain-language permission matrix generated
+  from the code, *What can I do?*, the Discord-role mapping, and the Owner's
+  per-person override editor with a diff preview.
+- **Everywhere** — attention badges on the nav and on the exact control,
+  a notification center (bell) with opt-in desktop alerts, a command palette
+  (Ctrl/⌘ K), keyboard shortcuts (`?`), "…"/right-click action menus that
+  also say *why* something is unavailable, hover cards, copy buttons, Undo
+  toasts.
 
-Dark glass UI, fully bilingual (English LTR / Arabic RTL), responsive down to
-phones, keyboard accessible, respects reduced motion.
+Dark glass UI with motion (staggered entrances, count-ups, springy controls,
+page transitions, ambient aurora — reduced to fades when the OS asks),
+fully bilingual (English LTR / Arabic RTL), responsive down to phones,
+keyboard accessible. See [docs/design-system.md](docs/design-system.md).
 
 > The app runs completely on a **mock provider** (realistic, live-moving fake
 > data). The **real provider** is an HTTP client for the bot backend, ready to
@@ -26,6 +42,8 @@ phones, keyboard accessible, respects reduced motion.
 ## Quick start
 
 Requires Node.js ≥ 20.9 (22 LTS recommended). Works on Linux ARM64.
+`better-sqlite3` is pinned to **12.11.1** on purpose — the 13.x prebuilt
+binary segfaults on the Oracle ARM server. Don't bump it.
 
 ```bash
 npm ci
@@ -60,6 +78,7 @@ All documented in [`.env.example`](.env.example). Never commit a filled-in copy.
 | `PROVIDER_API_URL` / `PROVIDER_API_TOKEN` | when real | Bot backend URL and shared bearer token. |
 | `MOCK_LOGIN` | dev | `true` shows the role picker on the login page. |
 | `ALLOW_MOCK_LOGIN_IN_PRODUCTION` | — | Mock login is refused in production unless this is also `true` (private staging only). |
+| `MOCK_NOT_IMPLEMENTED` | — | Mock only: every action answers 501, like the real backend while actions are being built. |
 
 Also edit **[`config/roles.ts`](config/roles.ts)**: replace the
 `REPLACE_ME_*` placeholders with the real Discord role IDs. Tunables
@@ -96,8 +115,12 @@ src/
     provider/                mock.ts (simulation), real.ts (HTTP client), index.ts (selection)
     server/                  db (SQLite), store (sessions, audit, prefs, overrides),
                              api guard, rate limit, Discord OAuth, queries
-    i18n/                    en.ts, ar.ts (same keys, type-checked)
-    client/                  fetch wrapper (CSRF), WebAudio chimes, useLoad, useAction
+    attention.ts             the attention model (pure; nav badges, strip, control highlights)
+    i18n/                    en.ts, ar.ts (same keys, type-checked + parity test)
+    client/                  fetch wrapper (CSRF), WebAudio chimes, useLoad, useAction (501-aware),
+                             Roblox thumbnail batching, bot sparkline samples, anchors
+    server/roblox.ts         cached Roblox thumbnail resolver
+  components/art/            generated mock art, rank badges, bot tiles, SVG illustrations
 config/                      roles.ts (Discord role mapping), dashboard.ts (limits)
 docs/                        provider-api.md, permissions.md
 tests/                       vitest suites
@@ -120,9 +143,26 @@ SSE response per browser tab, drops every event the user may not see
 (`useLiveEvent`). With the real provider, the dashboard holds a single
 upstream SSE connection to the bot backend.
 
+**Servers.** The selected server comes from `?guild=`, then the `jh_guild`
+cookie, then the user's saved prefs, then `main`. Pages are keyed by it, the
+live stream carries everything (permission-filtered) and components filter
+server-specific events (`stats`, `ticket`, server activity) client-side, so
+attention and notifications keep working whatever server you look at.
+
+**Attention.** `computeAttention()` turns live data into items (bot offline /
+degraded / stopped / restart spike, assistant offline, unclaimed tickets past
+15 min, failed or stuck transfers, lockdown/raid mode), each tied to a
+permission, a page (nav badge) and a target control (pulsing ring). Lockdown
+or raid mode switches the shell accent to amber with a banner.
+
+**Backend not ready (501).** Mutations the backend answers with 501 show a
+calm "not connected yet" toast and are audited with outcome
+`not_connected` — never as a change. See docs/provider-api.md.
+
 **Storage.** SQLite via better-sqlite3 (WAL mode), in `DATA_DIR`:
 `sessions` (only SHA-256 of tokens), `audit_log` (append-only — triggers
-reject UPDATE/DELETE), `user_prefs` (language, sound), `permission_overrides`.
+reject UPDATE/DELETE; `outcome` = ok / denied / not_connected / failed),
+`user_prefs` (language, sound, server), `permission_overrides`.
 Schema migrations run automatically on start.
 
 **Single process.** One Node process (pm2 fork mode). The SSE fan-out, the
@@ -189,6 +229,10 @@ server { listen 80; server_name dash.example.com; return 301 https://$host$reque
 ```
 
 Then set `APP_URL=https://dash.example.com` and `TRUST_PROXY=true`.
+
+The dashboard server needs outbound HTTPS to `cdn.discordapp.com`,
+`thumbnails.roblox.com` and `*.rbxcdn.com` (avatars, server art and Roblox
+thumbnails are optimised through `next/image`).
 Caddy works too (`reverse_proxy 127.0.0.1:3000` — it streams SSE by default).
 
 ## Wiring the real provider
