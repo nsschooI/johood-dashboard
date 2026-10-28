@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { clientIp } from "@/lib/server/api";
 import { env } from "@/lib/server/env";
 import { mockGiveaways, withFlag } from "@/lib/server/giveaways";
+import { GW_STATE_COOKIE, authorizeUrl, encodeState, giveawaysOAuthConfigured, newState, stateCookieOptions } from "@/lib/server/giveaways-oauth";
 import { MEMBER_COOKIE, createMemberSession, resolveMemberSession, setMemberCookie } from "@/lib/server/member-session";
 import { rateLimit } from "@/lib/server/rate-limit";
 import { MOCK_MEMBER } from "@/lib/giveaways/mock";
@@ -34,11 +35,10 @@ export async function GET(req: NextRequest) {
     return res;
   }
 
-  // REAL: redirect to https://discord.com/oauth2/authorize with
-  // scope="identify guilds.join", prompt=consent, a one-time `state` cookie
-  // carrying the validated `next`, redirect_uri = ${APP_URL}/api/giveaways/callback.
-  // The callback hands the OAuth tokens to the bot backend server-to-server
-  // (it stores them for guilds.join) — never to the browser, never in a URL,
-  // never in logs — then signs the member in and redirects to `next?authorized=1`.
-  return NextResponse.redirect(new URL(withFlag(next, "error", "authorize_unavailable"), env.appUrl));
+  // REAL: Discord consent (scopes identify guilds.join). The callback route stores the tokens in the bot backend.
+  if (!giveawaysOAuthConfigured()) return NextResponse.redirect(new URL(withFlag(next, "error", "authorize_unavailable"), env.appUrl));
+  const state = newState("authorize", next);
+  const res = NextResponse.redirect(authorizeUrl(state));
+  res.cookies.set(GW_STATE_COOKIE, encodeState(state), stateCookieOptions());
+  return res;
 }

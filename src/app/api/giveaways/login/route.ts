@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { clientIp } from "@/lib/server/api";
 import { env } from "@/lib/server/env";
 import { mockGiveaways } from "@/lib/server/giveaways";
+import { GW_STATE_COOKIE, authorizeUrl, encodeState, giveawaysOAuthConfigured, newState, stateCookieOptions } from "@/lib/server/giveaways-oauth";
 import { createMemberSession, setMemberCookie } from "@/lib/server/member-session";
 import { rateLimit } from "@/lib/server/rate-limit";
 import { MOCK_MEMBER } from "@/lib/giveaways/mock";
@@ -27,11 +28,10 @@ export async function GET(req: NextRequest) {
     return res;
   }
 
-  // REAL: redirect to https://discord.com/oauth2/authorize with scope=identify,
-  // a one-time `state` cookie (httpOnly, path=/api/giveaways) that also carries
-  // the validated `next`, and redirect_uri = ${APP_URL}/api/giveaways/callback.
-  // The callback exchanges the code, reads /users/@me, calls
-  // createMemberSession({ id, name, avatarUrl }) + setMemberCookie and redirects
-  // to `next`. Never put tokens in URLs or logs.
-  return NextResponse.redirect(new URL(`/giveaways?error=login_unavailable`, env.appUrl));
+  // REAL: Discord sign-in (scope identify). The callback route finishes it.
+  if (!giveawaysOAuthConfigured()) return NextResponse.redirect(new URL(`/giveaways?error=login_unavailable`, env.appUrl));
+  const state = newState("login", next);
+  const res = NextResponse.redirect(authorizeUrl(state));
+  res.cookies.set(GW_STATE_COOKIE, encodeState(state), stateCookieOptions());
+  return res;
 }

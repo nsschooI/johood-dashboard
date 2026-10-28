@@ -363,4 +363,9 @@ export class RealGiveaways implements GiveawaysApi {
   revoke(memberId: string) {
     return this.request<{ removed: boolean }>("POST", "/giveaways/revoke", { body: { memberId } });
   }
+
+  /** Server to server: the member authorized the app; the bot backend keeps the tokens (encrypted) for guilds.join. */
+  storeAuthorization(input: { memberId: string; username: string; accessToken: string; refreshToken: string | null; expiresIn: number | null; scope: string }) {
+    return this.request<{ ok: boolean }>("POST", "/giveaways/authorize", { body: input });
+  }
 }

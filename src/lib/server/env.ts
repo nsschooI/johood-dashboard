@@ -19,6 +19,13 @@ export const env = {
       redirectUri: process.env.DISCORD_REDIRECT_URI || `${this.appUrl}/api/auth/callback`,
     };
   },
+  /** The "Giveaways System" application, used for the public giveaway pages (login + authorize). */
+  get giveawaysOAuth() {
+    return {
+      clientId: process.env.GIVEAWAYS_CLIENT_ID ?? "",
+      clientSecret: process.env.GIVEAWAYS_CLIENT_SECRET ?? "",
+    };
+  },
   /** Discord OAuth is usable only when all credentials are present. */
   get discordConfigured() {
     const d = this.discord;
