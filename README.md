@@ -39,6 +39,12 @@ keyboard accessible. See [docs/design-system.md](docs/design-system.md).
 > data). The **real provider** is an HTTP client for the bot backend, ready to
 > wire — see [docs/provider-api.md](docs/provider-api.md).
 
+**Public giveaways** — `/giveaways` is a separate, public area for ordinary
+Discord members (their own `jh_member` session, no staff permissions):
+running and ended giveaways, a detail page with a requirement checklist,
+authorize and join, and "My page". Festive red/cream look with light and
+dark themes. See [docs/giveaways.md](docs/giveaways.md).
+
 ## Quick start
 
 Requires Node.js ≥ 20.9 (22 LTS recommended). Works on Linux ARM64.
@@ -122,7 +128,7 @@ src/
     server/roblox.ts         cached Roblox thumbnail resolver
   components/art/            generated mock art, rank badges, bot tiles, SVG illustrations
 config/                      roles.ts (Discord role mapping), dashboard.ts (limits)
-docs/                        provider-api.md, permissions.md
+docs/                        provider-api.md, permissions.md, giveaways.md
 tests/                       vitest suites
 ```
 

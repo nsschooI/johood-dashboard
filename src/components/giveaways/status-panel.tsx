@@ -89,7 +89,7 @@ export function StatusPanel({ g, onChange, refresh }: { g: Giveaway; onChange: (
   const signedIn = Boolean(member);
   const rows: Row[] = [
     ...g.requirements.servers.map<Row>((s) => {
-      const met = signedIn ? !missingServer(s.key) : null;
+      const met = signedIn && !ended ? !missingServer(s.key) : null;
       let action: React.ReactNode = null;
       const invite = safeHttpsUrl(s.inviteUrl);
       if (signedIn && !met && !ended) {
@@ -99,6 +99,8 @@ export function StatusPanel({ g, onChange, refresh }: { g: Giveaway; onChange: (
               {t("gw.status.joinServer", { name: s.name })}
             </button>
           ) : (
+            // REAL: the member joins through the server's invite (optional `inviteUrl`),
+            // then "Check again" re-reads the giveaway so `missing` updates.
             <span className="flex flex-wrap gap-1.5">
               {invite && (
                 <a href={invite} target="_blank" rel="noopener noreferrer" className="gw-cta-soft !min-h-9 !px-3 text-xs">
@@ -115,7 +117,7 @@ export function StatusPanel({ g, onChange, refresh }: { g: Giveaway; onChange: (
       }
       return { key: `server:${s.key}`, label: t("gw.req.server", { name: s.name }), met, action };
     }),
-    ...(g.requirements.authorize ? [{ key: "authorize", label: t("gw.req.authorize"), met: signedIn ? authorized : null }] : []),
+    ...(g.requirements.authorize ? [{ key: "authorize", label: t("gw.req.authorize"), met: signedIn && !ended ? authorized : null }] : []),
   ];
   const missingLabels = rows.filter((r) => r.met === false).map((r) => r.label);
   const firstMissingServer = g.requirements.servers.find((s) => missingServer(s.key));
@@ -148,7 +150,7 @@ export function StatusPanel({ g, onChange, refresh }: { g: Giveaway; onChange: (
                   {r.label}
                   {r.met !== null && <span className="sr-only"> — {r.met ? t("gw.status.met") : t("gw.status.unmet")}</span>}
                 </span>
-                {r.action}
+                {r.action && <div className="w-full ps-10">{r.action}</div>}
               </li>
             ))}
           </ul>

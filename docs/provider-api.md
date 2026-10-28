@@ -470,6 +470,14 @@ for permitted users, runs the confirm step, shows a calm "not connected yet"
 toast, and writes an audit row with outcome `not_connected` (never a change).
 Set `MOCK_NOT_IMPLEMENTED=true` with the mock provider to preview this.
 
+## Giveaways
+
+The public giveaways pages use five more endpoints (`GET /giveaways`,
+`GET /giveaways/:id?memberId=`, `POST /giveaways/:id/join`,
+`GET /giveaways/authorize-state?memberId=`, `POST /giveaways/revoke`) plus
+the member login / authorize OAuth flow. Everything is described in
+[giveaways.md](giveaways.md).
+
 ## Wiring checklist
 
 1. Implement the endpoints above on the bot server (Express/Fastify next to
