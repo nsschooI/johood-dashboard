@@ -50,6 +50,7 @@ import { BOT_NAMES, GUILD_KEYS, RANKS } from "../types";
 import { chance, createRng, int, pick, weighted, type Rng } from "../rng";
 import { DAY, HOUR, MINUTE, dayKey, lastDays, lastWeeks, weekKey } from "../time";
 import { ProviderError } from "./errors";
+import { MockGiveaways } from "../giveaways/mock";
 import {
   BOT_META,
   CATALOG,
@@ -121,6 +122,8 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 
 export class MockProvider implements DataProvider {
   readonly kind = "mock" as const;
+  /** Public giveaways (independent of the staff simulation). */
+  readonly giveaways = new MockGiveaways();
 
   private rng: Rng;
   private live: Rng;

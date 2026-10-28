@@ -11,6 +11,8 @@
  * snowflakes and Roblox IDs do not fit safely in a JS number).
  */
 
+import type { GiveawaysApi } from "./giveaways/types";
+
 // ---------------------------------------------------------------------------
 // Servers (guilds)
 // ---------------------------------------------------------------------------
@@ -548,6 +550,10 @@ export interface DataProvider {
   // Protection ---------------------------------------------------------
   getProtection(): Promise<ProtectionSettings>;
   setProtection(patch: ProtectionPatch): Promise<ProtectionSettings>;
+
+  // Giveaways (public area) -------------------------------------------
+  /** See src/lib/giveaways/types.ts and docs/giveaways.md. */
+  readonly giveaways: GiveawaysApi;
 
   // Live ---------------------------------------------------------------
   /** Subscribe to live events. Returns an unsubscribe function. */

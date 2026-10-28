@@ -76,6 +76,21 @@ const MIGRATIONS: string[] = [
   `
   ALTER TABLE user_prefs ADD COLUMN guild TEXT;
   `,
+  // 4: public member sessions (giveaways). Separate from staff sessions:
+  //    no roles, no permissions, different cookie.
+  `
+  CREATE TABLE member_sessions (
+    token_hash   TEXT PRIMARY KEY,
+    member_id    TEXT NOT NULL,
+    name         TEXT NOT NULL,
+    avatar_url   TEXT,
+    csrf         TEXT NOT NULL,
+    created_at   INTEGER NOT NULL,
+    expires_at   INTEGER NOT NULL
+  );
+  CREATE INDEX member_sessions_member ON member_sessions(member_id);
+  CREATE INDEX member_sessions_expires ON member_sessions(expires_at);
+  `,
 ];
 
 export function migrate(db: DB) {

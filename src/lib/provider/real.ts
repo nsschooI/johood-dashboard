@@ -51,6 +51,7 @@ import type {
   TransferStatus,
 } from "../types";
 import { ProviderError, isProviderError } from "./errors";
+import type { Giveaway, GiveawaysApi, JoinResult } from "../giveaways/types";
 
 export interface RealProviderOptions {
   baseUrl: string;
@@ -64,6 +65,7 @@ type Query = Record<string, string | number | undefined>;
 
 export class RealProvider implements DataProvider {
   readonly kind = "real" as const;
+  readonly giveaways: GiveawaysApi;
   private readonly baseUrl: string;
   private readonly token: string;
   private readonly timeoutMs: number;
@@ -78,6 +80,7 @@ export class RealProvider implements DataProvider {
     this.token = opts.token;
     this.timeoutMs = opts.timeoutMs ?? 8000;
     this.fetchImpl = opts.fetchImpl ?? fetch;
+    this.giveaways = new RealGiveaways((method, path, o) => this.request(method, path, o));
   }
 
   // -------------------------------------------------------------------------
@@ -323,5 +326,41 @@ export async function* parseSse(body: ReadableStream<Uint8Array>): AsyncGenerato
       }
       if (data.length) yield { event, data: data.join("\n") };
     }
+  }
+}
+
+type Requester = <T>(method: "GET" | "POST" | "PATCH", path: string, opts?: { query?: Query; body?: unknown }) => Promise<T>;
+
+/**
+ * REAL: giveaways endpoints on the bot backend (docs/giveaways.md). The
+ * Giveaways System bot owns the data; the dashboard only reads and asks it
+ * to join/revoke on behalf of the signed-in member.
+ */
+export class RealGiveaways implements GiveawaysApi {
+  constructor(private readonly request: Requester) {}
+
+  list() {
+    return this.request<Giveaway[]>("GET", "/giveaways");
+  }
+
+  async get(id: number, memberId?: string) {
+    try {
+      return await this.request<Giveaway>("GET", `/giveaways/${id}`, { query: { memberId } });
+    } catch (err) {
+      if (isProviderError(err) && err.code === "not_found") return null;
+      throw err;
+    }
+  }
+
+  join(id: number, memberId: string) {
+    return this.request<JoinResult>("POST", `/giveaways/${id}/join`, { body: { memberId } });
+  }
+
+  authorizeState(memberId: string) {
+    return this.request<{ authorized: boolean }>("GET", "/giveaways/authorize-state", { query: { memberId } });
+  }
+
+  revoke(memberId: string) {
+    return this.request<{ removed: boolean }>("POST", "/giveaways/revoke", { body: { memberId } });
   }
 }
