@@ -302,3 +302,243 @@
     border: 1px solid CanvasText;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Public giveaways area (/giveaways). Festive red / white / cream,    */
+/* light and dark. Everything is keyed off `.gw-root`, so the staff    */
+/* dashboard never sees these tokens. `light-dark()` follows the       */
+/* color-scheme picked by the theme switch (light / dark / system).    */
+/* ------------------------------------------------------------------ */
+@property --gw-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+:root:has(.gw-root) {
+  color-scheme: light dark;
+  --color-bg: light-dark(#fff7ef, #150d11);
+  --color-surface: light-dark(#ffffff, #21151a);
+  --color-surface-2: light-dark(#fdf0e4, #2b1b21);
+  --color-line: light-dark(rgb(120 40 30 / 0.11), rgb(255 255 255 / 0.08));
+  --color-line-strong: light-dark(rgb(120 40 30 / 0.2), rgb(255 255 255 / 0.15));
+  --color-ink: light-dark(#2a171c, #fbf1ed);
+  --color-ink-2: light-dark(#573c43, #e3d0d4);
+  --color-ink-3: light-dark(#76585f, #b79fa5);
+  /* Accent = festive red. Light mode darkens the "text" shades for AA contrast. */
+  --color-accent-200: light-dark(#9f1239, #fecdd3);
+  --color-accent-300: light-dark(#be123c, #fda4af);
+  --color-accent-400: light-dark(#e11d48, #fb7185);
+  --color-accent-500: #e11d48;
+  --color-accent-600: light-dark(#be123c, #e11d48);
+  --color-accent-700: #9f1239;
+  --color-blush: light-dark(#f59e0b, #fbbf24);
+  --color-good: light-dark(#047857, #34d399);
+  --color-warn: light-dark(#b45309, #fbbf24);
+  --color-bad: light-dark(#be123c, #fb7185);
+  --color-info: light-dark(#0369a1, #7dd3fc);
+  --shadow-glass: light-dark(0 1px 2px rgb(120 40 30 / 0.06), 0 1px 0 0 rgb(255 255 255 / 0.04) inset),
+    light-dark(0 18px 40px -22px rgb(150 40 40 / 0.28), 0 20px 40px -24px rgb(0 0 0 / 0.6));
+  --gw-cream: light-dark(#fdf0e4, #2a1a20);
+  --gw-card: light-dark(#ffffff, #1f1419);
+  --gw-red: #e11d48;
+  --gw-red-ink: light-dark(#be123c, #fda4af);
+  --gw-muted-ink: light-dark(#8a7177, #9c868c);
+  --gw-tile: light-dark(#2a171c, #3b232b);
+}
+:root:has(.gw-root[data-theme="light"]) {
+  color-scheme: light;
+}
+:root:has(.gw-root[data-theme="dark"]) {
+  color-scheme: dark;
+}
+:root:has(.gw-root) ::selection {
+  background: rgb(225 29 72 / 0.22);
+}
+:root:has(.gw-root) * {
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+/* Softer, warmer glow behind the page. */
+:root:has(.gw-root) body::before {
+  background:
+    radial-gradient(38vmax 26vmax at 85% 6%, light-dark(rgb(225 29 72 / 0.10), rgb(225 29 72 / 0.16)), transparent 70%),
+    radial-gradient(30vmax 22vmax at 8% 18%, light-dark(rgb(245 158 11 / 0.10), rgb(251 191 36 / 0.07)), transparent 70%);
+}
+:root:has(.gw-root) body::after {
+  background: radial-gradient(34vmax 24vmax at 50% 100%, light-dark(rgb(225 29 72 / 0.06), rgb(159 18 57 / 0.14)), transparent 70%);
+}
+:root:has(.gw-root) .glass {
+  background: var(--gw-card);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+/* Shared tooltip: dark chip in both themes so it reads on cream too. */
+:root:has(.gw-root) [role="tooltip"] {
+  background-color: #2a171c;
+  color: #fff7ef;
+}
+:root:has(.gw-root) .skeleton {
+  background: linear-gradient(
+    90deg,
+    light-dark(rgb(120 40 30 / 0.05), rgb(255 255 255 / 0.04)) 25%,
+    light-dark(rgb(120 40 30 / 0.1), rgb(255 255 255 / 0.09)) 37%,
+    light-dark(rgb(120 40 30 / 0.05), rgb(255 255 255 / 0.04)) 63%
+  );
+  background-size: 400% 100%;
+}
+:root:has(.gw-root) :focus-visible {
+  outline-color: var(--gw-red);
+}
+
+@layer components {
+.gw-card {
+  background: var(--gw-card);
+  border: 1px solid var(--color-line);
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow-glass);
+}
+/* Hover lift for cards that are links. */
+.gw-lift {
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+@media (hover: hover) {
+  .gw-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glass), 0 26px 50px -28px light-dark(rgb(225 29 72 / 0.45), rgb(0 0 0 / 0.8));
+  }
+}
+.gw-lift:active {
+  transform: translateY(-1px) scale(0.99);
+  transition-duration: var(--dur-instant);
+}
+/* Running giveaways: a slowly turning red/gold gradient border. */
+.gw-running {
+  position: relative;
+  border-color: transparent;
+  background:
+    linear-gradient(var(--gw-card), var(--gw-card)) padding-box,
+    conic-gradient(from var(--gw-angle), #e11d48, #fb7185, #fbbf24, #fff1e6, #e11d48) border-box;
+  border-width: 2px;
+  animation: gw-spin 6s linear infinite;
+}
+@keyframes gw-spin {
+  to { --gw-angle: 360deg; }
+}
+.gw-ended {
+  background: light-dark(#faf3ee, #1b1216);
+}
+.gw-ended .gw-banner {
+  filter: grayscale(1) contrast(0.9);
+  opacity: 0.75;
+}
+/* Big CTA: solid red, white text (AA in both themes). */
+.gw-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0 1.4rem;
+  border-radius: 999px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(180deg, #e8264f, #be123c);
+  box-shadow: 0 12px 28px -14px rgb(225 29 72 / 0.9), inset 0 1px 0 rgb(255 255 255 / 0.25);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast);
+  user-select: none;
+}
+.gw-cta:hover:not(:disabled, [aria-disabled="true"]) {
+  filter: brightness(1.06);
+  box-shadow: 0 16px 34px -14px rgb(225 29 72 / 1), inset 0 1px 0 rgb(255 255 255 / 0.25);
+  transform: translateY(-1px);
+}
+.gw-cta:active:not(:disabled, [aria-disabled="true"]) {
+  transform: scale(0.96);
+  transition-duration: var(--dur-instant);
+}
+.gw-cta:disabled,
+.gw-cta[aria-disabled="true"] {
+  background: light-dark(#e9dcd6, #3a2a30);
+  color: light-dark(#76585f, #b79fa5);
+  box-shadow: none;
+}
+.gw-cta-soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  color: var(--gw-red-ink);
+  background: light-dark(#fff1f2, rgb(225 29 72 / 0.12));
+  box-shadow: inset 0 0 0 1px light-dark(rgb(225 29 72 / 0.25), rgb(251 113 133 / 0.3));
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast);
+}
+.gw-cta-soft:hover {
+  background: light-dark(#ffe4e6, rgb(225 29 72 / 0.2));
+}
+.gw-cta-soft:active {
+  transform: scale(0.96);
+}
+/* Flip countdown digit: each new value flips down into place. */
+.gw-flip {
+  display: inline-block;
+  animation: gw-flip 0.42s var(--ease-out) both;
+  transform-origin: 50% 0%;
+  backface-visibility: hidden;
+}
+@keyframes gw-flip {
+  from { transform: perspective(300px) rotateX(-90deg); opacity: 0; }
+  60% { opacity: 1; }
+  to { transform: none; }
+}
+/* Floating gifts and parachutes behind the content. */
+.gw-floaters {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.gw-float {
+  position: absolute;
+  translate: 0 calc(var(--gw-scroll, 0) * var(--depth, 0.1) * -1px);
+}
+.gw-float > * {
+  animation: gw-bob var(--bob, 7s) var(--ease-in-out) infinite alternate;
+}
+@keyframes gw-bob {
+  from { transform: translateY(-6px) rotate(var(--tilt-a, -4deg)); }
+  to { transform: translateY(8px) rotate(var(--tilt-b, 5deg)); }
+}
+.gw-pop {
+  animation: gw-pop 0.6s var(--ease-spring) both;
+}
+@keyframes gw-pop {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gw-running {
+    animation: none;
+  }
+  .gw-float {
+    translate: none;
+  }
+  .gw-float > *,
+  .gw-flip,
+  .gw-pop {
+    animation: none !important;
+  }
+}

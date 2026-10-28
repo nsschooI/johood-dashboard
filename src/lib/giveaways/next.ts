@@ -9,7 +9,6 @@ export const DEFAULT_NEXT = "/giveaways";
 export function safeNext(next: unknown): string {
   if (typeof next !== "string" || next.length === 0 || next.length > 200) return DEFAULT_NEXT;
   if (!next.startsWith("/giveaways")) return DEFAULT_NEXT;
-  // eslint-disable-next-line no-control-regex
   if (/[\\\u0000-\u001f\u007f]/.test(next) || next.startsWith("//") || next.includes("/../") || next.endsWith("/..")) return DEFAULT_NEXT;
   let url: URL;
   try {
