@@ -39,7 +39,9 @@ export function GiveawaysAdminView({ initial }: { initial: AdminGiveaway[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const manageReason = why("giveaways.manage");
 
-  const upsert = (g: AdminGiveaway) => setList((cur) => (cur.some((x) => x.id === g.id) ? cur.map((x) => (x.id === g.id ? g : x)) : [g, ...cur]));
+  const remove = (id: number) => setList((cur) => cur.filter((x) => x.id !== id));
+  const upsert = (g: AdminGiveaway) =>
+    g.deleted ? remove(g.id) : setList((cur) => (cur.some((x) => x.id === g.id) ? cur.map((x) => (x.id === g.id ? g : x)) : [g, ...cur]));
   useLiveEvent("giveaway", (e) => upsert(e.data));
   const [refresh] = useState(() => () => {
     api<AdminGiveaway[]>("/api/giveaways-admin")
@@ -108,7 +110,7 @@ export function GiveawaysAdminView({ initial }: { initial: AdminGiveaway[] }) {
           ) : (
             <ul className="stagger space-y-3">
               {shown.map((g) => (
-                <GiveawayRow key={g.id} g={g} onChange={upsert} />
+                <GiveawayRow key={g.id} g={g} onChange={upsert} onDeleted={remove} />
               ))}
             </ul>
           )}
@@ -118,7 +120,7 @@ export function GiveawaysAdminView({ initial }: { initial: AdminGiveaway[] }) {
   );
 }
 
-function GiveawayRow({ g, onChange }: { g: AdminGiveaway; onChange: (g: AdminGiveaway) => void }) {
+function GiveawayRow({ g, onChange, onDeleted }: { g: AdminGiveaway; onChange: (g: AdminGiveaway) => void; onDeleted: (id: number) => void }) {
   const { t } = useApp();
   const f = useFormat();
   const { href } = useGuild();
@@ -162,7 +164,7 @@ function GiveawayRow({ g, onChange }: { g: AdminGiveaway; onChange: (g: AdminGiv
         ))}
       </dl>
       <div className="px-1 pb-1 sm:px-0 sm:pb-0">
-        <GiveawayActions g={g} onChange={onChange} />
+        <GiveawayActions g={g} onChange={onChange} onDeleted={onDeleted} />
       </div>
     </li>
   );

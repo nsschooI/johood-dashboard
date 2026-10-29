@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons/icon";
 import { useApp, useWhyNot } from "@/components/providers/app-provider";
 import { useGuild } from "@/components/providers/guild-provider";
@@ -67,14 +68,26 @@ export function GiveawayStatus({ g }: { g: Pick<AdminGiveaway, "status"> }) {
  * first; without `giveaways.manage` they stay visible but disabled with the
  * reason, exactly as the permission model decides.
  */
-export function GiveawayActions({ g, onChange, compact }: { g: AdminGiveaway; onChange: (next: AdminGiveaway) => void; compact?: boolean }) {
+export function GiveawayActions({
+  g,
+  onChange,
+  onDeleted,
+  compact,
+}: {
+  g: AdminGiveaway;
+  onChange: (next: AdminGiveaway) => void;
+  /** Called after a delete; without it the page goes back to the list. */
+  onDeleted?: (id: number) => void;
+  compact?: boolean;
+}) {
   const { t } = useApp();
   const why = useWhyNot();
   const { href } = useGuild();
   const { pending, run, feedbackFor } = useAction();
   const toast = useToast();
   const { play } = useSound();
-  const [confirm, setConfirm] = useState<"end" | "reroll" | null>(null);
+  const router = useRouter();
+  const [confirm, setConfirm] = useState<"end" | "reroll" | "delete" | null>(null);
   const reason = why("giveaways.manage");
 
   const exec = async (kind: "end" | "reroll") => {
@@ -87,6 +100,14 @@ export function GiveawayActions({ g, onChange, compact }: { g: AdminGiveaway; on
       toast({ tone: "success", title: t("ga.confirm.ended", { n: res.winners.length }) });
       play("success");
     }
+  };
+
+  const remove = async () => {
+    const res = await run("delete", () => api<{ deleted: true }>(`/api/giveaways-admin/${g.id}/delete`, { method: "POST", body: { confirm: true } }), t("gdel.done", { prize: g.prize }));
+    setConfirm(null);
+    if (!res) return;
+    if (onDeleted) onDeleted(g.id);
+    else router.push(href("/giveaways-admin"));
   };
 
   return (
@@ -108,15 +129,50 @@ export function GiveawayActions({ g, onChange, compact }: { g: AdminGiveaway; on
           {t("ga.list.reroll")}
         </Button>
       )}
+      {compact ? (
+        <Button size="sm" variant="ghost" className="text-bad!" disabledReason={reason} loading={pending === "delete"} onClick={() => setConfirm("delete")}>
+          <Icon name="trash" size={14} />
+          {t("gdel.action")}
+        </Button>
+      ) : (
+        <Button size="icon-sm" variant="ghost" className="text-bad!" disabledReason={reason} tip={t("gdel.action")} aria-label={t("gdel.action")} loading={pending === "delete"} onClick={() => setConfirm("delete")}>
+          <Icon name="trash" size={16} />
+        </Button>
+      )}
       <ConfirmDialog
-        open={confirm !== null}
+        open={confirm === "delete"}
+        title={t("gdel.title", { prize: g.prize })}
+        body={t("gdel.body")}
+        confirmLabel={t("gdel.confirm")}
+        danger
+        loading={pending === "delete"}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => void remove()}
+      >
+        <ul className="space-y-1.5 text-sm text-ink-2">
+          {(["what1", "what2", "what3"] as const).map((k) => (
+            <li key={k} className="flex items-start gap-2">
+              <Icon name="trash" size={14} className="mt-0.5 shrink-0 text-bad" />
+              {t(`gdel.${k}`, { n: g.entries })}
+            </li>
+          ))}
+        </ul>
+        {g.status === "active" && (
+          <p className="mt-3 flex items-start gap-2 rounded-xl bg-surface-2 px-3 py-2 text-xs text-ink-3">
+            <Icon name="info" size={14} className="mt-0.5 shrink-0" />
+            {t("gdel.endInstead")}
+          </p>
+        )}
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={confirm === "end" || confirm === "reroll"}
         title={confirm === "end" ? t("ga.confirm.endTitle", { prize: g.prize }) : t("ga.confirm.rerollTitle", { prize: g.prize })}
         body={confirm === "end" ? t("ga.confirm.endBody") : t("ga.confirm.rerollBody")}
         confirmLabel={confirm === "end" ? t("ga.list.end") : t("ga.list.reroll")}
         danger={confirm === "end"}
-        loading={pending !== null}
+        loading={pending === "end" || pending === "reroll"}
         onCancel={() => setConfirm(null)}
-        onConfirm={() => confirm && void exec(confirm)}
+        onConfirm={() => (confirm === "end" || confirm === "reroll") && void exec(confirm)}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/icons/icon";
 import { useApp, useFormat } from "@/components/providers/app-provider";
 import { useGuild } from "@/components/providers/guild-provider";
+import { useRouter } from "next/navigation";
 import { useLiveEvent } from "@/components/providers/live-provider";
 import { Avatar } from "@/components/ui/avatar";
 import { Chip } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
   const { t } = useApp();
   const f = useFormat();
   const { href } = useGuild();
+  const router = useRouter();
   const [g, setG] = useState(initial);
   const [people, setPeople] = useState(initialPeople);
   const [tab, setTab] = useState<Tab>("entries");
@@ -53,6 +55,8 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   useLiveEvent("giveaway", (e) => {
     if (e.data.id !== g.id) return;
+    // Deleted (here or by someone else): nothing left to show.
+    if (e.data.deleted) return router.replace(href("/giveaways-admin"));
     setG(e.data);
     if (debounce.current) clearTimeout(debounce.current);
     debounce.current = setTimeout(reloadPeople, 1200);
