@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cookies } from "next/headers";
+import { ManageAccessProvider } from "@/components/access/manage-access";
 import { AppProvider } from "@/components/providers/app-provider";
 import { AttentionProvider } from "@/components/providers/attention-provider";
 import { GuildProvider } from "@/components/providers/guild-provider";
@@ -40,7 +41,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             <LiveProvider>
               <AttentionProvider seed={shell.attention}>
                 <NotificationsProvider seed={shell.activity}>
-                  <Shell>{children}</Shell>
+                  <ManageAccessProvider>
+                    <Shell>{children}</Shell>
+                  </ManageAccessProvider>
                 </NotificationsProvider>
               </AttentionProvider>
             </LiveProvider>

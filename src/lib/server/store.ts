@@ -172,6 +172,7 @@ export function queryAudit(q: AuditQuery = {}): { items: AuditEntry[]; nextCurso
   if (q.to) add("at <= ?", q.to);
   if (q.beforeId) add("id < ?", q.beforeId);
   if (q.outcome) add("outcome = ?", q.outcome);
+  if (q.targets?.length) add(`target IN (${q.targets.map(() => "?").join(", ")})`, ...q.targets);
   if (q.q) {
     const like = `%${escapeLike(q.q)}%`;
     add("(actor_name LIKE ? ESCAPE '\\' OR target LIKE ? ESCAPE '\\' OR reason LIKE ? ESCAPE '\\' OR action LIKE ? ESCAPE '\\')", like, like, like, like);

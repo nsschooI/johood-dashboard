@@ -13,7 +13,8 @@ import { cn } from "@/components/ui/cn";
 import type { MenuSection } from "@/components/ui/menu";
 import { RobloxHeadshot } from "@/components/ui/roblox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RankBadge } from "@/components/members/member-search";
+import { useManageAccess, useManageAccessReason } from "@/components/access/manage-access";
+import { MemberBadge } from "./member-badge";
 import { api } from "@/lib/client/api";
 import { useLoad } from "@/lib/client/use-load";
 import type { MemberProfile, MemberRef } from "@/lib/types";
@@ -101,7 +102,7 @@ function PersonCard({ person }: { person: MemberRef }) {
         {data && (
           <span className="mt-3 block space-y-2.5">
             <span className="flex flex-wrap items-center gap-1.5">
-              <RankBadge rank={data.rank} />
+              <MemberBadge badge={data.badge} />
               {top.map((r) => (
                 <span key={r.id} className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] text-ink-2 ring-1 ring-inset ring-line">
                   <span aria-hidden className="size-1.5 rounded-full" style={{ background: r.color }} />
@@ -143,6 +144,8 @@ export function usePersonSections(person: MemberRef, opts: { onLedger?: () => vo
   const router = useRouter();
   const go = (path: string) => () => router.push(path);
   const adjustReason = why("points.adjust") && why("points.adjust_limited");
+  const manageAccess = useManageAccess();
+  const accessReason = useManageAccessReason();
   return [
     {
       title: person.name,
@@ -151,7 +154,7 @@ export function usePersonSections(person: MemberRef, opts: { onLedger?: () => vo
         { key: "copy", label: t("menu.copyId"), icon: <Icon name="copy" size={18} />, onSelect: () => void navigator.clipboard?.writeText(person.discordId) },
         { key: "ledger", label: t("menu.viewLedger"), icon: <Icon name="file" size={18} />, onSelect: opts.onLedger ?? go(href("/points", { member: person.discordId })), disabledReason: why("points.view") },
         { key: "adjust", label: t("menu.adjustPoints"), icon: <Icon name="coin" size={18} />, onSelect: opts.onAdjust ?? go(href("/points", { member: person.discordId, adjust: "1" })), disabledReason: adjustReason },
-        { key: "access", label: t("menu.manageAccess"), icon: <Icon name="access" size={18} />, onSelect: go(href("/access", { staff: person.discordId })), disabledReason: why("permissions.manage") },
+        { key: "access", label: t("menu.manageAccess"), icon: <Icon name="userCog" size={18} />, onSelect: () => manageAccess(person), disabledReason: accessReason },
       ],
     },
   ];

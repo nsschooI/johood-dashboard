@@ -8,7 +8,8 @@ import { PageHeader } from "@/components/ui/card";
 import { ServerChip } from "@/components/shell/server-chip";
 import { useHashFocus } from "@/lib/client/anchors";
 import { dayKey } from "@/lib/time";
-import type { PointsSummary } from "@/lib/types";
+import { RanksCard } from "@/components/members/ranks-roles";
+import type { PointsSummary, RankInfo } from "@/lib/types";
 import { Kpis } from "./kpis";
 import { LedgerPanel } from "./ledger-panel";
 import { TopBuyers } from "./top-buyers";
@@ -16,6 +17,8 @@ import { PointsFlowChart, VolumeChart } from "./volume-chart";
 
 export interface PointsData {
   summary: PointsSummary | null;
+  /** In-game levels (cashback tiers). */
+  ranks: RankInfo[] | null;
 }
 
 type Totals = { robux: number; pointsEarned: number; pointsRedeemed: number; purchases: number };
@@ -74,6 +77,7 @@ export function PointsView({ data }: { data: PointsData }) {
         )}
         {summary && <PointsFlowChart daily={summary.daily} />}
         {can("points.view") && <LedgerPanel />}
+        {data.ranks && <RanksCard ranks={data.ranks} />}
       </div>
     </>
   );

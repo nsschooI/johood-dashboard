@@ -205,7 +205,8 @@ export interface Redemption {
   points: number;
 }
 
-export type LedgerKind = "purchase" | "transfer" | "redeem" | "adjust" | "refund";
+/** `activity` = points earned on the Discord server (chat, voice, events). */
+export type LedgerKind = "purchase" | "transfer" | "redeem" | "adjust" | "refund" | "activity";
 
 export interface LedgerEntry {
   id: string;
@@ -280,13 +281,57 @@ export interface DiscordRole {
   color: string;
 }
 
+/**
+ * The one badge shown next to a member: their server rank, or their staff
+ * role for staff. The backend decides which; null = no badge.
+ */
+export interface Badge {
+  kind: "staff" | "rank";
+  label: string;
+  /** Hex colour, e.g. "#a78bfa". */
+  color?: string;
+}
+
 export interface MemberSummary {
   discordId: string;
   username: string;
   displayName: string;
   avatarUrl: string | null;
+  /** In-game economy tier (cashback). Shown on the Roblox side, never as the member badge. */
   rank: Rank;
   robloxName: string | null;
+  badge?: Badge | null;
+}
+
+/** One row of the server directory (GET /members). */
+export interface MemberRow {
+  discordId: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  /** Server points; null when the viewer may not see points (redacted by the dashboard). */
+  points: number | null;
+  linked: boolean;
+  badge: Badge | null;
+  joinedAt: string | null;
+}
+
+export type MemberSort = "points" | "joined" | "name";
+
+export interface MemberListQuery {
+  q?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: MemberSort;
+  guild?: GuildKey;
+}
+
+/** A giveaway the member entered (profile). */
+export interface GiveawayJoin {
+  id: number;
+  prize: string;
+  joinedAt: string;
+  won: boolean;
 }
 
 export interface RobloxLink {
@@ -296,18 +341,145 @@ export interface RobloxLink {
 }
 
 /**
- * Full member profile. Roles without `members.view_full` receive a redacted
- * copy (see `redactProfile`): points, purchases and ledger are removed.
+ * Member profile — the Discord side only (no purchases, no Robux). Roles
+ * without `members.view_full` receive a redacted copy (see `redactProfile`).
  */
 export interface MemberProfile extends MemberSummary {
   joinedAt: string;
   roles: DiscordRole[];
+  linked: boolean;
+  robloxId: string | null;
+  /** Account details, used by the Roblox page's profile drawer. */
   roblox: RobloxLink | null;
   points: number | null;
   lifetimePoints: number | null;
-  totalRobux: number | null;
-  purchases: PurchaseEvent[] | null;
   tickets: TicketSummary[];
+  /** Giveaways entered, newest first. Optional: older backends don't send it. */
+  giveaways?: GiveawayJoin[] | null;
+}
+
+// ---------------------------------------------------------------------------
+// Member access (the Manage access panel)
+// ---------------------------------------------------------------------------
+
+export interface AccessRole {
+  id: string;
+  name: string;
+  color: string;
+  /** Discord position; higher = more powerful. */
+  position: number;
+  /** False for roles the bot can't manage (above the bot, managed, @everyone). */
+  assignable: boolean;
+  /**
+   * Why it isn't assignable. The UI translates the codes `above_bot`,
+   * `managed` and `everyone`; any other text is shown as sent.
+   */
+  reason?: string;
+  /** Dashboard actions this role grants. */
+  permissions: string[];
+}
+
+export interface MemberAccess {
+  discordId: string;
+  /** Dashboard roles from their Discord roles (owner, manager, …). */
+  siteRoles: Role[];
+  /** Per-person overrides. The dashboard keeps these itself and fills them in. */
+  overrides: { allow: string[]; deny: string[] };
+  memberRoleIds: string[];
+  /** Every role of the server, with what the bot may do with it. */
+  roles: AccessRole[];
+}
+
+export interface RoleChangeInput {
+  actor: MemberRef;
+  add: string[];
+  remove: string[];
+}
+
+// ---------------------------------------------------------------------------
+// The Roblox world
+// ---------------------------------------------------------------------------
+
+export interface LinkedPlayer {
+  discordId: string;
+  discordName: string;
+  avatarUrl: string | null;
+  robloxId: string;
+  robloxName: string;
+  robloxAvatarUrl: string | null;
+  linkedAt: string;
+  purchases: number;
+  spentRobux: number;
+  points: number;
+}
+
+export interface Candidate {
+  discordId: string;
+  name: string;
+  avatarUrl: string | null;
+  points: number;
+  openTicketId: string | null;
+  lastActiveAt: string | null;
+  invitedAt: string | null;
+}
+
+export interface OutsidePlayer {
+  robloxId: string;
+  robloxName: string;
+  robloxAvatarUrl: string | null;
+  spentRobux: number;
+  purchases: number;
+  lastPurchaseAt: string;
+  nudgedAt: string | null;
+}
+
+export type LinkedSort = "spent" | "linked" | "points";
+export type CandidateSort = "points" | "ticket";
+export type OutsideSort = "spent" | "last";
+
+export interface PagedQuery<S extends string> {
+  q?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: S;
+  guild?: GuildKey;
+}
+
+export interface CandidateQuery extends PagedQuery<CandidateSort> {
+  /** Only people with an open ticket. */
+  hasTicket?: boolean;
+  /** Only people with at least this many server points. */
+  minPoints?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Leaderboards
+// ---------------------------------------------------------------------------
+
+export const LEADERBOARD_KINDS = ["general", "chat", "voice", "reactions"] as const;
+export type LeaderboardKind = (typeof LEADERBOARD_KINDS)[number];
+export const LEADERBOARD_PERIODS = ["day", "2d", "week", "month", "all"] as const;
+export type LeaderboardPeriod = (typeof LEADERBOARD_PERIODS)[number];
+
+export interface LeaderboardEntry {
+  rank: number;
+  discordId: string;
+  name: string;
+  avatarUrl: string | null;
+  value: number;
+  badge: Badge | null;
+  /** Places moved since the previous period (+ = up). */
+  delta?: number;
+}
+
+export interface Leaderboard {
+  kind: LeaderboardKind;
+  period: LeaderboardPeriod;
+  /** False until the server records this period (before the points reset). */
+  available: boolean;
+  since: string | null;
+  updatedAt: string;
+  items: LeaderboardEntry[];
 }
 
 export interface RankInfo {
@@ -430,6 +602,8 @@ export interface AuditQuery {
   limit?: number;
   beforeId?: number;
   outcome?: AuditOutcome;
+  /** Exact targets, e.g. ["member:123", "staff:123"]. */
+  targets?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -483,6 +657,14 @@ export type LiveEventType = LiveEvent["type"];
 // ---------------------------------------------------------------------------
 // Provider interface
 // ---------------------------------------------------------------------------
+
+/** Numbered pages (members directory, Roblox lists). */
+export interface NumberedPage<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
 export interface Page<T> {
   items: T[];
@@ -540,7 +722,24 @@ export interface DataProvider {
 
   // Members ------------------------------------------------------------
   searchMembers(query: string, limit?: number, guild?: GuildKey): Promise<MemberSummary[]>;
+  /** Every member of the server, a page at a time. */
+  listMembers(q?: MemberListQuery): Promise<NumberedPage<MemberRow>>;
   getMember(discordId: string, guild?: GuildKey): Promise<MemberProfile | null>;
+  getMemberAccess(discordId: string, guild?: GuildKey): Promise<MemberAccess | null>;
+  /** 501 until the backend builds it. */
+  setMemberRoles(discordId: string, input: RoleChangeInput, guild?: GuildKey): Promise<{ memberRoleIds: string[] }>;
+
+  // Roblox
+  getRobloxLinked(q?: PagedQuery<LinkedSort>): Promise<NumberedPage<LinkedPlayer>>;
+  getRobloxCandidates(q?: CandidateQuery): Promise<NumberedPage<Candidate>>;
+  /** DM a link invitation from the bot. 501 until built. */
+  inviteCandidate(discordId: string, actor: MemberRef, guild?: GuildKey): Promise<{ invitedAt: string }>;
+  getRobloxOutside(q?: PagedQuery<OutsideSort>): Promise<NumberedPage<OutsidePlayer>>;
+  /** Show the in-game "join our server" message. 501 until built. */
+  nudgeOutside(robloxId: string, actor: MemberRef): Promise<{ nudgedAt: string }>;
+
+  // Leaderboards
+  getLeaderboard(q: { kind: LeaderboardKind; period: LeaderboardPeriod; limit?: number; guild?: GuildKey }): Promise<Leaderboard>;
   getRanks(guild?: GuildKey): Promise<RankInfo[]>;
   getRoles(guild?: GuildKey): Promise<RoleInfo[]>;
   getStaff(guild?: GuildKey): Promise<StaffMember[]>;

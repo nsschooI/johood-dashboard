@@ -36,7 +36,8 @@ export async function getOverviewData(user: SessionUser, guild: GuildKey = "main
 
 export async function getPointsData(user: SessionUser) {
   const p = getProvider();
-  return { summary: can(user, "points.view") ? await p.getPointsSummary() : null };
+  const [summary, ranks] = await Promise.all([can(user, "points.view") ? p.getPointsSummary() : null, can(user, "points.view") ? p.getRanks() : null]);
+  return { summary, ranks };
 }
 
 export async function getActivityData(user: SessionUser) {
@@ -57,16 +58,18 @@ export async function getActivityData(user: SessionUser) {
 
 export async function getMembersData(user: SessionUser, guild: GuildKey = "main") {
   const p = getProvider();
-  const [members, ranks, roles, staff] = await Promise.all([
-    can(user, "members.view") ? p.searchMembers("", 12, guild) : null,
-    can(user, "members.view") ? p.getRanks(guild) : null,
+  // Counts are a nice-to-have: a backend hiccup shouldn't take the page down.
+  const count = async (fn: () => Promise<{ total: number }>) => fn().then((r) => r.total).catch(() => null);
+  const [total, linked, roles, staff] = await Promise.all([
+    can(user, "members.view") ? count(() => p.listMembers({ guild, pageSize: 1 })) : null,
+    can(user, "roblox.view") ? count(() => p.getRobloxLinked({ guild, pageSize: 1 })) : null,
     can(user, "members.view") ? p.getRoles(guild) : null,
     can(user, "staff.view") ? p.getStaff(guild) : null,
   ]);
   const overrides = staff && can(user, "permissions.manage") ? getAllOverrides() : null;
   return {
-    members,
-    ranks,
+    directory: can(user, "members.view"),
+    counts: { members: total, linked, staff: staff?.length ?? null },
     roles,
     staff: staff?.map((s) => ({ ...s, overrides: overrides ? (overrides[s.discordId] ?? { allow: [], deny: [] }) : null })) ?? null,
   };

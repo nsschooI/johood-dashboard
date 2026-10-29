@@ -22,6 +22,7 @@ const MAP = {
   wifiOff: "wifi-off", pause: "pause", trash: "trash", edit: "pencil", reply: "reply", userCheck: "user-round-check",
   usersPlus: "user-round-plus", flag: "flag", sparkle: "sparkle", target: "target", funnel: "funnel", file: "file-text",
   smile: "face-slightly-smiling", radio: "radio", chart: "chart-column", briefcase: "briefcase", code: "code-xml", gem: "gem", linkOff: "link-2-off", listChecks: "list-checks", siren: "siren", arrowDownRight: "arrow-down-right", moon2: "moon-star", heart: "heart", dice: "dices", award: "award", layers: "layers",
+  gamepad: "gamepad-2", medal: "medal", arrowUp: "arrow-up", arrowDown: "arrow-down", userCog: "user-round-cog", mail: "mail", sortDesc: "arrow-down-wide-narrow", messages: "messages-square", copyList: "clipboard-list",
 };
 const out = {};
 for (const [name, lucide] of Object.entries(MAP)) {

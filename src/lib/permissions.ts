@@ -30,6 +30,8 @@ export const ACTIONS = [
   "points.adjust_limited",
   "members.view",
   "members.view_full",
+  "members.roles",
+  "roblox.view",
   "staff.view",
   "protection.view",
   "protection.manage",
@@ -44,7 +46,7 @@ const ALL: readonly Action[] = ACTIONS;
 
 export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Action[]>> = {
   owner: ALL,
-  manager: ALL.filter((a) => a !== "permissions.manage" && a !== "points.adjust_limited" && a !== "giveaways.manage"),
+  manager: ALL.filter((a) => a !== "permissions.manage" && a !== "points.adjust_limited" && a !== "giveaways.manage" && a !== "members.roles"),
   dev: ["bots.view", "bots.logs", "bots.restart", "assistants.view", "activity.view"],
   head_support: [
     "stats.view",
@@ -60,6 +62,7 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Action[]>> = {
     "points.adjust_limited",
     "members.view",
     "members.view_full",
+    "roblox.view",
   ],
   support: ["activity.view", "tickets.view", "tickets.claim", "tickets.reply", "purchases.view", "members.view"],
 };
@@ -67,11 +70,12 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Action[]>> = {
 /**
  * Actions that can never be granted through a per-user override: only the
  * Owner role carries them, so an override can't be used to escalate.
+ * Giving Discord roles counts: whoever can add roles can add a staff role.
  */
-export const NON_GRANTABLE: readonly Action[] = ["permissions.manage"];
+export const NON_GRANTABLE: readonly Action[] = ["permissions.manage", "members.roles"];
 
 /** Actions that must pass an explicit confirm step (enforced server-side). */
-export const CONFIRM_REQUIRED: readonly Action[] = ["bots.stop", "permissions.manage"];
+export const CONFIRM_REQUIRED: readonly Action[] = ["bots.stop", "permissions.manage", "members.roles"];
 
 export interface PermissionOverrides {
   allow: Action[];
@@ -149,6 +153,8 @@ export const PAGE_ACCESS = {
   tickets: ["tickets.view"],
   activity: ["purchases.view", "transfers.view", "points.view", "activity.view"],
   members: ["members.view", "staff.view"],
+  leaderboards: ["members.view"],
+  roblox: ["roblox.view"],
   points: ["points.view"],
   giveaways: ["giveaways.view", "giveaways.manage"],
   bots: ["bots.view", "assistants.view"],

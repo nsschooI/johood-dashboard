@@ -29,6 +29,8 @@ export interface AdminGiveaway {
   bannerUrl: string | null;
   channelName?: string;
   guildName?: string;
+  /** Only on the live event sent when a giveaway is deleted. */
+  deleted?: boolean;
 }
 
 export interface Participant {
@@ -81,6 +83,8 @@ export interface AdminGiveawaysApi {
   create(input: CreateGiveawayInput): Promise<{ id: number }>;
   end(id: number, actor: MemberRef): Promise<{ winners: { id: string; name: string }[] }>;
   reroll(id: number, actor: MemberRef): Promise<{ winners: { id: string; name: string }[] }>;
+  /** Removes the giveaway, its entries and its Discord message for good. */
+  delete(id: number, actor: MemberRef): Promise<{ deleted: true }>;
 }
 
 export const GIVEAWAY_LIMITS = {

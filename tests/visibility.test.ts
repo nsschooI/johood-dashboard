@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canReceive, redactProfile } from "@/lib/visibility";
+import { canReceive, redactMemberRow, redactProfile } from "@/lib/visibility";
 import type { ActivityItem, LiveEvent, MemberProfile, Role } from "@/lib/types";
 
 const u = (role: Role) => ({ roles: [role] });
@@ -39,12 +39,17 @@ describe("live stream filtering", () => {
 describe("redactProfile", () => {
   const profile = {
     discordId: "1", username: "u", displayName: "U", avatarUrl: null, rank: "gold", robloxName: "R",
-    joinedAt: "", roles: [], roblox: null, points: 10, lifetimePoints: 20, totalRobux: 30, purchases: [], tickets: [],
+    joinedAt: "", roles: [], linked: false, robloxId: null, roblox: null, points: 10, lifetimePoints: 20, tickets: [],
   } as MemberProfile;
 
-  it("removes economy fields for basic viewers", () => {
+  it("removes points for basic viewers", () => {
     const r = redactProfile(u("support"), profile);
-    expect([r.points, r.lifetimePoints, r.totalRobux, r.purchases]).toEqual([null, null, null, null]);
+    expect([r.points, r.lifetimePoints]).toEqual([null, null]);
+  });
+  it("directory rows hide points the same way", () => {
+    const row = { discordId: "1", username: "u", displayName: "U", avatarUrl: null, points: 10, linked: true, badge: null, joinedAt: null };
+    expect(redactMemberRow(u("support"), row).points).toBeNull();
+    expect(redactMemberRow(u("head_support"), row).points).toBe(10);
   });
   it("keeps them for members.view_full", () => {
     expect(redactProfile(u("head_support"), profile).points).toBe(10);

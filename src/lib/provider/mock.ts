@@ -9,6 +9,14 @@
  * Tests construct it with `autoTick: false` and drive `tick(now)` by hand.
  */
 import type {
+  CandidateQuery,
+  LeaderboardKind,
+  LeaderboardPeriod,
+  LinkedSort,
+  MemberListQuery,
+  OutsideSort,
+  PagedQuery,
+  RoleChangeInput,
   ActivityItem,
   Assistant,
   AssistantAction,
@@ -52,6 +60,7 @@ import { DAY, HOUR, MINUTE, dayKey, lastDays, lastWeeks, weekKey } from "../time
 import { ProviderError } from "./errors";
 import { MockAdminGiveaways } from "../giveaways/admin-mock";
 import { MockGiveaways } from "../giveaways/mock";
+import { MockCommunity, activityPoints, type CommunityMember } from "./mock-community";
 import {
   BOT_META,
   CATALOG,
@@ -112,6 +121,11 @@ export interface MockOptions {
    * (MOCK_NOT_IMPLEMENTED=true), to try the "not connected yet" UX.
    */
   notImplemented?: boolean;
+  /**
+   * The day the points system was reset (leaderboards record per period
+   * from then). Default null: only "All time" has data, like the server today.
+   */
+  leaderboardSince?: string | null;
 }
 
 const MAX_ACTIVITY = 300;
@@ -152,6 +166,7 @@ export class MockProvider implements DataProvider {
   private stats!: Record<GuildKey, ServerStats>;
   private ticketNo = 1000;
   private notImplemented = false;
+  private community!: MockCommunity;
 
   private guardMutation() {
     if (this.notImplemented) throw new ProviderError("not_implemented", "Not implemented");
@@ -163,6 +178,7 @@ export class MockProvider implements DataProvider {
     this.live = opts.liveRng ?? Math.random;
     this.notImplemented = opts.notImplemented ?? false;
     this.seedMembers(opts.members ?? 260, now);
+    this.seedActivityPoints(now - ((opts.historyDays ?? 56) + 1) * DAY);
     this.seedHistory(opts.historyDays ?? 56, now);
     this.seedBots(now);
     this.seedTickets(now);
@@ -190,6 +206,17 @@ export class MockProvider implements DataProvider {
         boosts: MOCK_GUILDS.catalog.boosts,
       },
     };
+    this.community = new MockCommunity(
+      {
+        members: () => this.members,
+        purchases: () => this.purchases,
+        tickets: () => this.tickets,
+        giveaways: () => this.adminGiveaways.list(),
+        guardMutation: () => this.guardMutation(),
+        now: () => Date.now(),
+      },
+      { leaderboardSince: opts.leaderboardSince ?? null },
+    );
     if (opts.autoTick ?? true) this.start();
   }
 
@@ -283,6 +310,16 @@ export class MockProvider implements DataProvider {
       };
       this.members.push(m);
       this.byId.set(m.discordId, m);
+    }
+  }
+
+  /** Points earned on the server before the simulated history (see mock-community). */
+  private seedActivityPoints(at: number) {
+    for (const m of this.members) {
+      const pts = activityPoints(m.discordId);
+      if (pts <= 0) continue;
+      m.lifetime += pts;
+      this.pushLedger({ at: iso(at), discordId: m.discordId, kind: "activity", delta: pts, reason: "Chat, voice and events" }, m);
     }
   }
 
@@ -890,7 +927,7 @@ export class MockProvider implements DataProvider {
   }
 
   async getLedger(discordId: string, q: ListQuery = {}) {
-    if (!this.byId.has(discordId)) throw new ProviderError("not_found", "Unknown member");
+    if (!this.byId.has(discordId) && !this.community.member(discordId)) throw new ProviderError("not_found", "Unknown member");
     return paginate(this.ledgerByMember.get(discordId) ?? [], q);
   }
 
@@ -914,7 +951,7 @@ export class MockProvider implements DataProvider {
   // Members
   // -------------------------------------------------------------------------
 
-  private summary(m: MockMember): MemberSummary {
+  private summary(m: MockMember | CommunityMember): MemberSummary {
     return {
       discordId: m.discordId,
       username: m.username,
@@ -922,6 +959,7 @@ export class MockProvider implements DataProvider {
       avatarUrl: m.avatarUrl,
       rank: rankFor(m.lifetime),
       robloxName: m.linked ? m.robloxName : null,
+      badge: this.community.badge(m),
     };
   }
 
@@ -936,8 +974,13 @@ export class MockProvider implements DataProvider {
     return list.slice(0, clamp(limit, 1, 50)).map((m) => this.summary(m));
   }
 
+  async listMembers(q: MemberListQuery = {}) {
+    return this.community.listMembers(q);
+  }
+
+  /** The Discord side of a member: no purchases, no Robux (those live on the Roblox page). */
   async getMember(discordId: string, guild: GuildKey = "main"): Promise<MemberProfile | null> {
-    const m = this.byId.get(discordId);
+    const m = this.byId.get(discordId) ?? this.community.member(discordId);
     const membership = m?.guilds[guild];
     if (!m || !membership) return null;
     const pool = guild === "main" ? MAIN_ROLES : SERVER_ROLES;
@@ -945,13 +988,50 @@ export class MockProvider implements DataProvider {
       ...this.summary(m),
       joinedAt: membership.joinedAt,
       roles: pool.filter((r) => membership.roleIds.includes(r.id)),
+      linked: m.linked,
+      robloxId: m.linked ? m.robloxId : null,
       roblox: m.linked ? { robloxId: m.robloxId, robloxName: m.robloxName, verifiedAt: m.verifiedAt } : null,
       points: m.balance,
       lifetimePoints: m.lifetime,
-      totalRobux: m.totalRobux,
-      purchases: this.purchases.filter((p) => p.robloxId === m.robloxId).slice(-20).reverse(),
       tickets: guild === "catalog" ? this.tickets.filter((t) => t.openedBy.discordId === m.discordId).map(summarize).reverse() : [],
+      giveaways: await this.community.giveawaysFor(m),
     };
+  }
+
+  async getMemberAccess(discordId: string, guild: GuildKey = "catalog") {
+    return this.community.access(discordId, guild);
+  }
+
+  async setMemberRoles(discordId: string, input: RoleChangeInput, guild: GuildKey = "catalog") {
+    return this.community.setRoles(discordId, input, guild);
+  }
+
+  // -------------------------------------------------------------------------
+  // Roblox & leaderboards
+  // -------------------------------------------------------------------------
+
+  async getRobloxLinked(q: PagedQuery<LinkedSort> = {}) {
+    return this.community.linked(q);
+  }
+
+  async getRobloxCandidates(q: CandidateQuery = {}) {
+    return this.community.candidates(q);
+  }
+
+  async inviteCandidate(discordId: string, actor: MemberRef) {
+    return this.community.invite(discordId, actor);
+  }
+
+  async getRobloxOutside(q: PagedQuery<OutsideSort> = {}) {
+    return this.community.outsidePlayers(q);
+  }
+
+  async nudgeOutside(robloxId: string, actor: MemberRef) {
+    return this.community.nudge(robloxId, actor);
+  }
+
+  async getLeaderboard(q: { kind: LeaderboardKind; period: LeaderboardPeriod; limit?: number; guild?: GuildKey }) {
+    return this.community.leaderboard(q);
   }
 
   /** Ranks come from lifetime points, so they're the same in both servers. */

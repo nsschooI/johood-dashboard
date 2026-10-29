@@ -15,6 +15,22 @@
  * private network and authenticate with the shared bearer token.
  */
 import type {
+  Candidate,
+  CandidateQuery,
+  Leaderboard,
+  LeaderboardKind,
+  LeaderboardPeriod,
+  LinkedPlayer,
+  LinkedSort,
+  MemberAccess,
+  MemberListQuery,
+  MemberRef,
+  MemberRow,
+  NumberedPage,
+  OutsidePlayer,
+  OutsideSort,
+  PagedQuery,
+  RoleChangeInput,
   ActivityItem,
   Assistant,
   AssistantAction,
@@ -206,6 +222,60 @@ export class RealProvider implements DataProvider {
       if (isProviderError(err) && err.code === "not_found") return null;
       throw err;
     }
+  }
+
+  /** GET /members — every member of the server, numbered pages. */
+  listMembers(q: MemberListQuery = {}) {
+    return this.get<NumberedPage<MemberRow>>("/members", { q: q.q, page: q.page, pageSize: q.pageSize, sort: q.sort, guild: q.guild });
+  }
+
+  async getMemberAccess(discordId: string, guild?: GuildKey) {
+    try {
+      return await this.get<MemberAccess>(`/members/${encodeURIComponent(discordId)}/access`, { guild });
+    } catch (err) {
+      if (isProviderError(err) && err.code === "not_found") return null;
+      throw err;
+    }
+  }
+
+  /** 501 until the backend builds it. */
+  setMemberRoles(discordId: string, input: RoleChangeInput, guild?: GuildKey) {
+    return this.request<{ memberRoleIds: string[] }>("POST", `/members/${encodeURIComponent(discordId)}/roles`, { query: { guild }, body: input });
+  }
+
+  getRobloxLinked(q: PagedQuery<LinkedSort> = {}) {
+    return this.get<NumberedPage<LinkedPlayer>>("/roblox/linked", { q: q.q, page: q.page, pageSize: q.pageSize, sort: q.sort, guild: q.guild });
+  }
+
+  /** `hasTicket` and `minPoints` are filters on top of the contract; a backend that ignores them returns the unfiltered list. */
+  getRobloxCandidates(q: CandidateQuery = {}) {
+    return this.get<NumberedPage<Candidate>>("/roblox/candidates", {
+      q: q.q,
+      page: q.page,
+      pageSize: q.pageSize,
+      sort: q.sort,
+      guild: q.guild,
+      hasTicket: q.hasTicket ? 1 : undefined,
+      minPoints: q.minPoints || undefined,
+    });
+  }
+
+  /** 501 until built. */
+  inviteCandidate(discordId: string, actor: MemberRef, guild?: GuildKey) {
+    return this.request<{ invitedAt: string }>("POST", `/roblox/candidates/${encodeURIComponent(discordId)}/invite`, { query: { guild }, body: { actor } });
+  }
+
+  getRobloxOutside(q: PagedQuery<OutsideSort> = {}) {
+    return this.get<NumberedPage<OutsidePlayer>>("/roblox/outside", { q: q.q, page: q.page, pageSize: q.pageSize, sort: q.sort });
+  }
+
+  /** 501 until built. */
+  nudgeOutside(robloxId: string, actor: MemberRef) {
+    return this.request<{ nudgedAt: string }>("POST", `/roblox/outside/${encodeURIComponent(robloxId)}/nudge`, { body: { actor } });
+  }
+
+  getLeaderboard(q: { kind: LeaderboardKind; period: LeaderboardPeriod; limit?: number; guild?: GuildKey }) {
+    return this.get<Leaderboard>("/leaderboard", { kind: q.kind, period: q.period, limit: q.limit, guild: q.guild });
   }
 
   getRanks(guild?: GuildKey) {
@@ -417,5 +487,9 @@ export class RealAdminGiveaways implements AdminGiveawaysApi {
 
   reroll(id: number, actor: CreateGiveawayInput["actor"]) {
     return this.request<{ winners: { id: string; name: string }[] }>("POST", `/admin/giveaways/${id}/reroll`, { body: { actor } });
+  }
+
+  delete(id: number, actor: CreateGiveawayInput["actor"]) {
+    return this.request<{ deleted: true }>("POST", `/admin/giveaways/${id}/delete`, { body: { actor } });
   }
 }

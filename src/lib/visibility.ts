@@ -2,7 +2,7 @@
  * What each permission lets a user *read*. Used by the SSE stream and the
  * API routes to filter / redact data before it leaves the server.
  */
-import type { ActivityItem, ActivityKind, LiveEvent, MemberProfile } from "./types";
+import type { ActivityItem, ActivityKind, LiveEvent, MemberProfile, MemberRow } from "./types";
 import { can, type Action, type SessionUser } from "./permissions";
 
 type U = Pick<SessionUser, "roles" | "overrides">;
@@ -65,8 +65,11 @@ export function redactProfile(user: U, profile: MemberProfile): MemberProfile {
     ...profile,
     points: null,
     lifetimePoints: null,
-    totalRobux: null,
-    purchases: null,
     tickets: can(user, "tickets.view") ? profile.tickets : [],
   };
+}
+
+/** Directory rows: points need `members.view_full`, like profiles. */
+export function redactMemberRow(user: U, row: MemberRow): MemberRow {
+  return can(user, "members.view_full") ? row : { ...row, points: null };
 }

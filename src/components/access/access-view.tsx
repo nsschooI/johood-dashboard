@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useId, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Scene } from "@/components/art/scenes";
 import { AuditCard } from "@/components/members/audit-card";
@@ -431,8 +431,27 @@ function OverridesEditor({ staff: initial }: { staff: StaffRow[] }) {
   );
 }
 
-function PersonOverrides({ person, onSaved }: { person: StaffRow; onSaved: (o: PermissionOverrides) => void }) {
+export type OverridePerson = Pick<StaffRow, "discordId" | "name" | "avatarUrl" | "roles" | "overrides">;
+
+/**
+ * Grant / remove single permissions on top of someone's roles, with a diff,
+ * a reason and a confirm step. Used on the Access page and in the Manage
+ * access panel (`layout="panel"` stacks everything for a narrow drawer).
+ */
+export function PersonOverrides({
+  person,
+  onSaved,
+  layout = "page",
+  readOnlyReason = null,
+}: {
+  person: OverridePerson;
+  onSaved: (o: PermissionOverrides) => void;
+  layout?: "page" | "panel";
+  readOnlyReason?: string | null;
+}) {
   const t = useT();
+  const reasonId = useId();
+  const panel = layout === "panel";
   const { pending, run } = useAction();
   const initial = useMemo(() => person.overrides ?? { allow: [], deny: [] }, [person.overrides]);
   const start = useMemo(() => {
@@ -486,7 +505,7 @@ function PersonOverrides({ person, onSaved }: { person: StaffRow; onSaved: (o: P
 
   return (
     <div className="min-w-0 space-y-4">
-      <div className="flex items-center gap-3 rounded-2xl bg-surface-2 p-3 ring-1 ring-inset ring-line">
+      <div className={cn("flex items-center gap-3 rounded-2xl bg-surface-2 p-3 ring-1 ring-inset ring-line", panel && "hidden")}>
         <Avatar name={person.name} src={person.avatarUrl} size={44} />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{person.name}</p>
@@ -497,8 +516,8 @@ function PersonOverrides({ person, onSaved }: { person: StaffRow; onSaved: (o: P
         <Icon name="members" size={16} className="text-ink-3" />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_16rem]">
-        <div className="max-h-[30rem] space-y-4 overflow-y-auto pe-1">
+      <div className={cn("grid gap-4", !panel && "xl:grid-cols-[minmax(0,1fr)_16rem]")}>
+        <div className={cn("space-y-4", !panel && "max-h-[30rem] overflow-y-auto pe-1")}>
           {groups().map(([g, actions]) => (
             <fieldset key={g}>
               <legend className="mb-1.5 text-[11px] font-semibold text-ink-3">{translateDynamic(t, `access.group.${g}`, undefined, g)}</legend>
@@ -540,7 +559,10 @@ function PersonOverrides({ person, onSaved }: { person: StaffRow; onSaved: (o: P
           ))}
         </div>
 
-        <aside aria-label={t("access.diff")} className="h-fit space-y-3 rounded-2xl bg-surface-2 p-4 ring-1 ring-inset ring-line xl:sticky xl:top-20">
+        <aside
+          aria-label={t("access.diff")}
+          className={cn("h-fit space-y-3 rounded-2xl bg-surface-2 p-4 ring-1 ring-inset ring-line", panel ? "sticky bottom-0 z-10 shadow-[var(--shadow-pop)]" : "xl:sticky xl:top-20")}
+        >
           <h4 className="text-xs font-semibold text-ink-3">{t("access.diff")}</h4>
           {!changed || (granted.length === 0 && removed.length === 0) ? (
             <p className="text-sm text-ink-3">{t("access.noChanges")}</p>
@@ -560,17 +582,19 @@ function PersonOverrides({ person, onSaved }: { person: StaffRow; onSaved: (o: P
               ))}
             </ul>
           )}
-          <label htmlFor="ov-reason" className="block pt-1 text-xs font-medium text-ink-2">
+          <label htmlFor={reasonId} className="block pt-1 text-xs font-medium text-ink-2">
             {t("common.reason")}
           </label>
-          <Input id="ov-reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
+          <Input id={reasonId} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => setChoices(start)} disabled={!changed}>
               {t("access.reset")}
             </Button>
-            <Button variant="primary" size="sm" className="flex-1" onClick={() => setConfirming(true)} disabled={!changed} loading={pending === "save"}>
-              {t("common.save")}
-            </Button>
+            <Tooltip content={readOnlyReason} className="flex-1">
+              <Button variant="primary" size="sm" className="w-full flex-1" onClick={() => setConfirming(true)} disabled={!changed || Boolean(readOnlyReason)} loading={pending === "save"}>
+                {t("common.save")}
+              </Button>
+            </Tooltip>
           </div>
         </aside>
       </div>

@@ -18,14 +18,15 @@ import { Segmented } from "@/components/ui/segmented";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { TimeAgo } from "@/components/ui/time-ago";
-import { MemberSearch, RankBadge } from "@/components/members/member-search";
+import { MemberSearch } from "@/components/members/member-search";
+import { MemberBadge } from "@/components/people/member-badge";
 import { api, qs } from "@/lib/client/api";
 import { useAction } from "@/lib/client/use-action";
 import { useLoad } from "@/lib/client/use-load";
 import type { LedgerEntry, LedgerKind, MemberProfile, MemberSummary, Page } from "@/lib/types";
 import { Table, Td, Th } from "./tables";
 
-const KIND_TONE: Record<LedgerKind, Tone> = { purchase: "accent", transfer: "info", redeem: "neutral", adjust: "warn", refund: "good" };
+const KIND_TONE: Record<LedgerKind, Tone> = { purchase: "accent", transfer: "info", redeem: "neutral", adjust: "warn", refund: "good", activity: "info" };
 
 export function LedgerPanel() {
   const t = useT();
@@ -95,7 +96,7 @@ function MemberLedger({ member }: { member: Pick<MemberSummary, "discordId"> }) 
         <Avatar name={profile.displayName} src={profile.avatarUrl} size={48} />
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 truncate font-medium text-ink">
-            {profile.displayName} <RankBadge rank={profile.rank} />
+            {profile.displayName} <MemberBadge badge={profile.badge} />
           </p>
           <p className="rtl:text-right truncate text-xs text-ink-3" dir="ltr">
             {profile.roblox?.robloxName ?? t("members.notLinked")} · {profile.discordId}

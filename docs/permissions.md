@@ -55,6 +55,8 @@ that is only a courtesy — a hand-crafted request is refused the same way.
 | `points.adjust_limited` | ✓ | — | — | ✓ | — |
 | `members.view` | ✓ | ✓ | — | ✓ | ✓ |
 | `members.view_full` | ✓ | ✓ | — | ✓ | — |
+| `members.roles` | ✓ | — | — | — | — |
+| `roblox.view` | ✓ | ✓ | — | ✓ | — |
 | `staff.view` | ✓ | ✓ | — | — | — |
 | `protection.view` | ✓ | ✓ | — | — | — |
 | `protection.manage` | ✓ | ✓ | — | — | — |
@@ -82,14 +84,16 @@ that is only a courtesy — a hand-crafted request is refused the same way.
 | `points.view` | Totals, charts, top buyers, redemptions, per-member ledger |
 | `points.adjust` | Manual credit/debit, unlimited amount |
 | `points.adjust_limited` | Manual credit/debit up to `limitedAdjustMax` (500) per adjustment |
-| `members.view` | Member search and basic profile (roles, rank, Roblox link, tickets) |
-| `members.view_full` | Adds economy data to profiles (points, lifetime, Robux spent, purchases) |
+| `members.view` | Members directory and profiles (roles, badge, linked or not, tickets, giveaways), Leaderboards |
+| `members.view_full` | Adds server points and lifetime points to the directory and profiles |
+| `members.roles` | Add and remove a member's Discord roles from Manage access (Owner and Founders; can't be granted) |
+| `roblox.view` | The Roblox page: linked players, link candidates, players outside the server, invitations and nudges |
 | `staff.view` | Staff list with access levels |
 | `protection.view` / `.manage` | Lockdown, raid mode, link blocking, blocked-word lists |
 | `audit.view` | The audit log viewer |
 | `permissions.manage` | Per-user overrides (Owner only, can't be granted) |
 | `giveaways.view` | Giveaways page: list, details, participants and blocked members, CSV export |
-| `giveaways.manage` | Start, end and reroll giveaways from the dashboard (Owner and Founders) |
+| `giveaways.manage` | Start, end, reroll and delete giveaways from the dashboard (Owner and Founders) |
 
 ### Pages
 
@@ -99,6 +103,8 @@ that is only a courtesy — a hand-crafted request is refused the same way.
 | Tickets | `tickets.view` |
 | Activity | `purchases.view`, `transfers.view`, `points.view`, `activity.view` |
 | Members | `members.view`, `staff.view` |
+| Leaderboards | `members.view` |
+| Roblox | `roblox.view` |
 | Points | `points.view` |
 | Giveaways | `giveaways.view`, `giveaways.manage` |
 | Bots | `bots.view`, `assistants.view` |
@@ -110,11 +116,12 @@ server only fetches the data for those sections.
 
 ## Overrides (Owner only)
 
-On **Access**, an Owner can set per-member
-overrides on top of their Discord roles:
+From **Manage access** on any member (or the Access page), an Owner can set
+per-member overrides on top of their Discord roles:
 
-- **Allow** adds a single action. `permissions.manage` can never be granted
-  this way (no privilege escalation).
+- **Allow** adds a single action. `permissions.manage` and `members.roles`
+  can never be granted this way (no privilege escalation — whoever can give
+  Discord roles could give themselves a staff role).
 - **Deny** removes an action even if a role grants it. Deny wins over allow.
 - An Owner can't deny themselves `permissions.manage` (no lock-out).
 - Overrides are stored in SQLite and apply to the member's **next request**
@@ -129,7 +136,7 @@ overrides on top of their Discord roles:
 | Denied mutations are audited too (`ok = false`) | `guard()`, `ctx.require()` |
 | The audit log is append-only | SQLite triggers reject UPDATE/DELETE |
 | Every point adjustment needs a written reason (≥ 5 chars) | `/api/points/adjust` schema |
-| Confirm step for dangerous actions — stopping a bot, changing permissions, lockdown/raid mode, adjusting more than 1,000 points | Server returns **428 confirm_required** until the request carries `confirm: true`; the UI shows a confirm dialog first |
+| Confirm step for dangerous actions — stopping a bot, changing permissions or Discord roles, lockdown/raid mode, adjusting more than 1,000 points, ending / rerolling / deleting a giveaway, link invitations and in-game nudges | Server returns **428 confirm_required** until the request carries `confirm: true`; the UI shows a confirm dialog first |
 | Rate limits on sensitive endpoints (per user, sliding window) | `config/dashboard.ts → rateLimits`, `guard({ rateLimit })` |
 | CSRF: mutations need the per-session `X-CSRF-Token` header **and** a same-origin `Origin`/`Sec-Fetch-Site` | `guard({ mutation: true })` |
 | Sessions: random 256-bit token in an `httpOnly`, `SameSite=Lax` cookie (`__Host-` + `Secure` over https); only a SHA-256 hash is stored | `src/lib/server/store.ts` |

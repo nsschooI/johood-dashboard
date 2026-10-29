@@ -271,6 +271,15 @@ export class MockAdminGiveaways implements AdminGiveawaysApi {
     return { winners: [...g.winners] };
   }
 
+  async delete(id: number, actor: MemberRef) {
+    void actor;
+    const g = this.must(id);
+    this.items.delete(id);
+    // Stored banner data goes with it.
+    this.onChange({ ...this.public(g), deleted: true });
+    return { deleted: true as const };
+  }
+
   /** Simulation step (called by the mock provider about once a second). */
   tick() {
     this.settle();

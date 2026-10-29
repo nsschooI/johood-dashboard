@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { Icon } from "@/components/icons/icon";
 import { useT } from "@/components/providers/app-provider";
 import { Avatar } from "@/components/ui/avatar";
-import { RANK_TEXT, RankIcon } from "@/components/art/rank-icon";
+import { MemberBadge } from "@/components/people/member-badge";
 import { cn } from "@/components/ui/cn";
 import { Input } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -86,40 +86,14 @@ export function MemberSearch({
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold text-ink"><bdi>{m.displayName}</bdi></span>
                       <span className="rtl:text-right block truncate text-xs text-ink-3" dir="ltr">
-                        {m.robloxName ?? m.username}
+                        @{m.username}
                       </span>
                     </span>
-                    <RankBadge rank={m.rank} />
+                    <MemberBadge badge={m.badge} />
                   </button>
                 </li>
               ))}
       </ul>
     </div>
-  );
-}
-
-const RANK_STYLE: Record<MemberSummary["rank"], string> = {
-  newcomer: "ring-line bg-surface-2",
-  bronze: "ring-orange-400/35 bg-orange-400/[0.08]",
-  silver: "ring-slate-400/35 bg-slate-300/[0.1]",
-  gold: "ring-amber-400/40 bg-amber-300/[0.12]",
-  diamond: "ring-cyan-400/40 bg-cyan-300/[0.1]",
-  legend: "ring-fuchsia-400/40 bg-fuchsia-400/10",
-};
-
-export function RankBadge({ rank, size = "sm" }: { rank: MemberSummary["rank"]; size?: "sm" | "md" }) {
-  const t = useT();
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full font-semibold whitespace-nowrap ring-1 ring-inset",
-        size === "md" ? "py-0.5 ps-1 pe-2.5 text-xs" : "py-px ps-0.5 pe-2 text-[11px]",
-        RANK_STYLE[rank],
-        RANK_TEXT[rank],
-      )}
-    >
-      <RankIcon rank={rank} size={size === "md" ? 20 : 16} />
-      {t(`members.rankName.${rank}`)}
-    </span>
   );
 }

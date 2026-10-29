@@ -3,26 +3,27 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icons/icon";
-import { useApp } from "@/components/providers/app-provider";
+import { useApp, useFormat } from "@/components/providers/app-provider";
 import { useGuild } from "@/components/providers/guild-provider";
 import { Avatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/card";
 import { Segmented } from "@/components/ui/segmented";
 import { ServerChip } from "@/components/shell/server-chip";
 import { useHashFocus } from "@/lib/client/anchors";
-import type { MemberSummary, RankInfo, RoleInfo } from "@/lib/types";
+import type { RoleInfo } from "@/lib/types";
 import { MembersPanel } from "./member-profile";
-import { RanksCard, RolesCard } from "./ranks-roles";
+import { RolesCard } from "./ranks-roles";
 import type { StaffRow } from "@/components/access/access-view";
 
 export interface MembersData {
-  members: MemberSummary[] | null;
-  ranks: RankInfo[] | null;
+  /** False when the viewer can't see the directory (staff list only). */
+  directory: boolean;
+  counts: { members: number | null; linked: number | null; staff: number | null };
   roles: RoleInfo[] | null;
   staff: StaffRow[] | null;
 }
 
-type Tab = "directory" | "ranks";
+type Tab = "directory" | "roles";
 
 /** Staff and their access live on the Access page; this links there with their faces. */
 function StaffLink({ staff }: { staff: StaffRow[] }) {
@@ -44,40 +45,72 @@ function StaffLink({ staff }: { staff: StaffRow[] }) {
   );
 }
 
+function Counts({ counts }: { counts: MembersData["counts"] }) {
+  const { t } = useApp();
+  const f = useFormat();
+  const items = [
+    counts.members !== null && { icon: "members" as const, text: t("dir.counts.members", { n: f.n(counts.members) }) },
+    counts.linked !== null && { icon: "link" as const, text: t("dir.counts.linked", { n: f.n(counts.linked) }) },
+    counts.staff !== null && { icon: "shield" as const, text: t("dir.counts.staff", { n: f.n(counts.staff) }) },
+  ].filter(Boolean) as { icon: "members" | "link" | "shield"; text: string }[];
+  if (!items.length) return null;
+  return (
+    <p className="mb-4 flex flex-wrap gap-2 text-xs font-medium text-ink-2">
+      {items.map((i) => (
+        <span key={i.icon} className="inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 shadow-[var(--shadow-glass)] ring-1 ring-line">
+          <Icon name={i.icon} size={14} className="text-accent-400" />
+          <span className="tabular">{i.text}</span>
+        </span>
+      ))}
+    </p>
+  );
+}
+
 export function MembersView({ data }: { data: MembersData }) {
   const { t } = useApp();
+  const { info, guild } = useGuild();
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const tab: Tab = params.get("tab") === "ranks" && (data.ranks || data.roles) ? "ranks" : "directory";
+  const tab: Tab = (params.get("tab") === "roles" && data.roles) || !data.directory ? "roles" : "directory";
   useHashFocus();
   const setTab = (v: Tab) => {
     const next = new URLSearchParams(params.toString());
     if (v === "directory") next.delete("tab");
     else next.set("tab", v);
+    next.delete("member");
     router.replace(`${pathname}?${next}`, { scroll: false });
   };
   return (
     <>
-      <PageHeader eyebrow={<ServerChip />} title={t("nav.members")} subtitle={t("members.subtitle")} actions={data.staff && <StaffLink staff={data.staff} />} />
-      {data.members && (data.ranks || data.roles) && (
+      <PageHeader
+        eyebrow={<ServerChip />}
+        title={t("nav.members")}
+        subtitle={t("dir.subtitle", { server: info(guild)?.name ?? "" })}
+        actions={data.staff && <StaffLink staff={data.staff} />}
+      />
+      <Counts counts={data.counts} />
+      {data.directory && data.roles && (
         <div className="mb-5">
           <Segmented
             label={t("nav.members")}
             value={tab}
             onChange={setTab}
             options={[
-              { value: "directory" as Tab, label: t("people.tabs.directory"), icon: <Icon name="members" size={16} /> },
-              { value: "ranks" as Tab, label: t("people.tabs.ranks"), icon: <Icon name="award" size={16} /> },
+              { value: "directory" as Tab, label: t("dir.title"), icon: <Icon name="members" size={16} /> },
+              { value: "roles" as Tab, label: t("dir.rolesTab"), icon: <Icon name="shield" size={16} /> },
             ]}
           />
         </div>
       )}
-      {tab === "directory" && data.members && <MembersPanel initial={data.members} />}
-      {(tab === "ranks" || !data.members) && (data.ranks || data.roles) && (
-        <div className="grid items-start gap-5 xl:grid-cols-2">
-          {data.ranks && <RanksCard ranks={data.ranks} />}
-          {data.roles && <RolesCard roles={data.roles} />}
+      {tab === "directory" && data.directory && <MembersPanel />}
+      {tab === "roles" && data.roles && (
+        <div className="max-w-3xl space-y-3">
+          <RolesCard roles={data.roles} />
+          <p className="flex items-center gap-2 px-1 text-xs text-ink-3">
+            <Icon name="info" size={14} />
+            {t("dir.levelsMoved")}
+          </p>
         </div>
       )}
     </>

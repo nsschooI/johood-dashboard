@@ -43,6 +43,8 @@ const EXPECTED: Record<Action, Role[]> = {
   "points.adjust_limited": ["owner", "head_support"],
   "members.view": ["owner", "manager", "head_support", "support"],
   "members.view_full": ["owner", "manager", "head_support"],
+  "members.roles": ["owner"],
+  "roblox.view": ["owner", "manager", "head_support"],
   "staff.view": ["owner", "manager"],
   "protection.view": ["owner", "manager"],
   "protection.manage": ["owner", "manager"],

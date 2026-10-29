@@ -170,7 +170,15 @@ describe("member profile redaction", () => {
     const p = await res.json();
     expect(p.displayName).toBeTruthy();
     expect(p.points).toBeNull();
-    expect(p.purchases).toBeNull();
+    expect(p.lifetimePoints).toBeNull();
+  });
+
+  it("profiles never carry Roblox purchase data (that lives on the Roblox page)", async () => {
+    const res = await getMember(req("GET", `/api/members/${memberId}`, { auth: login("owner") }), ctx({ discordId: memberId }));
+    const p = await res.json();
+    expect(p).not.toHaveProperty("purchases");
+    expect(p).not.toHaveProperty("totalRobux");
+    expect(typeof p.linked).toBe("boolean");
   });
 
   it("head of support gets the full profile", async () => {

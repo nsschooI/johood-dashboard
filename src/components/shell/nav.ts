@@ -23,6 +23,8 @@ export const NAV: NavItem[] = [
   { key: "tickets", href: "/tickets", label: "nav.tickets", hint: "nav.hint.tickets", icon: "tickets", shortcut: "t", group: "today" },
   { key: "activity", href: "/activity", label: "nav.activity", hint: "nav.hint.activity", icon: "activity", shortcut: "y", group: "today", global: true },
   { key: "members", href: "/members", label: "nav.members", hint: "nav.hint.members", icon: "members", shortcut: "m", group: "community" },
+  { key: "leaderboards", href: "/leaderboards", label: "nav.leaderboards", hint: "nav.hint.leaderboards", icon: "trophy", shortcut: "l", group: "community" },
+  { key: "roblox", href: "/roblox", label: "nav.roblox", hint: "nav.hint.roblox", icon: "gamepad", shortcut: "r", group: "community" },
   { key: "points", href: "/points", label: "nav.points", hint: "nav.hint.points", icon: "coin", shortcut: "p", group: "community", global: true },
   { key: "giveaways", href: "/giveaways-admin", label: "nav.giveaways", hint: "nav.hint.giveaways", icon: "giveaways", shortcut: "v", group: "community", global: true },
   { key: "bots", href: "/bots", label: "nav.bots", hint: "nav.hint.bots", icon: "bots", shortcut: "b", group: "system", global: true },
