@@ -7,7 +7,7 @@ export default function Loading() {
     <div aria-busy="true">
       <HeaderSkeleton />
       <Skeleton className="mb-5 h-10 w-64 rounded-xl" />
-      <div className="grid gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)]">
         <ListSkeleton rows={8} thumb={36} />
         <div className="space-y-4">
           <div className="glass overflow-hidden rounded-[var(--radius-card)]">

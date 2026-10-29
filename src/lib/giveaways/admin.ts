@@ -147,15 +147,7 @@ export function missingKey(m: MissingRequirement) {
 }
 
 /** CSV with a BOM so Excel opens Arabic names correctly; every cell quoted. */
-export function toCsv(rows: (string | number)[][]) {
-  const cell = (v: string | number) => {
-    let s = String(v);
-    // Neutralise spreadsheet formulas in user-controlled text.
-    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
-    return `"${s.replace(/"/g, '""')}"`;
-  };
-  return "﻿" + rows.map((r) => r.map(cell).join(",")).join("\r\n");
-}
+export { toCsv } from "../csv";
 
 /** Joined / attempts and blocked / attempts, safe for zero. */
 export function funnel(g: Pick<AdminGiveaway, "attempts" | "blocked" | "entries">) {

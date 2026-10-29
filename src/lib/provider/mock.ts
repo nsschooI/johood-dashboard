@@ -427,6 +427,12 @@ export class MockProvider implements DataProvider {
         t.lastMessageAt = t.messages[t.messages.length - 1].at;
       }
     }
+    // A few very active members who never linked are asking for help right now
+    // (the Roblox page's "open ticket" candidates). Own PRNG: nothing above shifts.
+    const r = createRng(2_718);
+    const unlinked = this.members.filter((m) => !m.linked).sort((a, b) => b.balance - a.balance);
+    for (const m of unlinked.slice(1, 4)) this.newTicket("support", m, now - int(r, 20, 240) * MINUTE, r);
+    this.tickets.sort((a, b) => a.openedAt.localeCompare(b.openedAt));
   }
 
   private newTicket(category: TicketCategory, member: MockMember, at: number, rng: Rng, transferId?: string): Ticket {

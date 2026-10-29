@@ -17,21 +17,13 @@ import { EmptyState } from "@/components/ui/states";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { Table, Td, Th } from "@/components/points/tables";
 import { api } from "@/lib/client/api";
+import { downloadCsv } from "@/lib/client/download";
 import { funnel, missingKey, toCsv, type AdminGiveaway, type Blocked, type MissingRequirement, type Participant } from "@/lib/giveaways/admin";
 import { BannerThumb, GiveawayActions, GiveawayStatus } from "./actions";
 import { usePolling } from "./list-view";
 
 type Tab = "entries" | "blocked";
 const PAGE = 150;
-
-function download(name: string, csv: string) {
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 export function GiveawayDetailView({ initial, people: initialPeople }: { initial: AdminGiveaway; people: { entries: Participant[]; blocked: Blocked[] } }) {
   const { t } = useApp();
@@ -82,7 +74,7 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
 
   const exportCsv = () => {
     if (tab === "entries") {
-      download(
+      downloadCsv(
         `giveaway-${g.id}-participants.csv`,
         toCsv([
           [t("ga.detail.name"), t("ga.detail.id"), t("ga.detail.joinedAt"), t("ga.detail.winner")],
@@ -90,7 +82,7 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
         ]),
       );
     } else {
-      download(
+      downloadCsv(
         `giveaway-${g.id}-blocked.csv`,
         toCsv([
           [t("ga.detail.name"), t("ga.detail.id"), t("ga.detail.missing"), t("ga.detail.tries"), t("ga.detail.firstTry"), t("ga.detail.lastTry")],

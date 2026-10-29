@@ -75,6 +75,19 @@ export async function getMembersData(user: SessionUser, guild: GuildKey = "main"
   };
 }
 
+/** Roblox page: the three tab counts (each one is optional). */
+export async function getRobloxData(user: SessionUser, guild: GuildKey = "main") {
+  const p = getProvider();
+  const count = async (fn: () => Promise<{ total: number }>) => fn().then((r) => r.total).catch(() => null);
+  if (!can(user, "roblox.view")) return { counts: { linked: null, candidates: null, outside: null } };
+  const [linked, candidates, outside] = await Promise.all([
+    count(() => p.getRobloxLinked({ guild, pageSize: 1 })),
+    count(() => p.getRobloxCandidates({ guild, pageSize: 1 })),
+    count(() => p.getRobloxOutside({ pageSize: 1 })),
+  ]);
+  return { counts: { linked, candidates, outside } };
+}
+
 export async function getMemberFor(user: SessionUser, discordId: string, guild?: GuildKey) {
   const profile = await getProvider().getMember(discordId, guild);
   return profile ? redactProfile(user, profile) : null;
