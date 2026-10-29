@@ -61,7 +61,11 @@ export function TicketsView({ initial }: { initial: Page<TicketSummary> }) {
   };
 
   const counts = useMemo(
-    () => ({ active: tickets.filter((x) => x.status !== "closed").length, open: tickets.filter((x) => x.status === "open").length, claimed: tickets.filter((x) => x.status === "claimed").length }),
+    () => ({
+      active: tickets.filter((x) => x.status !== "closed").length,
+      open: tickets.filter((x) => x.status === "open").length,
+      claimed: tickets.filter((x) => x.status === "claimed").length,
+    }),
     [tickets],
   );
 
@@ -71,7 +75,15 @@ export function TicketsView({ initial }: { initial: Page<TicketSummary> }) {
     return base
       .filter((x) => !mine || x.claimedBy?.discordId === user?.discordId)
       .filter((x) => !term || String(x.number).includes(term) || x.subject.toLowerCase().includes(term) || x.openedBy.name.toLowerCase().includes(term))
-      .sort((a, b) => (filter === "open" || filter === "active" ? (a.status === b.status ? a.openedAt.localeCompare(b.openedAt) : a.status === "open" ? -1 : 1) : b.lastMessageAt.localeCompare(a.lastMessageAt)));
+      .sort((a, b) =>
+        filter === "open" || filter === "active"
+          ? a.status === b.status
+            ? a.openedAt.localeCompare(b.openedAt)
+            : a.status === "open"
+              ? -1
+              : 1
+          : b.lastMessageAt.localeCompare(a.lastMessageAt),
+      );
   }, [tickets, closed, filter, mine, q, user]);
 
   const loadMore = async () => {
@@ -93,24 +105,26 @@ export function TicketsView({ initial }: { initial: Page<TicketSummary> }) {
         {/* Queue */}
         <section aria-label={t("tickets.title")} className={cn("flex min-h-0 flex-col border-line lg:border-e", selected && "max-lg:hidden")}>
           <div className="space-y-3 border-b border-line p-3">
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("inbox.search")} aria-label={t("inbox.search")} leading={<Icon name="search" size={16} />} />
             <div className="flex items-center gap-2">
-              <Segmented
-                size="sm"
-                label={t("tickets.title")}
-                value={filter}
-                onChange={(v) => void showClosed(v)}
-                options={[
-                  { value: "active" as Filter, label: t("inbox.all"), count: counts.active },
-                  { value: "open" as Filter, label: t("tickets.status.open"), count: counts.open },
-                  { value: "claimed" as Filter, label: t("tickets.status.claimed") },
-                  { value: "closed" as Filter, label: t("inbox.closedTab") },
-                ]}
-              />
-              <Chip active={mine} onClick={() => setMine((m) => !m)} className="ms-auto shrink-0" icon={<Icon name="user" size={14} />}>
+              <div className="min-w-0 flex-1">
+                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("inbox.search")} aria-label={t("inbox.search")} leading={<Icon name="search" size={16} />} />
+              </div>
+              <Chip active={mine} onClick={() => setMine((m) => !m)} className="shrink-0" icon={<Icon name="user" size={14} />}>
                 {t("inbox.mine")}
               </Chip>
             </div>
+            <Segmented
+              size="sm"
+              label={t("tickets.title")}
+              value={filter}
+              onChange={(v) => void showClosed(v)}
+              options={[
+                { value: "active" as Filter, label: t("inbox.all"), count: counts.active },
+                { value: "open" as Filter, label: t("tickets.status.open"), count: counts.open },
+                { value: "claimed" as Filter, label: t("tickets.status.claimed") },
+                { value: "closed" as Filter, label: t("inbox.closedTab") },
+              ]}
+            />
           </div>
           {shown.length === 0 ? (
             <EmptyState art="allClear" title={t("inbox.empty")} hint={t("inbox.emptyHint")} compact className="flex-1" />
@@ -163,7 +177,9 @@ function TicketRow({ ticket: tk, active, onSelect }: { ticket: TicketSummary; ac
           active ? "bg-[color-mix(in_oklab,var(--color-accent-500)_9%,var(--color-surface))] ring-1 ring-accent-500/25" : "hover:bg-surface-2",
         )}
       >
-        {tk.status === "open" && <span aria-hidden className={cn("absolute top-4 start-1 size-1.5 rounded-full", attention === "critical" ? "bg-bad needs-attention" : "bg-warn")} />}
+        {tk.status === "open" && (
+          <span aria-hidden className={cn("absolute top-4 start-1 size-1.5 rounded-full", attention === "critical" ? "bg-bad needs-attention" : "bg-warn")} />
+        )}
         <Avatar name={tk.openedBy.name} src={tk.openedBy.avatarUrl} size={36} />
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline gap-2">

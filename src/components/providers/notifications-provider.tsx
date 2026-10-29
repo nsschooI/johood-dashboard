@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { AttentionItem } from "@/lib/attention";
+import { localParams, type AttentionItem } from "@/lib/attention";
 import { translateDynamic } from "@/lib/i18n";
 import { safeStorage } from "@/lib/client/storage";
 import type { ActivityItem } from "@/lib/types";
@@ -39,7 +39,7 @@ const MAX = 60;
  * opt-in desktop notification and a soft alert chime.
  */
 export function NotificationsProvider({ seed, children }: { seed: ActivityItem[]; children: ReactNode }) {
-  const { t } = useApp();
+  const { t, locale } = useApp();
   const f = useFormat();
   const { items } = useAttention();
   const { play } = useSound();
@@ -107,14 +107,14 @@ export function NotificationsProvider({ seed, children }: { seed: ActivityItem[]
       if (browser === "granted" && typeof Notification !== "undefined") {
         for (const i of critical) {
           try {
-            new Notification("JoHood", { body: translateDynamic(t, `attention.${i.key}`, i.params), tag: i.id, icon: "/icon.svg" });
+            new Notification("JoHood", { body: translateDynamic(t, `attention.${i.key}`, localParams(i.params, locale)), tag: i.id, icon: "/icon.svg" });
           } catch {
             // some browsers only allow notifications from a service worker
           }
         }
       }
     }
-  }, [items, browser, play, t]);
+  }, [items, browser, play, t, locale]);
 
   const unread = useMemo(() => notices.filter((n) => n.at > lastRead).length, [notices, lastRead]);
 

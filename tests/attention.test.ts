@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ATTENTION_RULES, computeAttention, pageBadges, targetSeverities } from "@/lib/attention";
+import { ATTENTION_RULES, computeAttention, formatAge, localParams, pageBadges, targetSeverities } from "@/lib/attention";
 import { denialReason, rolesGranting } from "@/lib/permissions";
 import type { Assistant, BotStatus, ProtectionSettings, TicketSummary, Transfer } from "@/lib/types";
 
@@ -45,7 +45,7 @@ describe("computeAttention", () => {
     expect(young).toEqual([]);
     const items = computeAttention({ now: NOW, tickets: [ticket("a", { openedAt: ago(20) }), ticket("b", { openedAt: ago(70) }), ticket("c", { status: "claimed", openedAt: ago(90) })] });
     expect(items).toHaveLength(1);
-    expect(items[0]).toMatchObject({ key: "ticketsUnclaimed", severity: "critical", params: { n: 2, minutes: 70, age: "1\u00a0h" }, related: ["ticket:a", "ticket:b"] });
+    expect(items[0]).toMatchObject({ key: "ticketsUnclaimed", severity: "critical", params: { n: 2, minutes: 70, age: "1\u00a0hr" }, related: ["ticket:a", "ticket:b"] });
   });
 
   it("flags failed and stuck transfers", () => {
@@ -78,6 +78,20 @@ describe("computeAttention", () => {
     const t = targetSeverities(items);
     expect(t.get("bot:ops")).toBe("critical");
     expect(t.get("transfer:f")).toBe("warning");
+  });
+});
+
+describe("formatAge", () => {
+  it("uses the reader's language and never breaks between number and unit", () => {
+    expect(formatAge(5)).toBe("5\u00a0min");
+    expect(formatAge(37 * 60)).toBe("37\u00a0hr");
+    expect(formatAge(3 * 1440)).toBe("3\u00a0days");
+    expect(formatAge(12 * 60, "ar")).toBe("12\u00a0س");
+    expect(formatAge(12 * 60, "ar")).not.toMatch(/[a-z]/);
+  });
+  it("re-formats the server's English age for the reader", () => {
+    expect(localParams({ n: 1, minutes: 120, age: "2\u00a0hr" }, "ar").age).toBe("2\u00a0س");
+    expect(localParams({ bot: "Ops" }, "ar")).toEqual({ bot: "Ops" });
   });
 });
 

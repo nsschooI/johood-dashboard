@@ -107,7 +107,7 @@ export function BotsPulse({ bots }: { bots: BotStatus[] }) {
 }
 
 export function WaitingPulse({ tickets, assistants, now }: { tickets: TicketSummary[] | null; assistants: Assistant[] | null; now: number }) {
-  const { t } = useApp();
+  const { t, locale } = useApp();
   const f = useFormat();
   const { href } = useGuild();
   const open = tickets?.filter((x) => x.status !== "closed") ?? [];
@@ -128,7 +128,7 @@ export function WaitingPulse({ tickets, assistants, now }: { tickets: TicketSumm
           </div>
           <p className={cn("mt-2 text-sm font-medium", unclaimed.length ? (tone === "bad" ? "text-bad" : "text-warn") : "text-good")}>
             {unclaimed.length ? t("home.waiting.unclaimed", { n: unclaimed.length }) : t("home.waiting.allClaimed")}
-            {oldest && <span className="font-normal text-ink-3"> · {t("home.waiting.oldest", { age: formatAge(ageMin) })}</span>}
+            {oldest && <span className="font-normal text-ink-3"> · {t("home.waiting.oldest", { age: formatAge(ageMin, locale) })}</span>}
           </p>
         </>
       )}

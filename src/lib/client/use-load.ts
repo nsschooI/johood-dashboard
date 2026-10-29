@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ApiClientError } from "./api";
 
 interface LoadState<T> {
   key: string | null;
   nonce: number;
   data?: T;
   error?: boolean;
+  notFound?: boolean;
 }
 
 /**
@@ -30,8 +32,10 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
       .then((data) => setState({ key, nonce, data }))
       .catch((err) => {
         if (ctrl.signal.aborted) return;
-        console.error(err);
-        setState({ key, nonce, error: true });
+        const notFound = err instanceof ApiClientError && err.status === 404;
+        // A missing record is an answer, not a failure: don't log it as one.
+        if (!notFound) console.error(err);
+        setState({ key, nonce, error: true, notFound });
       });
     return () => ctrl.abort();
   }, [key, nonce]);
@@ -43,6 +47,7 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
   return {
     data: current ? state.data : undefined,
     error: current && Boolean(state.error),
+    notFound: current && Boolean(state.notFound),
     loading: key !== null && !current,
     reload,
     setData,

@@ -82,7 +82,11 @@ function Profile({ id, onBack }: { id: string; onBack: () => void }) {
   const can = useCan();
   const openTicket = useOpenTicket();
   const { guild, guilds, info, setGuild, href } = useGuild();
-  const { data: p, error, reload } = useLoad(`${guild}:${id}`, (signal) =>
+  const {
+    data: p,
+    error,
+    reload,
+  } = useLoad(`${guild}:${id}`, (signal) =>
     api<MemberProfile>(`/api/members/${id}?guild=${guild}`, { signal }).catch((e) => {
       if (e?.status === 404) return null;
       throw e;
@@ -156,7 +160,11 @@ function Profile({ id, onBack }: { id: string; onBack: () => void }) {
       {back}
       {/* Identity */}
       <section className="glass overflow-hidden rounded-[var(--radius-card)]">
-        <div aria-hidden className="relative h-28 overflow-hidden" style={{ background: `linear-gradient(120deg, ${color}, color-mix(in oklab, ${color} 40%, var(--color-surface)) 60%, var(--color-surface-2))` }}>
+        <div
+          aria-hidden
+          className="relative h-28 overflow-hidden"
+          style={{ background: `linear-gradient(120deg, ${color}, color-mix(in oklab, ${color} 40%, var(--color-surface)) 60%, var(--color-surface-2))` }}
+        >
           <svg className="absolute inset-0 size-full opacity-25" aria-hidden>
             <defs>
               <pattern id={`pf-${id}`} width="16" height="16" patternUnits="userSpaceOnUse">
@@ -235,16 +243,23 @@ function Profile({ id, onBack }: { id: string; onBack: () => void }) {
             <dl className="grid grid-cols-3 gap-2">
               {(
                 [
-                  ["members.points", f.n(p.points!), "text-ink"],
-                  ["members.lifetime", f.n(p.lifetimePoints!), "text-ink-2"],
-                  ["members.spent", f.robux(p.totalRobux!), "text-ink-2"],
+                  ["members.points", p.points!, false, "text-ink"],
+                  ["members.lifetime", p.lifetimePoints!, false, "text-ink-2"],
+                  ["members.spent", p.totalRobux!, true, "text-ink-2"],
                 ] as const
-              ).map(([k, v, c]) => (
-                <div key={k} className="rounded-xl bg-surface-2 px-2.5 py-2">
-                  <dt className="truncate text-[11px] text-ink-3">{t(k)}</dt>
-                  <dd className={cn("font-display tabular mt-0.5 truncate text-lg font-bold", c)}>{v}</dd>
-                </div>
-              ))}
+              ).map(([k, v, robux, c]) => {
+                // Three cells share a narrow card: big numbers go compact, the exact one is on hover.
+                const short = v >= 10_000 ? f.compact(v) : f.n(v);
+                const full = robux ? f.robux(v) : f.n(v);
+                return (
+                  <div key={k} className="rounded-xl bg-surface-2 px-2.5 py-2">
+                    <dt className="truncate text-[11px] text-ink-3">{t(k)}</dt>
+                    <dd className={cn("font-display tabular mt-0.5 truncate text-lg font-bold", c)} title={full}>
+                      {robux ? `\u2066${short} R$\u2069` : short}
+                    </dd>
+                  </div>
+                );
+              })}
             </dl>
           ) : (
             <p className="flex items-center gap-2 text-sm text-ink-3">
@@ -312,8 +327,18 @@ function Profile({ id, onBack }: { id: string; onBack: () => void }) {
           <ol className="relative ms-2 space-y-1 border-s-2 border-line ps-4">
             {p.tickets.slice(0, 8).map((tk) => (
               <li key={tk.id} className="relative">
-                <span aria-hidden className={cn("absolute -start-[1.42rem] top-3.5 size-3 rounded-full ring-4 ring-surface", tk.status === "open" ? "bg-warn" : tk.status === "claimed" ? "bg-info" : "bg-ink-4")} />
-                <button type="button" onClick={() => openTicket(tk.id)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm transition hover:bg-surface-2">
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute -start-[1.42rem] top-3.5 size-3 rounded-full ring-4 ring-surface",
+                    tk.status === "open" ? "bg-warn" : tk.status === "claimed" ? "bg-info" : "bg-ink-4",
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => openTicket(tk.id)}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm transition hover:bg-surface-2"
+                >
                   <span className="tabular text-xs text-ink-3">#{tk.number}</span>
                   <bdi className="min-w-0 flex-1 truncate">{tk.subject}</bdi>
                   <TimeAgo at={tk.openedAt} className="hidden text-[11px] text-ink-3 sm:inline" />

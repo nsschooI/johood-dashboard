@@ -44,13 +44,13 @@ export function CardHeader({
   return (
     <header className={cn("flex flex-wrap items-center gap-3 px-5 pt-5 pb-3", className)}>
       {icon && (typeof icon === "string" ? <IconTile name={icon as IconName} /> : <span className="grid size-9 place-items-center rounded-xl bg-accent-500/10 text-accent-400">{icon}</span>)}
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-44">
         <h2 id={id} className="font-display text-[15px] font-semibold text-ink">
           {title}
         </h2>
         {description && <p className="mt-0.5 text-xs text-ink-3">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex max-w-full flex-wrap items-center gap-2 overflow-x-auto">{actions}</div>}
     </header>
   );
 }
@@ -67,7 +67,7 @@ export function PageHeader({ title, subtitle, actions, eyebrow, art }: { title: 
           {subtitle && <p className="mt-1 max-w-2xl text-sm text-ink-3">{subtitle}</p>}
         </div>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex max-w-full flex-wrap items-center gap-2 overflow-x-auto">{actions}</div>}
     </div>
   );
 }

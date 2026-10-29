@@ -8,6 +8,7 @@ import { useGuild } from "@/components/providers/guild-provider";
 import { cn } from "@/components/ui/cn";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { NAV } from "@/components/shell/nav";
+import { localParams } from "@/lib/attention";
 import { anchorId, focusAnchor } from "@/lib/client/anchors";
 import { translateDynamic } from "@/lib/i18n";
 
@@ -19,7 +20,7 @@ const STYLE = {
 
 /** "Needs attention": each item jumps to the exact control that fixes it. Renders nothing when all is clear. */
 export function AttentionStrip() {
-  const { t } = useApp();
+  const { t, locale } = useApp();
   const { items } = useAttention();
   const { href } = useGuild();
   const router = useRouter();
@@ -44,7 +45,7 @@ export function AttentionStrip() {
                   <Icon name={s.icon} size={18} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-ink">{translateDynamic(t, `attention.${i.key}`, i.params)}</span>
+                  <span className="block text-sm font-semibold text-ink">{translateDynamic(t, `attention.${i.key}`, localParams(i.params, locale))}</span>
                   <span className="mt-0.5 block text-xs text-ink-3">
                     {t(`attention.${i.severity}`)}
                     {i.since && (

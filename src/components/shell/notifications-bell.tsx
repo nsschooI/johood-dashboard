@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/states";
 import { Switch } from "@/components/ui/switch";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { ACTIVITY_ICON, ACTIVITY_TONE } from "@/components/overview/activity-meta";
+import { localParams } from "@/lib/attention";
 import { translateDynamic } from "@/lib/i18n";
 import { NAV } from "./nav";
 
@@ -97,7 +98,7 @@ export function NotificationsBell() {
 }
 
 function NoticeRow({ notice, onNavigate }: { notice: Notice; onNavigate: () => void }) {
-  const { t } = useApp();
+  const { t, locale } = useApp();
   const { href } = useGuild();
   if (notice.type === "attention") {
     const i = notice.item;
@@ -113,7 +114,7 @@ function NoticeRow({ notice, onNavigate }: { notice: Notice; onNavigate: () => v
             <Icon name="warning" size={16} duo />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] leading-snug text-ink">{translateDynamic(t, `attention.${i.key}`, i.params)}</span>
+            <span className="block text-[13px] leading-snug text-ink">{translateDynamic(t, `attention.${i.key}`, localParams(i.params, locale))}</span>
             <TimeAgo at={notice.at} className="text-[11px] text-ink-3" />
           </span>
           <Icon name="chevronRight" size={16} mirror className="mt-1 text-ink-3" />

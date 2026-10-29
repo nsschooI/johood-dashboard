@@ -84,7 +84,10 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
     if (tab === "entries") {
       download(
         `giveaway-${g.id}-participants.csv`,
-        toCsv([[t("ga.detail.name"), t("ga.detail.id"), t("ga.detail.joinedAt"), t("ga.detail.winner")], ...entries.map((p) => [p.name, p.userId, p.joinedAt, winners.has(p.userId) ? "1" : ""])]),
+        toCsv([
+          [t("ga.detail.name"), t("ga.detail.id"), t("ga.detail.joinedAt"), t("ga.detail.winner")],
+          ...entries.map((p) => [p.name, p.userId, p.joinedAt, winners.has(p.userId) ? "1" : ""]),
+        ]),
       );
     } else {
       download(
@@ -99,7 +102,11 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
 
   return (
     <div className="space-y-6">
-      <Link href={href("/giveaways-admin")} transitionTypes={["nav"]} className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-2 transition hover:text-accent-400">
+      <Link
+        href={href("/giveaways-admin")}
+        transitionTypes={["nav"]}
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-2 transition hover:text-accent-400"
+      >
         <Icon name="arrowLeft" size={16} mirror />
         {t("ga.detail.back")}
       </Link>
@@ -129,7 +136,12 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
           <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
             <GiveawayActions g={g} onChange={setG} compact />
             {g.messageUrl && /^https:\/\/(\w+\.)?discord(app)?\.com\//.test(g.messageUrl) && (
-              <a href={g.messageUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-accent-300 transition hover:bg-accent-500/10">
+              <a
+                href={g.messageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-accent-300 transition hover:bg-accent-500/10"
+              >
                 {t("ga.detail.openDiscord")}
                 <Icon name="external" size={14} />
               </a>
@@ -162,7 +174,13 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
             </div>
             <div className="flex flex-wrap items-center gap-2 px-4 pt-4">
               <div className="w-full sm:w-72">
-                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("ga.detail.search")} aria-label={t("ga.detail.search")} leading={<Icon name="search" size={16} />} />
+                <Input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder={t("ga.detail.search")}
+                  aria-label={t("ga.detail.search")}
+                  leading={<Icon name="search" size={16} />}
+                />
               </div>
               {tab === "blocked" && missingOptions.length > 1 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -184,13 +202,17 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
 
             {tab === "entries" ? (
               entries.length === 0 ? (
-                <EmptyState art={term ? "search" : "emptyGift"} title={term ? t("ga.detail.noMatch") : t("ga.detail.noneJoined")} hint={term ? undefined : t("ga.detail.noneJoinedHint")} />
+                <EmptyState
+                  art={term ? "search" : "emptyGift"}
+                  title={term ? t("ga.detail.noMatch") : t("ga.detail.noneJoined")}
+                  hint={term ? undefined : t("ga.detail.noneJoinedHint")}
+                />
               ) : (
                 <Table label={t("ga.detail.participants")} className="mt-3 max-h-[36rem] overflow-y-auto">
                   <thead>
                     <tr>
                       <Th>{t("ga.detail.name")}</Th>
-                      <Th>{t("ga.detail.id")}</Th>
+                      <Th className="hidden sm:table-cell">{t("ga.detail.id")}</Th>
                       <Th end>{t("ga.detail.joinedAt")}</Th>
                     </tr>
                   </thead>
@@ -202,7 +224,13 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
                           <Td>
                             <span className="flex items-center gap-2.5">
                               <Avatar name={p.name} src={p.avatarUrl} size={30} />
-                              <bdi className="truncate font-semibold">{p.name}</bdi>
+                              <span className="min-w-0">
+                                <bdi className="block truncate font-semibold">{p.name}</bdi>
+                                {/* Phones: the id sits under the name instead of in its own column. */}
+                                <span className="font-mono text-[11px] text-ink-3 sm:hidden" dir="ltr">
+                                  {p.userId}
+                                </span>
+                              </span>
                               {won && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-warn/15 px-2 py-0.5 text-[11px] font-semibold text-warn">
                                   <Icon name="trophy" size={12} />
@@ -211,7 +239,7 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
                               )}
                             </span>
                           </Td>
-                          <Td className="font-mono text-xs text-ink-3">
+                          <Td className="hidden font-mono text-xs text-ink-3 sm:table-cell">
                             <span className="inline-flex items-center gap-1" dir="ltr">
                               {p.userId}
                               <CopyButton value={p.userId} className="size-5" />
@@ -227,7 +255,11 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
                 </Table>
               )
             ) : blocked.length === 0 ? (
-              <EmptyState art={term || missing !== "all" ? "search" : people.blocked.length ? "search" : g.entries ? "allClear" : "emptyGift"} title={term || missing !== "all" ? t("ga.detail.noMatch") : t("ga.detail.noneBlocked")} hint={term || missing !== "all" ? undefined : t("ga.detail.noneBlockedHint")} />
+              <EmptyState
+                art={term || missing !== "all" ? "search" : people.blocked.length ? "search" : g.entries ? "allClear" : "emptyGift"}
+                title={term || missing !== "all" ? t("ga.detail.noMatch") : t("ga.detail.noneBlocked")}
+                hint={term || missing !== "all" ? undefined : t("ga.detail.noneBlockedHint")}
+              />
             ) : (
               <Table label={t("ga.detail.blockedTab")} className="mt-3 max-h-[36rem] overflow-y-auto">
                 <thead>
@@ -235,7 +267,9 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
                     <Th>{t("ga.detail.name")}</Th>
                     <Th>{t("ga.detail.missing")}</Th>
                     <Th end>{t("ga.detail.tries")}</Th>
-                    <Th end>{t("ga.detail.firstTry")}</Th>
+                    <Th end className="hidden sm:table-cell">
+                      {t("ga.detail.firstTry")}
+                    </Th>
                     <Th end>{t("ga.detail.lastTry")}</Th>
                   </tr>
                 </thead>
@@ -266,7 +300,7 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
                       <Td end className="font-display tabular font-bold">
                         {f.n(b.attempts)}
                       </Td>
-                      <Td end className="text-xs whitespace-nowrap text-ink-3">
+                      <Td end className="hidden text-xs whitespace-nowrap text-ink-3 sm:table-cell">
                         <TimeAgo at={b.firstAt} />
                       </Td>
                       <Td end className="text-xs whitespace-nowrap text-ink-3">
@@ -297,9 +331,15 @@ export function GiveawayDetailView({ initial, people: initialPeople }: { initial
               <span className="font-display tabular text-3xl font-bold">{f.n(fun.attempts)}</span>
               <span className="text-sm text-ink-3">{t("ga.detail.attempts")}</span>
             </p>
-            <div className="mt-3 flex h-3 gap-[2px] overflow-hidden rounded-full bg-surface-3" role="img" aria-label={`${t("ga.detail.joined")} ${f.pct(fun.joinedPct)}, ${t("ga.detail.blocked")} ${f.pct(fun.blockedPct)}`}>
+            <div
+              className="mt-3 flex h-3 gap-[2px] overflow-hidden rounded-full bg-surface-3"
+              role="img"
+              aria-label={`${t("ga.detail.joined")} ${f.pct(fun.joinedPct)}, ${t("ga.detail.blocked")} ${f.pct(fun.blockedPct)}`}
+            >
               {fun.joined > 0 && <span className="h-full rounded-s-full bg-series-1 transition-[width] duration-[var(--dur-slow)]" style={{ width: `${fun.joinedPct * 100}%` }} />}
-              {fun.blocked > 0 && <span className="h-full bg-series-3 transition-[width] duration-[var(--dur-slow)] last:rounded-e-full" style={{ width: `${fun.blockedPct * 100}%` }} />}
+              {fun.blocked > 0 && (
+                <span className="h-full bg-series-3 transition-[width] duration-[var(--dur-slow)] last:rounded-e-full" style={{ width: `${fun.blockedPct * 100}%` }} />
+              )}
             </div>
             <dl className="mt-4 space-y-2.5 text-sm">
               {(

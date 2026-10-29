@@ -64,6 +64,7 @@ Browser ──https──▶ nginx ──▶ Dashboard (Next.js, :3000) ──ht
 | POST | `/tickets/:id/actions` | `Ticket` | Claim / reply / close / hand over |
 | GET | `/protection` | `ProtectionSettings` | Protection panel |
 | PATCH | `/protection` | `ProtectionSettings` | Toggles and thresholds |
+| GET | `/admin/giveaways` … | see [giveaways-admin.md](giveaways-admin.md) | Giveaways staff page (`adminGiveaways`) |
 | GET | `/events/stream` | `text/event-stream` | Everything live |
 
 `:name` is a pm2 process name: `ops`, `tickets`, `welcome`, `system`,
@@ -442,6 +443,7 @@ data: {"name":"ops","state":"restarting", …full BotStatus…}
 | `ticket` | `TicketSummary` (with `guild`) | Ticket opened, claimed, replied, closed, handed over |
 | `protection` | `ProtectionSettings` | Settings changed (from the dashboard or Discord) |
 | `activity` | `ActivityItem` | Anything worth a feed line (see table above). Server-specific lines (`member_join`, `ticket`) carry `guild`. |
+| `giveaway` | `AdminGiveaway` | A giveaway changed: entry, blocked attempt, end, reroll (only sent to `giveaways.view`) |
 
 ## Roblox thumbnails
 
@@ -477,6 +479,14 @@ The public giveaways pages use five more endpoints (`GET /giveaways`,
 `GET /giveaways/authorize-state?memberId=`, `POST /giveaways/revoke`) plus
 the member login / authorize OAuth flow. Everything is described in
 [giveaways.md](giveaways.md).
+
+The staff page (`/giveaways-admin`) uses the `adminGiveaways` section of the
+provider: `GET /admin/giveaways`, `GET /admin/giveaways/:id`,
+`GET /admin/giveaways/:id/participants`, `GET /admin/giveaway-channels`,
+`GET /admin/giveaways/:id/banner`, `POST /admin/giveaways`,
+`POST /admin/giveaways/:id/end`, `POST /admin/giveaways/:id/reroll`.
+Payloads, status codes and the mock's behaviour are in
+[giveaways-admin.md](giveaways-admin.md).
 
 ## Wiring checklist
 

@@ -158,6 +158,12 @@
   :root[data-theme="light"] {
     color-scheme: light;
   }
+  /* Grid items default to min-width:auto, so one long row (a truncated name,
+     a tab strip) widens a single-column mobile grid past the screen. Let them
+     shrink; a min-w-* utility still wins. */
+  :where([class~="grid"]) > * {
+    min-width: 0;
+  }
   :root[data-theme="dark"] {
     color-scheme: dark;
   }

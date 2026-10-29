@@ -11,7 +11,7 @@ import { cn } from "@/components/ui/cn";
 import { Select, Textarea } from "@/components/ui/field";
 import { ConfirmDialog } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorState } from "@/components/ui/states";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { api } from "@/lib/client/api";
 import { useAction } from "@/lib/client/use-action";
@@ -34,7 +34,7 @@ export function TicketConversation({ ticketId, onBack, onChange }: { ticketId: s
   const [confirmClose, setConfirmClose] = useState(false);
   const [handTo, setHandTo] = useState("");
   const thread = useRef<HTMLOListElement>(null);
-  const { data: ticket, error, reload, setData } = useLoad(ticketId, (signal) => api<Ticket>(`/api/tickets/${ticketId}`, { signal }));
+  const { data: ticket, error, notFound, reload, setData } = useLoad(ticketId, (signal) => api<Ticket>(`/api/tickets/${ticketId}`, { signal }));
   const { data: assignees } = useLoad(can("tickets.transfer") ? "assignees" : null, (signal) => api<MemberRef[]>("/api/tickets/assignees", { signal }));
 
   // Someone else acted on this ticket: refresh it quietly.
@@ -69,7 +69,27 @@ export function TicketConversation({ ticketId, onBack, onChange }: { ticketId: s
     if (await act("reply", { body: reply.trim() }, t("tickets.sent"))) setReply("");
   };
 
-  if (error) return <ErrorState title={t("common.error")} action={<Button onClick={reload}>{t("common.retry")}</Button>} />;
+  if (error) {
+    // On phones the list is hidden while a ticket is open, so both states offer the way back.
+    const back = onBack && (
+      <Button variant="secondary" onClick={onBack}>
+        <Icon name="arrowLeft" size={16} mirror />
+        {t("inbox.back")}
+      </Button>
+    );
+    if (notFound) return <EmptyState art="lost" title={t("inbox.notFound")} action={back} />;
+    return (
+      <ErrorState
+        title={t("common.error")}
+        action={
+          <span className="flex flex-wrap justify-center gap-2">
+            {back}
+            <Button onClick={reload}>{t("common.retry")}</Button>
+          </span>
+        }
+      />
+    );
+  }
 
   if (!ticket) {
     return (
@@ -120,7 +140,14 @@ export function TicketConversation({ ticketId, onBack, onChange }: { ticketId: s
             </span>
           ) : (
             !closed && (
-              <Button size="sm" variant="primary" loading={pending === "claim"} disabledReason={claimReason} feedback={feedbackFor("claim")} onClick={() => act("claim", {}, t("tickets.claimed"))}>
+              <Button
+                size="sm"
+                variant="primary"
+                loading={pending === "claim"}
+                disabledReason={claimReason}
+                feedback={feedbackFor("claim")}
+                onClick={() => act("claim", {}, t("tickets.claimed"))}
+              >
                 <Icon name="hand" size={16} />
                 {t("tickets.claim")}
               </Button>
@@ -195,7 +222,15 @@ export function TicketConversation({ ticketId, onBack, onChange }: { ticketId: s
                 className="min-h-11 flex-1 bg-surface"
                 rows={2}
               />
-              <Button type="submit" variant="primary" size="icon" loading={pending === "reply"} disabled={!reply.trim()} aria-label={t("tickets.send")} feedback={feedbackFor("reply")}>
+              <Button
+                type="submit"
+                variant="primary"
+                size="icon"
+                loading={pending === "reply"}
+                disabled={!reply.trim()}
+                aria-label={t("tickets.send")}
+                feedback={feedbackFor("reply")}
+              >
                 {pending !== "reply" && <Icon name="send" size={18} mirror />}
               </Button>
             </form>

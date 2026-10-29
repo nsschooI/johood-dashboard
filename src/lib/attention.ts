@@ -9,6 +9,7 @@
  * `bot:tickets`).
  */
 import { can, type Action, type PageKey, type SessionUser } from "./permissions";
+import { numberLocale, type Locale } from "./i18n";
 import type { Assistant, BotStatus, ProtectionSettings, TicketSummary, Transfer } from "./types";
 
 export type AttentionSeverity = "critical" | "warning" | "info";
@@ -50,11 +51,15 @@ export const ATTENTION_RULES = {
 } as const;
 
 /** "15 min", "3 h", "2 d" — compact and language-neutral enough for both locales. */
-export function formatAge(minutes: number) {
-  // No-break space: "37 h" never wraps between the number and the unit.
-  if (minutes < 60) return `${minutes}\u00a0min`;
-  if (minutes < 48 * 60) return `${Math.round(minutes / 60)}\u00a0h`;
-  return `${Math.round(minutes / 1440)}\u00a0d`;
+export function formatAge(minutes: number, locale: Locale = "en") {
+  const [n, unit] = minutes < 60 ? [minutes, "minute"] : minutes < 48 * 60 ? [Math.round(minutes / 60), "hour"] : [Math.round(minutes / 1440), "day"];
+  // No-break space: "37 hr" never wraps between the number and the unit.
+  return new Intl.NumberFormat(numberLocale(locale), { style: "unit", unit, unitDisplay: "short" }).format(n).replace(/\s/g, "\u00a0");
+}
+
+/** Attention params for display: the age is computed on the server in English, re-format it for the reader. */
+export function localParams(params: AttentionItem["params"], locale: Locale): AttentionItem["params"] {
+  return typeof params.minutes === "number" ? { ...params, age: formatAge(params.minutes, locale) } : params;
 }
 
 const RANK: Record<AttentionSeverity, number> = { critical: 0, warning: 1, info: 2 };

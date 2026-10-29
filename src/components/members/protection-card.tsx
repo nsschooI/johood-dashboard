@@ -23,7 +23,7 @@ function Row({ icon, title, hint, children, danger, id }: { icon: IconName; titl
       <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", danger ? "bg-bad text-white needs-attention dark:text-[#2a0a12]" : "bg-surface text-ink-2 ring-1 ring-line")}>
         <Icon name={icon} size={20} duo />
       </span>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-32">
         <p className="text-sm font-semibold text-ink">{title}</p>
         {hint && <p className="text-xs text-ink-3">{hint}</p>}
       </div>

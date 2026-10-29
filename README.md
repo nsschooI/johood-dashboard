@@ -6,34 +6,39 @@ Roblox map. Staff sign in with Discord; what each person sees and can do comes
 from their Discord roles.
 
 - **Two servers** — JoHood (the community, default) and JoHood Catalog
-  (tickets, ops, ranks, staff roles). A server switcher in the shell (icon,
-  banner, counts, boost level) remembers your choice and lives in `?guild=`.
-  Server-specific pages follow it; the economy is global and labelled so.
-- **Overview** — a *Needs attention* strip, the server card, bot cards with
-  memory/CPU sparklines, the three assistants (room, caller, time in room),
-  the ticket queue and a filterable live activity feed. Restart / stop / start
-  per role, with confirm and Undo.
-- **Points & Purchases** — live purchases with item thumbnails and player
-  headshots (soft chime + toast), KPI tiles with 7-day deltas, Robux and
-  points revenue panels, top buyers, transfers with reviews and linked
-  tickets, redemptions, and a per-member ledger with reason-required
-  adjustments.
-- **Members & Security** — member profiles (avatar, roles in their Discord
-  colours, Roblox account, points, purchases, ticket timeline), rank badges,
-  protection switches and the audit log.
-- **Access** — the role ladder, a plain-language permission matrix generated
-  from the code, *What can I do?*, the Discord-role mapping, and the Owner's
-  per-person override editor with a diff preview.
-- **Everywhere** — attention badges on the nav and on the exact control,
-  a notification center (bell) with opt-in desktop alerts, a command palette
-  (Ctrl/⌘ K), keyboard shortcuts (`?`), "…"/right-click action menus that
-  also say *why* something is unavailable, hover cards, copy buttons, Undo
-  toasts.
+  (tickets, ops, ranks, staff roles). The server switcher sits at the top of
+  the sidebar, each server with its own accent (red / amber); the choice
+  lives in `?guild=` and is remembered. Pages that are the same in both
+  servers say so.
+- **Overview** — answers four questions in five seconds: are the bots
+  healthy, is anything waiting for me, what happened in the last hour, how
+  is the server. Plus the live stream, waiting tickets and voice assistants.
+- **Tickets** — an inbox: search, filters, *Mine*, and the conversation next
+  to the list (claim, reply, hand over, close with confirm).
+- **Activity** — purchases, transfers and rewards live, and everything else
+  (bots, members joining, voice assistants).
+- **Members** — directory and profiles (roles, Roblox account, economy,
+  recent points and purchases), plus ranks & roles.
+- **Points** — the economy (global): KPIs with deltas, revenue, top buyers,
+  points flow and every member's ledger with reason-required adjustments.
+- **Giveaways** (`/giveaways-admin`) — start a giveaway with a live Discord
+  preview, follow entries and blocked members live, end or reroll. See
+  [docs/giveaways-admin.md](docs/giveaways-admin.md).
+- **Bots** — the three voice assistants and the core bots: health, logs,
+  restart / stop / start with confirm and Undo.
+- **Safety** — lockdown, raid mode, link blocking and word filters.
+- **Access** — the role ladder, *What can I do?*, the Discord-role mapping,
+  per-person overrides, and the audit log.
+- **Everywhere** — attention badges on the nav, a bell with opt-in desktop
+  alerts, toasts for new tickets and big purchases (optional sounds, muted
+  by default), a command palette (Ctrl/⌘ K), shortcuts (`?`), and controls
+  that say *why* they're disabled.
 
-Dark glass UI with motion (staggered entrances, count-ups, springy controls,
-page transitions, ambient aurora — reduced to fades when the OS asks),
-fully bilingual (English LTR / Arabic RTL), responsive down to phones,
-keyboard accessible. See [docs/design-system.md](docs/design-system.md).
+Red, white, cream and charcoal, with a dark mode designed on its own; the
+JoHood robot "Hoodie" on empty states, login and errors; motion that
+collapses to fades when the OS asks for reduced motion; English and Arabic
+(full RTL); usable from 375 px phones (bottom nav) up. See
+[docs/design.md](docs/design.md).
 
 > The app runs completely on a **mock provider** (realistic, live-moving fake
 > data). The **real provider** is an HTTP client for the bot backend, ready to
@@ -107,11 +112,17 @@ src/
     layout.tsx               html lang/dir from the locale cookie, fonts
     login/                   Discord + dev login
     (dash)/                  signed-in area: layout = session + providers + shell
-      overview/ points/ members/   server components: check access, fetch, render view
+      overview/ tickets/ activity/ members/ points/ giveaways-admin/ bots/ safety/ access/
+                             server components: check access, fetch, render view
+    giveaways/               the public giveaways area (separate member session)
+    dev/design/              design showcase (404 in production unless DESIGN_PAGE=1)
     api/                     route handlers — every one wrapped in guard()
       stream/                Server-Sent Events, filtered per user
   components/
-    overview/ points/ members/ tickets/   page sections (client components)
+    overview/ tickets/ members/ points/ bots/ activity/ safety/ access/ giveaways-admin/
+                             page sections (client components)
+    icons/                   the one icon set (Lucide geometry, generated) — see docs/design.md
+    art/                     Hoodie and the illustration scenes, bot tiles, rank badges
     providers/               app (user, permissions, i18n), live SSE, sound, toasts
     shell/ ui/               layout chrome and primitives (dialog, switch, badge…)
   lib/
@@ -126,9 +137,8 @@ src/
     client/                  fetch wrapper (CSRF), WebAudio chimes, useLoad, useAction (501-aware),
                              Roblox thumbnail batching, bot sparkline samples, anchors
     server/roblox.ts         cached Roblox thumbnail resolver
-  components/art/            generated mock art, rank badges, bot tiles, SVG illustrations
 config/                      roles.ts (Discord role mapping), dashboard.ts (limits)
-docs/                        provider-api.md, permissions.md, giveaways.md
+docs/                        design.md, provider-api.md, permissions.md, giveaways.md, giveaways-admin.md
 tests/                       vitest suites
 ```
 
@@ -251,13 +261,17 @@ set `PROVIDER=real`, `PROVIDER_API_URL`, `PROVIDER_API_TOKEN`, confirm the
 
 ## Design notes
 
-- One accent (soft orchid `#b06ef2`) on a near-black background with frosted
-  "glass" cards; Inter for Latin, IBM Plex Sans Arabic for Arabic, both
-  self-hosted (no runtime font requests).
+The full reference is [docs/design.md](docs/design.md): tokens, the icon
+rules, illustrations, components, motion and accessibility. In short:
+
+- Every colour is a light/dark pair in `src/app/globals.css`; the theme is
+  `light`, `dark` or `system` (cookie `jh_theme`, rendered by the server).
+- Rubik for titles and numbers, Inter for text, IBM Plex Sans Arabic for
+  Arabic — Google Fonts, self-hosted (no runtime font requests).
 - Logical CSS properties throughout (`ms-`, `pe-`, `start-`…), so RTL is a
   `dir` switch, not a second stylesheet. Amounts and names are bidi-isolated
   inside sentences.
-- Charts show one measure per axis (no dual axes); series colours were
-  checked for colour-blind separation and contrast on the card surface.
+- Charts show one measure per axis (no dual axes); the series colours were
+  checked for colour-blind separation on both surfaces.
 - Sounds are synthesized with WebAudio (no files), **off by default** until
   the speaker is clicked; the choice is remembered.
