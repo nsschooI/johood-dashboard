@@ -2,7 +2,7 @@
 
 `/giveaways-admin` lets staff run giveaways from the dashboard: start one
 (the bot posts the card in Discord), follow entries and blocked members
-live, end it early or reroll the winners. The public member pages are a
+live, end it early, reroll the winners or delete it. The public member pages are a
 separate area — see [giveaways.md](giveaways.md).
 
 ## Who may do what
@@ -10,7 +10,7 @@ separate area — see [giveaways.md](giveaways.md).
 | Action | Roles | Covers |
 |---|---|---|
 | `giveaways.view` | Owner, Manager | The page, details, participants, blocked members, CSV export, banners |
-| `giveaways.manage` | Owner (Founders map to Owner) | Start, end now, reroll |
+| `giveaways.manage` | Owner (Founders map to Owner) | Start, end now, reroll, delete |
 
 Like every other action: `can()` decides, per-person overrides apply, a
 refused mutation is audited as `denied`. Managers see the page with the
@@ -32,6 +32,7 @@ mutations → `can()` → rate limit → zod input → confirm → provider → 
 | POST | `/api/giveaways-admin` | manage | start; `confirm: true` required (428 otherwise) |
 | POST | `/api/giveaways-admin/:id/end` | manage | end now; confirm; 409 if not running |
 | POST | `/api/giveaways-admin/:id/reroll` | manage | new winners; confirm; 409 if not ended |
+| POST | `/api/giveaways-admin/:id/delete` | manage | removes it, its entries and its Discord message; confirm; 404 if unknown |
 
 - **Rate limit:** `giveaways` — 10 mutations per minute per user
   (`config/dashboard.ts`).
@@ -44,7 +45,8 @@ mutations → `can()` → rate limit → zod input → confirm → provider → 
   64 KB; anything larger is refused with 413 before parsing.
 - **Audit:** `giveaways.create` (target `giveaway:<id>`, after = prize,
   duration, winners, channel, requirements and `image: { type, bytes }`),
-  `giveaways.end` and `giveaways.reroll` (before/after winner ids). **Image
+  `giveaways.end` and `giveaways.reroll` (before/after winner ids),
+  `giveaways.delete` (prize, status, entries and winners before). **Image
   data and tokens are never logged** — not in the audit log, not in the
   console.
 - **501:** if the backend doesn't have a route yet, the action shows the
@@ -76,6 +78,7 @@ everything else in [provider-api.md](provider-api.md)):
 | POST | `/admin/giveaways` | `CreateGiveawayInput` (with `actor`) → `{ id }` |
 | POST | `/admin/giveaways/:id/end` | `{ actor }` → `{ winners }` |
 | POST | `/admin/giveaways/:id/reroll` | `{ actor }` → `{ winners }` |
+| POST | `/admin/giveaways/:id/delete` | `{ actor }` → `{ deleted: true }` |
 
 Status codes as everywhere: 400 `invalid`, 404 `not_found`, 409 `conflict`
 (end on an ended giveaway, reroll on a running one), 501 `not_implemented`.
@@ -89,7 +92,7 @@ the first and last attempt.
 
 **Live updates.** The provider emits a `giveaway` live event
 (`data: AdminGiveaway`) whenever a giveaway changes — entry, blocked
-attempt, end, reroll. Only users with `giveaways.view` receive it. The list
+attempt, end, reroll, delete (`deleted: true`; open pages drop it). Only users with `giveaways.view` receive it. The list
 and detail pages also poll every 15 s while visible, so they stay current
 if the backend doesn't stream these events yet.
 

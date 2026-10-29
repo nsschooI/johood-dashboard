@@ -17,12 +17,22 @@ from their Discord roles.
   to the list (claim, reply, hand over, close with confirm).
 - **Activity** — purchases, transfers and rewards live, and everything else
   (bots, members joining, voice assistants).
-- **Members** — directory and profiles (roles, Roblox account, economy,
-  recent points and purchases), plus ranks & roles.
+- **Members** — the Discord server only: every member with search, sort
+  and load more, one badge each (server rank or staff role, from the
+  backend), linked / not linked, and profiles with roles, points, tickets and
+  giveaways. **Manage access** opens a panel: dashboard permissions and
+  overrides, Discord roles (add / remove), and the member's audit trail.
+- **Leaderboards** — General, Chat, Voice and Reactions, five periods, a
+  podium and the ranked list, refreshed every minute.
+- **Roblox** — only people connected to the game: linked players (copy the
+  list, CSV, player drawer), link candidates (invite by DM) and players
+  who bought but aren't in the server (nudge in game). See
+  [docs/roblox-and-members.md](docs/roblox-and-members.md).
 - **Points** — the economy (global): KPIs with deltas, revenue, top buyers,
-  points flow and every member's ledger with reason-required adjustments.
+  points flow, every member's ledger with reason-required adjustments, and
+  the in-game levels (cashback tiers).
 - **Giveaways** (`/giveaways-admin`) — start a giveaway with a live Discord
-  preview, follow entries and blocked members live, end or reroll. See
+  preview, follow entries and blocked members live, end, reroll or delete. See
   [docs/giveaways-admin.md](docs/giveaways-admin.md).
 - **Bots** — the three voice assistants and the core bots: health, logs,
   restart / stop / start with confirm and Undo.
@@ -112,14 +122,14 @@ src/
     layout.tsx               html lang/dir from the locale cookie, fonts
     login/                   Discord + dev login
     (dash)/                  signed-in area: layout = session + providers + shell
-      overview/ tickets/ activity/ members/ points/ giveaways-admin/ bots/ safety/ access/
+      overview/ tickets/ activity/ members/ leaderboards/ roblox/ points/ giveaways-admin/ bots/ safety/ access/
                              server components: check access, fetch, render view
     giveaways/               the public giveaways area (separate member session)
     dev/design/              design showcase (404 in production unless DESIGN_PAGE=1)
     api/                     route handlers — every one wrapped in guard()
       stream/                Server-Sent Events, filtered per user
   components/
-    overview/ tickets/ members/ points/ bots/ activity/ safety/ access/ giveaways-admin/
+    overview/ tickets/ members/ leaderboards/ roblox/ points/ bots/ activity/ safety/ access/ giveaways-admin/
                              page sections (client components)
     icons/                   the one icon set (Lucide geometry, generated) — see docs/design.md
     art/                     Hoodie and the illustration scenes, bot tiles, rank badges
@@ -138,7 +148,7 @@ src/
                              Roblox thumbnail batching, bot sparkline samples, anchors
     server/roblox.ts         cached Roblox thumbnail resolver
 config/                      roles.ts (Discord role mapping), dashboard.ts (limits)
-docs/                        design.md, provider-api.md, permissions.md, giveaways.md, giveaways-admin.md
+docs/                        design.md, provider-api.md, permissions.md, roblox-and-members.md, giveaways.md, giveaways-admin.md
 tests/                       vitest suites
 ```
 

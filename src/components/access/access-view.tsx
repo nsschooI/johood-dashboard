@@ -561,7 +561,7 @@ export function PersonOverrides({
 
         <aside
           aria-label={t("access.diff")}
-          className={cn("h-fit space-y-3 rounded-2xl bg-surface-2 p-4 ring-1 ring-inset ring-line", panel ? "sticky bottom-0 z-10 shadow-[var(--shadow-pop)]" : "xl:sticky xl:top-20")}
+          className={cn("h-fit space-y-3 rounded-2xl bg-surface-2 p-4 ring-1 ring-inset ring-line", panel ? "z-10 sm:sticky sm:bottom-0 sm:shadow-[var(--shadow-pop)]" : "xl:sticky xl:top-20")}
         >
           <h4 className="text-xs font-semibold text-ink-3">{t("access.diff")}</h4>
           {!changed || (granted.length === 0 && removed.length === 0) ? (

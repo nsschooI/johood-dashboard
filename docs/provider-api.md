@@ -54,8 +54,17 @@ Browser ──https──▶ nginx ──▶ Dashboard (Next.js, :3000) ──ht
 | GET | `/points/summary` | `PointsSummary` | KPIs, charts, top buyers |
 | GET | `/points/ledger/:discordId?limit&cursor` | `Page<LedgerEntry>` | Member ledger |
 | POST | `/points/adjust` | `LedgerEntry` | Manual adjustment |
-| GET | `/members/search?q&limit&guild` | `MemberSummary[]` | Member search |
-| GET | `/members/:discordId?guild=` | `MemberProfile` | Profile (404 when not in that server) |
+| GET | `/members/search?q&limit&guild` | `MemberSummary[]` | Quick member search (palette, ledger picker) |
+| GET | `/members?q&page&pageSize&sort&guild` | `NumberedPage<MemberRow>` | Members directory — every member of the server |
+| GET | `/members/:discordId?guild=` | `MemberProfile` | Profile, Discord side only (404 when not in that server) |
+| GET | `/members/:discordId/access?guild=` | `MemberAccess` | Manage access panel |
+| POST | `/members/:discordId/roles?guild=` | `{ memberRoleIds }` | Add / remove Discord roles (501 until built) |
+| GET | `/roblox/linked?q&page&pageSize&sort&guild` | `NumberedPage<LinkedPlayer>` | Roblox page · Linked |
+| GET | `/roblox/candidates?q&page&pageSize&sort&hasTicket&minPoints&guild` | `NumberedPage<Candidate>` | Roblox page · Link candidates |
+| POST | `/roblox/candidates/:discordId/invite` | `{ invitedAt }` | Link invitation by DM (501 until built) |
+| GET | `/roblox/outside?q&page&pageSize&sort` | `NumberedPage<OutsidePlayer>` | Roblox page · Outside the server |
+| POST | `/roblox/outside/:robloxId/nudge` | `{ nudgedAt }` | In-game nudge (501 until built) |
+| GET | `/leaderboard?kind&period&limit&guild` | `Leaderboard` | Leaderboards page |
 | GET | `/ranks` | `RankInfo[]` | Rank overview (economy-wide; `guild` accepted, ignored) |
 | GET | `/roles?guild=` | `RoleInfo[]` | Role overview, Access page colours |
 | GET | `/staff` | `StaffMember[]` | Staff list, ticket hand-over (`guild` accepted) |
@@ -294,7 +303,7 @@ Every balance change for one member, newest first. `404` for an unknown member.
   "reason": "Duplicate reward", "actor": { "discordId": "…", "name": "Lina", "avatarUrl": null }, "refId": null }
 ```
 
-`kind`: `purchase` | `transfer` | `redeem` | `adjust` | `refund`. `refId`
+`kind`: `purchase` | `transfer` | `redeem` | `adjust` | `refund` | `activity` (points earned on the Discord server). `refId`
 points to the purchase/transfer/redemption id.
 
 ### `POST /points/adjust` → `LedgerEntry`
@@ -316,34 +325,86 @@ All people (`MemberRef`, `MemberSummary`, `StaffMember`, ticket authors,
 ledger actors) should carry their Discord `avatarUrl` (CDN URL) — the
 dashboard shows faces everywhere and falls back to gradient initials.
 
-### `GET /members/search?q=nour&limit=10` → `MemberSummary[]`
+Full types, the mock's behaviour and the UI that uses each endpoint are in
+[roblox-and-members.md](roblox-and-members.md). In short:
 
-Match display name, username, Roblox name, Discord ID or Roblox ID. Empty `q`
-returns the top members by lifetime points.
+**Badge.** Every member carries one badge, decided by the backend: their
+server rank, or their staff role for staff. `null` shows nothing (the
+dashboard never invents a "Newcomer").
 
-```json
-{ "discordId": "…", "username": "nourpro", "displayName": "Nour", "avatarUrl": null, "rank": "silver", "robloxName": "NourPro" }
+```ts
+type Badge = { kind: "staff" | "rank"; label: string; color?: string };
 ```
 
-`rank`: `newcomer` | `bronze` | `silver` | `gold` | `diamond` | `legend`.
+### `GET /members?q=&page=1&pageSize=25&sort=points|joined|name` → `NumberedPage<MemberRow>`
+
+Every member of the server (not only the top ones). `q` matches display
+name, username or an exact Discord ID.
+
+```ts
+type MemberRow = { discordId; username; displayName; avatarUrl: string | null;
+                   points: number; linked: boolean; badge: Badge | null; joinedAt: string | null };
+type NumberedPage<T> = { items: T[]; total: number; page: number; pageSize: number };
+```
+
+The dashboard sets `points` to `null` for viewers without
+`members.view_full` and won't let them sort by points.
+
+### `GET /members/search?q=nour&limit=10` → `MemberSummary[]`
+
+Quick search for pickers (command palette, ledger). Match display name,
+username, Roblox name, Discord ID or Roblox ID. Empty `q` returns the top
+members by lifetime points.
+
+```json
+{ "discordId": "…", "username": "nourpro", "displayName": "Nour", "avatarUrl": null, "rank": "silver", "robloxName": "NourPro", "badge": { "kind": "rank", "label": "Astra", "color": "#38bdf8" } }
+```
+
+`rank` is the **in-game level** (cashback tier): `newcomer` | `bronze` |
+`silver` | `gold` | `diamond` | `legend`. The dashboard shows it only on the
+Roblox side ("Starter" for `newcomer`); next to a member it shows `badge`.
 
 ### `GET /members/:discordId` → `MemberProfile`
 
-`MemberSummary` plus:
+The Discord side only — **no purchases, no Robux** (those live on the
+Roblox page). `MemberSummary` plus:
 
 ```json
 {
   "joinedAt": "…",
   "roles": [{ "id": "…", "name": "VIP", "color": "#fbbf24" }],
+  "linked": true, "robloxId": "…",
   "roblox": { "robloxId": "…", "robloxName": "NourPro", "verifiedAt": "…" },
-  "points": 1340, "lifetimePoints": 4210, "totalRobux": 38110,
-  "purchases": [ /* last 20 PurchaseEvent */ ],
-  "tickets":   [ /* TicketSummary, newest first */ ]
+  "points": 1340, "lifetimePoints": 4210,
+  "tickets":   [ /* TicketSummary, newest first */ ],
+  "giveaways": [ { "id": 101, "prize": "Nitro", "joinedAt": "…", "won": false } ]
 }
 ```
 
-Always send the full profile; the dashboard redacts economy fields for roles
+`giveaways` is optional (the profile shows the section only when it's
+sent). Always send the full profile; the dashboard redacts points for roles
 without `members.view_full`.
+
+### `GET /members/:discordId/access` → `MemberAccess`
+
+```ts
+{ discordId, siteRoles: ("owner"|"manager"|"dev"|"head_support"|"support")[],
+  overrides: { allow: string[]; deny: string[] },      // ignored: the dashboard keeps overrides itself
+  memberRoleIds: string[],
+  roles: { id, name, color, position, assignable: boolean, reason?: string, permissions: string[] }[] }
+```
+
+`roles` is every role of the server. `assignable: false` for roles the bot
+can't hand out; `reason` is shown to staff — the dashboard translates
+`above_bot`, `managed` and `everyone`, any other text is shown as sent.
+`permissions` are the dashboard actions the role grants (empty for
+non-staff roles).
+
+### `POST /members/:discordId/roles` → `{ memberRoleIds }` — 501 until built
+
+Body `{ actor, add: string[], remove: string[] }`. The dashboard has
+already checked `members.roles`, the confirm step and that every role is
+`assignable` in the access answer; reject anything else with 400.
 
 ### `GET /ranks` → `RankInfo[]`, `GET /roles` → `RoleInfo[]`, `GET /staff` → `StaffMember[]`
 
@@ -443,7 +504,7 @@ data: {"name":"ops","state":"restarting", …full BotStatus…}
 | `ticket` | `TicketSummary` (with `guild`) | Ticket opened, claimed, replied, closed, handed over |
 | `protection` | `ProtectionSettings` | Settings changed (from the dashboard or Discord) |
 | `activity` | `ActivityItem` | Anything worth a feed line (see table above). Server-specific lines (`member_join`, `ticket`) carry `guild`. |
-| `giveaway` | `AdminGiveaway` | A giveaway changed: entry, blocked attempt, end, reroll (only sent to `giveaways.view`) |
+| `giveaway` | `AdminGiveaway` | A giveaway changed: entry, blocked attempt, end, reroll, delete (`deleted: true`) — only sent to `giveaways.view` |
 
 ## Roblox thumbnails
 
@@ -466,6 +527,9 @@ answers `501` for them. Implement them and they start working:
 | `POST /points/adjust` | Ledger adjustment form (reason, cap, confirm, Undo) |
 | `POST /tickets/:id/actions` | Claim / reply / close / hand over in the ticket drawer |
 | `PATCH /protection` | Lockdown, raid mode, thresholds, link blocking, word lists (Undo) |
+| `POST /members/:id/roles` | Add / remove a Discord role in Manage access (confirm) |
+| `POST /roblox/candidates/:id/invite` | Send link invitation (confirm; shows "Invited …" once it works) |
+| `POST /roblox/outside/:robloxId/nudge` | Nudge in game (confirm; shows "Nudged …" once it works) |
 
 While they answer 501 the dashboard: keeps the buttons visible and enabled
 for permitted users, runs the confirm step, shows a calm "not connected yet"
@@ -486,7 +550,16 @@ provider: `GET /admin/giveaways`, `GET /admin/giveaways/:id`,
 `GET /admin/giveaways/:id/banner`, `POST /admin/giveaways`,
 `POST /admin/giveaways/:id/end`, `POST /admin/giveaways/:id/reroll`.
 Payloads, status codes and the mock's behaviour are in
-[giveaways-admin.md](giveaways-admin.md).
+[giveaways-admin.md](giveaways-admin.md). Deleting is
+`POST /admin/giveaways/:id/delete` with `{ actor }` → `{ deleted: true }`
+(removes the giveaway, its entries and its Discord message).
+
+## Roblox lists and leaderboards
+
+`/roblox/linked`, `/roblox/candidates`, `/roblox/outside` and
+`/leaderboard` are described in [roblox-and-members.md](roblox-and-members.md).
+Until the points system is reset the server records only all-time
+activity: answer any other period with `{ items: [], available: false }`.
 
 ## Wiring checklist
 

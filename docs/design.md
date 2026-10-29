@@ -115,11 +115,33 @@ All in `src/components/ui/` unless noted.
 | `EmptyState`, `ErrorState` | illustration + one line + one action |
 | `Avatar`, `RobloxAvatar`, `CopyButton`, `TimeAgo`, `CountUp`, `Sparkline`, `Stars`, `Spinner` | |
 | Shell (`src/components/shell/`) | sidebar, top bar, bottom nav + "More" sheet, server switcher, bell, command palette (⌘K), shortcuts (?), user menu |
+| `InfoPopover` | a small ⓘ that opens a card on click / Enter (works on phones and inside dialogs; Esc closes it, not the dialog) |
+| `MemberBadge`, `LinkedChip` (`src/components/people/member-badge.tsx`) | the one badge next to a member — server rank (☆) or staff role (shield) in the colour the backend sends, tinted for both themes; *linked / not linked* |
+| Manage access (`src/components/access/manage-access.tsx`) | drawer with three tabs; `useManageAccess()(person)` opens it from anywhere |
+| Lists that grow | `usePagedList()` (`src/lib/client/use-paged.ts`): numbered pages, "load more", rows patched in place after an action |
+| Podium (`src/components/leaderboards/`) | top three, winner in the middle with a crown, gold / silver / bronze steps |
 
 **Disabled with a reason.** A control the user may not use is either hidden
 (navigation they can't open) or disabled with a tooltip that says why
 (`useWhyNot()(action)` → "Needs Manager / Owner role"). The rule is
 `can()` from `src/lib/permissions.ts`; the UI never decides on its own.
+
+### Members and the Roblox world
+
+Members (Discord) and Roblox (the game) are separate pages with separate
+vocabularies: next to a member the dashboard shows their **badge** and a
+*linked* chip, never Robux; the Roblox page shows Roblox headshots,
+spending and the **in-game level** (cashback tier, with its rank icon). The
+two meet only through links: profile → Roblox page, player drawer → member
+profile. See [roblox-and-members.md](roblox-and-members.md).
+
+Outreach actions (link invitations, in-game nudges) use the `soft` button,
+turn into `secondary` "… again" once sent, and show *when* next to the
+button ("Invited 2 days ago"). The nudge confirm previews the in-game
+message on a charcoal card.
+
+Destructive giveaway actions read differently on purpose: *End now* keeps
+the record, *Delete giveaway* (trash, red) lists what disappears.
 
 ## Motion
 
@@ -133,6 +155,8 @@ tooltips), `--dur-base` 240 ms (pills, menus, toasts), `--dur-slow` 420 ms
   `transitionTypes={["nav"]}` — a short rise and fade. Back/forward and
   refreshes don't animate.
 - **Stagger:** `.stagger` children enter 40 ms apart, capped at 10.
+- **Refresh without flicker:** pages that poll (leaderboards every 60 s,
+  giveaways every 15 s) keep the current data on screen while they reload.
 - **Count-ups** on headline numbers; **live pulses** on the Live pill and on
   new rows (`.live-in`); **press** scales to 0.97; cards `.lift` on hover.
 - Only `transform` and `opacity` animate. No layout animation.
