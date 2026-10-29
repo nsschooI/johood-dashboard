@@ -24,7 +24,7 @@ export const NAV: NavItem[] = [
   { key: "activity", href: "/activity", label: "nav.activity", hint: "nav.hint.activity", icon: "activity", shortcut: "y", group: "today", global: true },
   { key: "members", href: "/members", label: "nav.members", hint: "nav.hint.members", icon: "members", shortcut: "m", group: "community" },
   { key: "points", href: "/points", label: "nav.points", hint: "nav.hint.points", icon: "coin", shortcut: "p", group: "community", global: true },
-  { key: "giveaways", href: "/giveaways-admin", label: "nav.giveaways", hint: "nav.hint.giveaways", icon: "giveaways", shortcut: "v", group: "community" },
+  { key: "giveaways", href: "/giveaways-admin", label: "nav.giveaways", hint: "nav.hint.giveaways", icon: "giveaways", shortcut: "v", group: "community", global: true },
   { key: "bots", href: "/bots", label: "nav.bots", hint: "nav.hint.bots", icon: "bots", shortcut: "b", group: "system", global: true },
   { key: "safety", href: "/safety", label: "nav.safety", hint: "nav.hint.safety", icon: "safety", shortcut: "s", group: "system", global: true },
   { key: "access", href: "/access", label: "nav.access", hint: "nav.hint.access", icon: "access", shortcut: "a", group: "system" },

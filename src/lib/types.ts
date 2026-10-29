@@ -11,6 +11,7 @@
  * snowflakes and Roblox IDs do not fit safely in a JS number).
  */
 
+import type { AdminGiveaway, AdminGiveawaysApi } from "./giveaways/admin";
 import type { GiveawaysApi } from "./giveaways/types";
 
 // ---------------------------------------------------------------------------
@@ -473,7 +474,9 @@ export type LiveEvent =
   | { type: "stats"; data: ServerStats }
   | { type: "ticket"; data: TicketSummary }
   | { type: "protection"; data: ProtectionSettings }
-  | { type: "activity"; data: ActivityItem };
+  | { type: "activity"; data: ActivityItem }
+  /** A giveaway changed: new entry, new blocked attempt, ended, rerolled. */
+  | { type: "giveaway"; data: AdminGiveaway };
 
 export type LiveEventType = LiveEvent["type"];
 
@@ -554,6 +557,10 @@ export interface DataProvider {
   // Giveaways (public area) -------------------------------------------
   /** See src/lib/giveaways/types.ts and docs/giveaways.md. */
   readonly giveaways: GiveawaysApi;
+
+  // Giveaways (staff: run them from the dashboard) --------------------
+  /** See src/lib/giveaways/admin.ts and docs/giveaways-admin.md. */
+  readonly adminGiveaways: AdminGiveawaysApi;
 
   // Live ---------------------------------------------------------------
   /** Subscribe to live events. Returns an unsubscribe function. */

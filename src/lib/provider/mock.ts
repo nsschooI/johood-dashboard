@@ -50,6 +50,7 @@ import { BOT_NAMES, GUILD_KEYS, RANKS } from "../types";
 import { chance, createRng, int, pick, weighted, type Rng } from "../rng";
 import { DAY, HOUR, MINUTE, dayKey, lastDays, lastWeeks, weekKey } from "../time";
 import { ProviderError } from "./errors";
+import { MockAdminGiveaways } from "../giveaways/admin-mock";
 import { MockGiveaways } from "../giveaways/mock";
 import {
   BOT_META,
@@ -124,6 +125,8 @@ export class MockProvider implements DataProvider {
   readonly kind = "mock" as const;
   /** Public giveaways (independent of the staff simulation). */
   readonly giveaways = new MockGiveaways();
+  /** Staff giveaways (the dashboard's giveaway admin page). */
+  readonly adminGiveaways = new MockAdminGiveaways({ onChange: (g) => this.emit({ type: "giveaway", data: g }) });
 
   private rng: Rng;
   private live: Rng;
@@ -196,7 +199,11 @@ export class MockProvider implements DataProvider {
 
   start() {
     if (this.timer) return;
-    this.timer = setInterval(() => this.tick(), 1000);
+    this.timer = setInterval(() => {
+      this.tick();
+      // Giveaway admin simulation runs only with the real clock (tests drive tick() by hand).
+      this.adminGiveaways.tick();
+    }, 1000);
     this.timer.unref?.();
   }
 

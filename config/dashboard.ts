@@ -22,6 +22,8 @@ export const DASHBOARD_CONFIG = {
     settings: { limit: 15, windowMs: 60_000 },
     /** Ticket actions. */
     tickets: { limit: 60, windowMs: 60_000 },
+    /** Starting, ending and rerolling giveaways. */
+    giveaways: { limit: 10, windowMs: 60_000 },
     /** Login attempts (per IP). */
     login: { limit: 20, windowMs: 5 * 60_000 },
   },

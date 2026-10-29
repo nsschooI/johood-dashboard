@@ -51,6 +51,7 @@ import type {
   TransferStatus,
 } from "../types";
 import { ProviderError, isProviderError } from "./errors";
+import type { AdminGiveaway, AdminGiveawaysApi, Blocked, ChannelOption, CreateGiveawayInput, Participant } from "../giveaways/admin";
 import type { Giveaway, GiveawaysApi, JoinResult } from "../giveaways/types";
 
 export interface RealProviderOptions {
@@ -66,6 +67,7 @@ type Query = Record<string, string | number | undefined>;
 export class RealProvider implements DataProvider {
   readonly kind = "real" as const;
   readonly giveaways: GiveawaysApi;
+  readonly adminGiveaways: AdminGiveawaysApi;
   private readonly baseUrl: string;
   private readonly token: string;
   private readonly timeoutMs: number;
@@ -81,6 +83,7 @@ export class RealProvider implements DataProvider {
     this.timeoutMs = opts.timeoutMs ?? 8000;
     this.fetchImpl = opts.fetchImpl ?? fetch;
     this.giveaways = new RealGiveaways((method, path, o) => this.request(method, path, o));
+    this.adminGiveaways = new RealAdminGiveaways((method, path, o) => this.request(method, path, o));
   }
 
   // -------------------------------------------------------------------------
@@ -367,5 +370,52 @@ export class RealGiveaways implements GiveawaysApi {
   /** Server to server: the member authorized the app; the bot backend keeps the tokens (encrypted) for guilds.join. */
   storeAuthorization(input: { memberId: string; username: string; accessToken: string; refreshToken: string | null; expiresIn: number | null; scope: string }) {
     return this.request<{ ok: boolean }>("POST", "/giveaways/authorize", { body: input });
+  }
+}
+
+/**
+ * Staff giveaways: the bot backend's `/admin/giveaways*` routes (built by
+ * the owner; see docs/giveaways-admin.md). Errors are `{ error, message }`
+ * with 400 / 404 / 409 / 502, mapped by `request()` to ProviderErrors.
+ * Image data is sent once as base64 and never logged.
+ */
+export class RealAdminGiveaways implements AdminGiveawaysApi {
+  constructor(private readonly request: Requester) {}
+
+  list() {
+    return this.request<AdminGiveaway[]>("GET", "/admin/giveaways");
+  }
+
+  async get(id: number) {
+    try {
+      return await this.request<AdminGiveaway>("GET", `/admin/giveaways/${id}`);
+    } catch (err) {
+      if (isProviderError(err) && err.code === "not_found") return null;
+      throw err;
+    }
+  }
+
+  participants(id: number) {
+    return this.request<{ entries: Participant[]; blocked: Blocked[] }>("GET", `/admin/giveaways/${id}/participants`);
+  }
+
+  channels() {
+    return this.request<ChannelOption[]>("GET", "/admin/giveaway-channels");
+  }
+
+  banner(id: number) {
+    return this.request<{ contentType: string; base64: string }>("GET", `/admin/giveaways/${id}/banner`);
+  }
+
+  create(input: CreateGiveawayInput) {
+    return this.request<{ id: number }>("POST", "/admin/giveaways", { body: input });
+  }
+
+  end(id: number, actor: CreateGiveawayInput["actor"]) {
+    return this.request<{ winners: { id: string; name: string }[] }>("POST", `/admin/giveaways/${id}/end`, { body: { actor } });
+  }
+
+  reroll(id: number, actor: CreateGiveawayInput["actor"]) {
+    return this.request<{ winners: { id: string; name: string }[] }>("POST", `/admin/giveaways/${id}/reroll`, { body: { actor } });
   }
 }

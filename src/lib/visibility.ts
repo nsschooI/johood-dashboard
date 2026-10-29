@@ -47,6 +47,8 @@ export function eventPermission(event: LiveEvent): Action | null {
       return "protection.view";
     case "activity":
       return "activity.view";
+    case "giveaway":
+      return "giveaways.view";
   }
 }
 

@@ -184,13 +184,14 @@ export function guard<P = Record<string, never>>(opts: GuardOptions, fn: (ctx: R
 
 const MAX_BODY = 32 * 1024;
 
-export async function readJson<T>(req: NextRequest, schema: ZodType<T>): Promise<T> {
+export async function readJson<T>(req: NextRequest, schema: ZodType<T>, opts: { maxBytes?: number } = {}): Promise<T> {
+  const max = opts.maxBytes ?? MAX_BODY;
   const len = Number(req.headers.get("content-length") ?? 0);
-  if (len > MAX_BODY) throw new ApiError(413, "body_too_large");
+  if (len > max) throw new ApiError(413, "body_too_large");
   let raw: unknown;
   try {
     const text = await req.text();
-    if (text.length > MAX_BODY) throw new ApiError(413, "body_too_large");
+    if (text.length > max) throw new ApiError(413, "body_too_large");
     raw = text ? JSON.parse(text) : {};
   } catch (err) {
     if (err instanceof ApiError) throw err;
