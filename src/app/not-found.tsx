@@ -1,17 +1,17 @@
 import Link from "next/link";
-import { Illustration } from "@/components/art/illustrations";
+import { Scene } from "@/components/art/scenes";
 import { getT } from "@/lib/server/i18n";
 
 export default async function NotFound() {
   const t = await getT();
   return (
-    <main className="grid min-h-dvh place-items-center px-4">
-      <div className="glass max-w-md rounded-[var(--radius-card)] p-8 text-center animate-rise">
-        <Illustration name="lost" className="mx-auto h-32 w-auto" />
-        <p className="bg-gradient-to-br from-accent-300 to-blush bg-clip-text text-5xl font-semibold text-transparent">404</p>
-        <h1 className="mt-3 text-lg font-semibold">{t("errors.notFoundTitle")}</h1>
-        <p className="mt-1 text-sm text-ink-3">{t("errors.notFoundBody")}</p>
-        <Link href="/overview" className="mt-6 inline-flex h-10 items-center rounded-xl bg-white/[0.06] px-4 text-sm font-medium ring-1 ring-inset ring-line-strong hover:bg-white/[0.1]">
+    <main className="grid min-h-dvh place-items-center px-4 py-10">
+      <div className="w-full max-w-lg text-center animate-rise">
+        <Scene name="lost" className="mx-auto h-56 w-auto" />
+        <p className="font-display text-7xl leading-none font-black text-accent-500">404</p>
+        <h1 className="font-display mt-3 text-2xl font-bold">{t("errors.notFoundTitle")}</h1>
+        <p className="mt-2 text-sm text-ink-3">{t("errors.notFoundBody")}</p>
+        <Link href="/overview" className="mt-7 inline-flex h-11 items-center gap-2 rounded-2xl bg-accent-500 px-5 text-sm font-semibold text-white shadow-[0_10px_24px_-12px_#e11d48] transition hover:brightness-105 active:scale-95">
           {t("errors.backHome")}
         </Link>
       </div>

@@ -11,12 +11,16 @@ import type { GuildKey } from "../types";
 
 export async function getOverviewData(user: SessionUser, guild: GuildKey = "main") {
   const p = getProvider();
-  const [bots, assistants, stats, activity, tickets] = await Promise.all([
+  const [bots, assistants, stats, activity, tickets, purchases, transfers, redemptions] = await Promise.all([
     can(user, "bots.view") ? p.getBots() : null,
     can(user, "assistants.view") ? p.getAssistants() : null,
     can(user, "stats.view") ? p.getServerStats(guild) : null,
     can(user, "activity.view") ? p.getActivity(120) : null,
-    can(user, "tickets.view") ? p.getTickets({ status: "active", limit: 40, guild }) : null,
+    // Tickets live in JoHood Catalog, whichever server is selected.
+    can(user, "tickets.view") ? p.getTickets({ status: "active", limit: 40, guild: "catalog" }) : null,
+    can(user, "purchases.view") ? p.getPurchases({ limit: 60 }) : null,
+    can(user, "transfers.view") ? p.getTransfers({ limit: 30 }) : null,
+    can(user, "points.view") ? p.getRedemptions({ limit: 30 }) : null,
   ]);
   return {
     bots,
@@ -24,28 +28,40 @@ export async function getOverviewData(user: SessionUser, guild: GuildKey = "main
     stats,
     activity: activity ? activity.filter((a) => canSeeActivity(user, a)).slice(0, 80) : null,
     tickets: tickets?.items ?? null,
+    purchases: purchases?.items ?? null,
+    transfers: transfers?.items ?? null,
+    redemptions: redemptions?.items ?? null,
   };
 }
 
 export async function getPointsData(user: SessionUser) {
   const p = getProvider();
-  const [purchases, transfers, redemptions, summary] = await Promise.all([
-    can(user, "purchases.view") ? p.getPurchases({ limit: 30 }) : null,
+  return { summary: can(user, "points.view") ? await p.getPointsSummary() : null };
+}
+
+export async function getActivityData(user: SessionUser) {
+  const p = getProvider();
+  const [purchases, transfers, redemptions, activity] = await Promise.all([
+    can(user, "purchases.view") ? p.getPurchases({ limit: 40 }) : null,
     can(user, "transfers.view") ? p.getTransfers({ limit: 25 }) : null,
-    can(user, "points.view") ? p.getRedemptions({ limit: 15 }) : null,
-    can(user, "points.view") ? p.getPointsSummary() : null,
+    can(user, "points.view") ? p.getRedemptions({ limit: 20 }) : null,
+    can(user, "activity.view") ? p.getActivity(120) : null,
   ]);
-  return { purchases, transfers, redemptions, summary };
+  return {
+    purchases,
+    transfers,
+    redemptions,
+    activity: activity ? activity.filter((a) => canSeeActivity(user, a)).slice(0, 80) : null,
+  };
 }
 
 export async function getMembersData(user: SessionUser, guild: GuildKey = "main") {
   const p = getProvider();
-  const [members, ranks, roles, staff, protection] = await Promise.all([
+  const [members, ranks, roles, staff] = await Promise.all([
     can(user, "members.view") ? p.searchMembers("", 12, guild) : null,
     can(user, "members.view") ? p.getRanks(guild) : null,
     can(user, "members.view") ? p.getRoles(guild) : null,
     can(user, "staff.view") ? p.getStaff(guild) : null,
-    can(user, "protection.view") ? p.getProtection() : null,
   ]);
   const overrides = staff && can(user, "permissions.manage") ? getAllOverrides() : null;
   return {
@@ -53,7 +69,6 @@ export async function getMembersData(user: SessionUser, guild: GuildKey = "main"
     ranks,
     roles,
     staff: staff?.map((s) => ({ ...s, overrides: overrides ? (overrides[s.discordId] ?? { allow: [], deny: [] }) : null })) ?? null,
-    protection,
   };
 }
 

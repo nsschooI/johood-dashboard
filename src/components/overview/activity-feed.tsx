@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Radio } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useT } from "@/components/providers/app-provider";
 import { useGuild } from "@/components/providers/guild-provider";
 import { useLiveEvent } from "@/components/providers/live-provider";
@@ -23,7 +23,7 @@ const FILTER_KINDS: Record<Exclude<Filter, "all">, ActivityKind[]> = {
   members: ["member_join", "protection"],
 };
 
-export function ActivityFeed({ initial }: { initial: ActivityItem[] }) {
+export function ActivityFeed({ initial, exclude = [], title }: { initial: ActivityItem[]; exclude?: ActivityKind[]; title?: string }) {
   const t = useT();
   const { guild } = useGuild();
   const [items, setItems] = useState(initial);
@@ -36,7 +36,7 @@ export function ActivityFeed({ initial }: { initial: ActivityItem[] }) {
     setFresh((s) => new Set(s).add(e.data.id));
   });
 
-  const inServer = useMemo(() => items.filter((a) => !a.guild || a.guild === guild), [items, guild]);
+  const inServer = useMemo(() => items.filter((a) => (!a.guild || a.guild === guild) && !exclude.includes(a.kind)), [items, guild, exclude]);
   const counts = useMemo(() => {
     const c: Record<Filter, number> = { all: inServer.length, purchases: 0, transfers: 0, bots: 0, tickets: 0, members: 0 };
     for (const a of inServer) for (const [f, kinds] of Object.entries(FILTER_KINDS)) if (kinds.includes(a.kind)) c[f as Filter]++;
@@ -47,26 +47,25 @@ export function ActivityFeed({ initial }: { initial: ActivityItem[] }) {
 
   return (
     <Card aria-labelledby="activity-title" className="flex flex-col">
-      <CardHeader id="activity-title" title={t("overview.activity")} icon={<Radio className="size-4" aria-hidden />} />
+      <CardHeader id="activity-title" title={title ?? t("overview.activity")} icon="history" />
       {filters.length > 2 && (
-        <div className="-mt-1 overflow-x-auto px-5 pb-3">
+        <div className="-mt-1 px-5 pb-3">
           <Segmented size="sm" label={t("overview.activity")} value={filter} onChange={setFilter} options={filters.map((f) => ({ value: f, label: t(`activityFilter.${f}`) }))} />
         </div>
       )}
       {shown.length === 0 ? (
-        <EmptyState art="inbox" title={t("overview.noActivity")} compact />
+        <EmptyState art="quiet" title={t("overview.noActivity")} compact />
       ) : (
-        <ol className="max-h-[36rem] space-y-0.5 overflow-y-auto px-3 pb-3" aria-live="polite" aria-relevant="additions">
+        <ol className="max-h-[40rem] space-y-0.5 overflow-y-auto px-3 pb-3" aria-live="polite" aria-relevant="additions">
           {shown.map((a) => {
-            const Icon = ACTIVITY_ICON[a.kind];
             return (
-              <li key={a.id} className={cn("flex items-start gap-3 rounded-xl px-2 py-2 transition hover:bg-white/[0.03]", fresh.has(a.id) && "motion-safe:animate-slide-in")}>
-                <span className={cn("mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg ring-1", ACTIVITY_TONE[a.tone])}>
-                  <Icon aria-hidden className="size-3.5" />
+              <li key={a.id} className={cn("flex items-start gap-3 rounded-xl px-2 py-2 transition hover:bg-surface-2", fresh.has(a.id) && "live-in")}>
+                <span className={cn("mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl", ACTIVITY_TONE[a.tone])}>
+                  <Icon name={ACTIVITY_ICON[a.kind]} size={16} duo />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] leading-snug text-ink-2">{translateDynamic(t, `activity.${a.kind}.${a.variant}`, a.params, a.kind)}</p>
-                  <TimeAgo at={a.at} className="text-[11px] text-ink-3" />
+                  <p className="text-sm leading-snug text-ink-2">{translateDynamic(t, `activity.${a.kind}.${a.variant}`, a.params, a.kind)}</p>
+                  <TimeAgo at={a.at} className="text-xs text-ink-3" />
                 </div>
               </li>
             );

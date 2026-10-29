@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
-import { X } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useT } from "@/components/providers/app-provider";
 import { Button } from "./button";
 import { cn } from "./cn";
@@ -27,7 +27,7 @@ export function Modal({
   description?: ReactNode;
   children?: ReactNode;
   footer?: ReactNode;
-  variant?: "center" | "drawer";
+  variant?: "center" | "drawer" | "sheet";
   className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -53,26 +53,28 @@ export function Modal({
         if (e.target === ref.current) onClose();
       }}
       className={cn(
-        "glass m-0 max-h-[100dvh] bg-surface/95 p-0 text-ink backdrop:bg-transparent open:flex open:flex-col",
+        "glass m-0 max-h-[100dvh] bg-surface p-0 text-ink shadow-[var(--shadow-pop)] backdrop:bg-transparent open:flex open:flex-col",
         variant === "center"
           ? "fixed inset-0 m-auto h-fit w-[min(32rem,calc(100vw-2rem))] rounded-[var(--radius-card)] open:animate-fade-in"
-          : "fixed inset-y-0 start-auto end-0 h-[100dvh] w-full max-w-xl rounded-none border-y-0 border-e-0 sm:rounded-s-[var(--radius-card)] open:animate-fade-in",
+          : variant === "sheet"
+            ? "fixed inset-x-0 top-auto bottom-0 max-h-[85dvh] w-full max-w-none rounded-t-[28px] border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)] open:animate-[sheet-up_var(--dur-slow)_var(--ease-out)]"
+            : "fixed inset-y-0 start-auto end-0 h-[100dvh] w-full max-w-xl rounded-none border-y-0 border-e-0 sm:rounded-s-[var(--radius-card)] open:animate-fade-in",
         className,
       )}
     >
       <header className="flex items-start gap-3 border-b border-line px-5 py-4">
         <div className="min-w-0 flex-1">
-          <h2 id={titleId} className="text-base font-semibold tracking-tight">
+          <h2 id={titleId} className="font-display text-lg font-semibold">
             {title}
           </h2>
           {description && <div className="mt-1 text-sm text-ink-3">{description}</div>}
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label={t("common.close")}>
-          <X className="size-4" aria-hidden />
+          <Icon name="x" size={18} />
         </Button>
       </header>
       {children && <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>}
-      {footer && <footer className="flex flex-wrap justify-end gap-2 border-t border-line px-5 py-3">{footer}</footer>}
+      {footer && <footer className="flex flex-wrap justify-end gap-2 border-t border-line bg-surface-2/60 px-5 py-3">{footer}</footer>}
     </dialog>
   );
 }

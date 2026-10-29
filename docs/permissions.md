@@ -60,6 +60,8 @@ that is only a courtesy — a hand-crafted request is refused the same way.
 | `protection.manage` | ✓ | ✓ | — | — | — |
 | `audit.view` | ✓ | ✓ | — | — | — |
 | `permissions.manage` | ✓ | — | — | — | — |
+| `giveaways.view` | ✓ | ✓ | — | — | — |
+| `giveaways.manage` | ✓ | — | — | — | — |
 
 ### What the actions cover
 
@@ -86,21 +88,29 @@ that is only a courtesy — a hand-crafted request is refused the same way.
 | `protection.view` / `.manage` | Lockdown, raid mode, link blocking, blocked-word lists |
 | `audit.view` | The audit log viewer |
 | `permissions.manage` | Per-user overrides (Owner only, can't be granted) |
+| `giveaways.view` | Giveaways page: list, details, participants and blocked members, CSV export |
+| `giveaways.manage` | Start, end and reroll giveaways from the dashboard (Owner and Founders) |
 
 ### Pages
 
 | Page | Visible with any of |
 |---|---|
 | Overview | `bots.view`, `assistants.view`, `stats.view`, `tickets.view`, `activity.view` |
-| Points & Purchases | `purchases.view`, `transfers.view`, `points.view` |
-| Members & Security | `members.view`, `staff.view`, `protection.view`, `audit.view` |
+| Tickets | `tickets.view` |
+| Activity | `purchases.view`, `transfers.view`, `points.view`, `activity.view` |
+| Members | `members.view`, `staff.view` |
+| Points | `points.view` |
+| Giveaways | `giveaways.view`, `giveaways.manage` |
+| Bots | `bots.view`, `assistants.view` |
+| Safety | `protection.view` |
+| Access | everyone signed in (the audit log tab needs `audit.view`) |
 
 Each page only renders the sections the user is allowed to see, and the
 server only fetches the data for those sections.
 
 ## Overrides (Owner only)
 
-On **Members & Security → Staff & access**, an Owner can set per-member
+On **Access**, an Owner can set per-member
 overrides on top of their Discord roles:
 
 - **Allow** adds a single action. `permissions.manage` can never be granted

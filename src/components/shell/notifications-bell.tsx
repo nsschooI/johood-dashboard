@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Bell, BellRing, ChevronRight } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useApp } from "@/components/providers/app-provider";
 import { useGuild } from "@/components/providers/guild-provider";
 import { useNotifications, type Notice } from "@/components/providers/notifications-provider";
@@ -52,17 +52,17 @@ export function NotificationsBell() {
         aria-label={n.unread ? `${t("notify.open")} (${t("notify.unread", { n: n.unread })})` : t("notify.open")}
         tip={t("notify.title")}
       >
-        {n.unread ? <BellRing aria-hidden className="size-[18px] text-accent-300 motion-safe:animate-[pulse_2.4s_ease-in-out_infinite]" /> : <Bell aria-hidden className="size-[18px]" />}
+        <Icon name="bell" size={20} duo={n.unread > 0} className={n.unread ? "text-accent-400 motion-safe:animate-[bell-ring_2.4s_ease-in-out_infinite] origin-top" : undefined} />
         {n.unread > 0 && (
-          <span className="tabular absolute -end-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent-500 px-1 text-[10px] font-semibold text-white ring-2 ring-bg animate-pop">
+          <span className="tabular absolute -end-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent-500 px-1 text-[10px] font-semibold text-white ring-2 ring-surface animate-pop">
             {n.unread > 99 ? "99+" : n.unread}
           </span>
         )}
       </Button>
       {open && (
-        <div role="dialog" aria-label={t("notify.title")} className="glass fixed inset-x-3 top-16 z-[65] flex max-h-[min(34rem,80vh)] flex-col rounded-2xl bg-[#18141f]/95 shadow-2xl animate-pop sm:absolute sm:inset-x-auto sm:end-0 sm:top-11 sm:w-[24rem]">
+        <div role="dialog" aria-label={t("notify.title")} className="glass fixed inset-x-3 top-16 z-[65] flex max-h-[min(36rem,80vh)] flex-col rounded-3xl shadow-[var(--shadow-pop)] animate-pop sm:absolute sm:inset-x-auto sm:end-0 sm:top-12 sm:w-[25rem]">
           <header className="flex items-center gap-2 border-b border-line px-4 py-3">
-            <h2 className="flex-1 text-sm font-semibold">{t("notify.title")}</h2>
+            <h2 className="font-display flex-1 text-base font-semibold">{t("notify.title")}</h2>
             <Button size="sm" variant="ghost" onClick={n.markAllRead} disabled={!n.unread}>
               {t("notify.markRead")}
             </Button>
@@ -78,7 +78,7 @@ export function NotificationsBell() {
               </ul>
             )}
           </div>
-          <footer className="flex items-center gap-3 border-t border-line px-4 py-3">
+          <footer className="flex items-center gap-3 border-t border-line bg-surface-2/60 px-4 py-3">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-ink-2">{t("notify.browser")}</p>
               <p className="text-[11px] text-ink-3">{n.browser === "denied" ? t("notify.browserBlocked") : t("notify.browserHint")}</p>
@@ -107,26 +107,25 @@ function NoticeRow({ notice, onNavigate }: { notice: Notice; onNavigate: () => v
         <Link
           href={href(page.href)}
           onClick={onNavigate}
-          className={cn("flex items-start gap-3 rounded-xl px-2.5 py-2 transition hover:bg-white/[0.05]", i.severity === "critical" ? "bg-bad/[0.06]" : "bg-warn/[0.04]")}
+          className={cn("flex items-start gap-3 rounded-2xl px-2.5 py-2.5 transition hover:bg-surface-2", i.severity === "critical" ? "bg-bad/[0.06]" : "bg-warn/[0.06]")}
         >
-          <span className={cn("mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg ring-1", i.severity === "critical" ? "bg-bad/15 text-bad ring-bad/25" : "bg-warn/15 text-warn ring-warn/25")}>
-            <AlertTriangle aria-hidden className="size-3.5" />
+          <span className={cn("mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl", i.severity === "critical" ? "bg-bad/15 text-bad" : "bg-warn/15 text-warn")}>
+            <Icon name="warning" size={16} duo />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[13px] leading-snug text-ink">{translateDynamic(t, `attention.${i.key}`, i.params)}</span>
             <TimeAgo at={notice.at} className="text-[11px] text-ink-3" />
           </span>
-          <ChevronRight aria-hidden className="mt-1 size-4 text-ink-3 rtl:-scale-x-100" />
+          <Icon name="chevronRight" size={16} mirror className="mt-1 text-ink-3" />
         </Link>
       </li>
     );
   }
   const a = notice.item;
-  const Icon = ACTIVITY_ICON[a.kind];
   return (
-    <li className="flex items-start gap-3 rounded-xl px-2.5 py-2">
-      <span className={cn("mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg ring-1", ACTIVITY_TONE[a.tone])}>
-        <Icon aria-hidden className="size-3.5" />
+    <li className="flex items-start gap-3 rounded-2xl px-2.5 py-2">
+      <span className={cn("mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl", ACTIVITY_TONE[a.tone])}>
+        <Icon name={ACTIVITY_ICON[a.kind]} size={16} duo />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[13px] leading-snug text-ink-2">{translateDynamic(t, `activity.${a.kind}.${a.variant}`, a.params, a.kind)}</span>

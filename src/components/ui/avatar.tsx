@@ -24,7 +24,7 @@ export function Initials({ name, size }: { name: string; size: number }) {
     <span
       aria-hidden
       style={{ fontSize: Math.max(9, size * 0.36) }}
-      className={cn("absolute inset-0 grid place-items-center bg-gradient-to-br font-semibold text-white/95", GRADIENTS[hash(name) % GRADIENTS.length])}
+      className={cn("absolute inset-0 grid place-items-center bg-gradient-to-br font-semibold text-white", GRADIENTS[hash(name) % GRADIENTS.length])}
     >
       {initials}
     </span>
@@ -58,7 +58,7 @@ export function Avatar({
       <Img
         src={src}
         sizes={`${size}px`}
-        className={cn("size-full ring-1 ring-white/10", square ? "rounded-[28%]" : "rounded-full")}
+        className={cn("size-full ring-1 ring-line", square ? "rounded-[28%]" : "rounded-full")}
         fallback={<Initials name={name} size={size} />}
       />
       {ring && <span aria-hidden className={cn("pointer-events-none absolute -inset-[3px] border-2", square ? "rounded-[32%]" : "rounded-full")} style={{ borderColor: ring }} />}

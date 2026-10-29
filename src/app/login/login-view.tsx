@@ -2,19 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Crown, Code2, Headset, LifeBuoy, Briefcase, Languages, AlertTriangle } from "lucide-react";
+import { Chute, Gift, Mascot } from "@/components/art/scenes";
+import { Icon, type IconName } from "@/components/icons/icon";
 import { AppProvider, useApp, useFormat } from "@/components/providers/app-provider";
-import { GuildBannerArt } from "@/components/art/mock-art";
-import { Illustration } from "@/components/art/illustrations";
 import { GuildIcon } from "@/components/shell/guild-mark";
-import { Img } from "@/components/ui/img";
-import type { GuildInfo } from "@/lib/types";
-import { Logo } from "@/components/shell/logo";
+import { LogoMark } from "@/components/shell/logo";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { useTheme } from "@/lib/client/theme";
+import type { GuildInfo } from "@/lib/types";
 import { type Locale, translateDynamic } from "@/lib/i18n";
 import { ROLES, type Role } from "@/lib/types";
 
-const ROLE_ICON: Record<Role, typeof Crown> = { owner: Crown, manager: Briefcase, dev: Code2, head_support: LifeBuoy, support: Headset };
+const ROLE_ICON: Record<Role, IconName> = { owner: "crown", manager: "briefcase", dev: "code", head_support: "tickets", support: "headphones" };
+const ROLE_COLOR: Record<Role, string> = { owner: "#e11d48", manager: "#d97706", dev: "#2a78d6", head_support: "#0d9488", support: "#7c6f75" };
 
 export function LoginView(props: { locale: Locale; error: string | null; discordEnabled: boolean; mockEnabled: boolean; guilds: GuildInfo[]; providerKind: "mock" | "real" }) {
   return (
@@ -24,39 +25,65 @@ export function LoginView(props: { locale: Locale; error: string | null; discord
   );
 }
 
-/** Left side: the community's identity — banner, icons, live counts. */
+/** The brand side: Hoodie waving from a red stage, gifts drifting, both servers live. */
 function Hero({ guilds }: { guilds: GuildInfo[] }) {
   const { t } = useApp();
   const f = useFormat();
-  const main = guilds.find((g) => g.key === "main") ?? null;
   return (
-    <section className="relative hidden overflow-hidden rounded-[2rem] ring-1 ring-line lg:flex lg:flex-col">
-      <div aria-hidden className="absolute inset-0">
-        <Img src={main?.bannerUrl} sizes="720px" priority className="size-full" fallback={<GuildBannerArt guild="main" className="absolute inset-0 size-full" />} />
-        <span className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/20" />
+    <section className="relative isolate flex flex-col overflow-hidden rounded-[2rem] bg-[radial-gradient(120%_90%_at_80%_0%,#fb4d6d_0%,#e11d48_38%,#9f1239_100%)] p-6 text-white shadow-[var(--shadow-pop)] sm:p-10">
+      <svg aria-hidden className="pointer-events-none absolute inset-0 -z-10 size-full opacity-[0.12]">
+        <defs>
+          <pattern id="login-dots" width="24" height="24" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.5" fill="#fff" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#login-dots)" />
+      </svg>
+      <p aria-hidden className="font-display pointer-events-none absolute -end-6 -bottom-10 -z-10 text-[9rem] leading-none font-black text-white/[0.07] select-none sm:text-[12rem]">
+        JoHood
+      </p>
+
+      <div className="flex items-center gap-2.5">
+        <span className="rounded-2xl bg-white/95 p-1 shadow-lg">
+          <LogoMark size={34} />
+        </span>
+        <span className="font-display text-xl font-bold">JoHood</span>
+        <span className="rounded-full bg-white/18 px-2.5 py-0.5 text-xs font-semibold">{t("loginPage.kicker")}</span>
       </div>
-      <div className="relative mt-auto p-10">
-        <Illustration name="people" className="mb-4 h-28 w-auto" />
-        <h2 className="max-w-md text-3xl font-semibold tracking-tight">{t("art.loginTitle")}</h2>
-        <p className="mt-2 max-w-md text-sm text-ink-2">{t("guild.signInNote")}</p>
-        <ul className="stagger mt-8 grid gap-3">
-          {guilds.map((g) => (
-            <li key={g.key} className="glass flex items-center gap-3 rounded-2xl p-3">
-              <GuildIcon guild={g.key} info={g} size={44} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{g.name}</p>
-                <p className="truncate text-xs text-ink-3">{g.description}</p>
-              </div>
-              <div className="text-end text-xs">
-                <p className="tabular font-medium text-ink">{t("guild.members", { n: f.compact(g.members) })}</p>
-                <p className="tabular flex items-center justify-end gap-1 text-ink-3">
-                  <span aria-hidden className="size-1.5 rounded-full bg-good" />
-                  {t("guild.online", { n: f.compact(g.online) })}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
+
+      <div className="relative my-6 flex flex-1 items-center justify-center lg:my-8">
+        <svg viewBox="0 0 320 240" className="h-40 w-auto drop-shadow-[0_24px_30px_rgb(76_5_25/0.45)] sm:h-56 lg:h-72" aria-hidden>
+          <ellipse cx="160" cy="214" rx="96" ry="12" fill="#4c0519" opacity="0.35" />
+          <g className="motion-safe:animate-[float_6s_ease-in-out_infinite]">
+            <Chute x={262} y={6} scale={0.5} rotate={10} />
+          </g>
+          <Gift x={62} y={214} scale={0.8} tone="gold" rotate={-8} />
+          <Gift x={252} y={214} scale={0.62} tone="cream" rotate={8} />
+          <Mascot x={160} y={112} scale={1.05} mood="happy" wave />
+        </svg>
+      </div>
+
+      <div>
+        <h2 className="font-display max-w-md text-3xl leading-tight font-bold sm:text-[2.4rem]">{t("loginPage.headline")}</h2>
+        <p className="mt-3 max-w-md text-sm text-white/85 sm:text-base">{t("loginPage.lede")}</p>
+        {guilds.length > 0 && (
+          <ul className="mt-6 hidden gap-3 sm:grid sm:grid-cols-2">
+            {guilds.map((g) => (
+              <li key={g.key} className="flex items-center gap-3 rounded-2xl bg-white/12 p-3 ring-1 ring-white/20 backdrop-blur">
+                <GuildIcon guild={g.key} info={g} size={40} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{g.name}</p>
+                  <p className="tabular flex items-center gap-1.5 text-xs text-white/80">
+                    {t("guild.members", { n: f.compact(g.members) })}
+                    <span aria-hidden>·</span>
+                    <span aria-hidden className="size-1.5 rounded-full bg-[#4ade80]" />
+                    {t("guild.online", { n: f.compact(g.online) })}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   );
@@ -72,8 +99,8 @@ function DiscordMark() {
 
 function Login({ error, discordEnabled, mockEnabled, guilds }: { error: string | null; discordEnabled: boolean; mockEnabled: boolean; guilds: GuildInfo[] }) {
   const { t, locale, setLocale } = useApp();
+  const theme = useTheme();
   const router = useRouter();
-  const catalog = guilds.find((g) => g.key === "catalog") ?? null;
   const [pending, setPending] = useState<Role | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -84,8 +111,7 @@ function Login({ error, discordEnabled, mockEnabled, guilds }: { error: string |
     if (res.ok) {
       router.replace("/overview");
       router.refresh();
-    }
-    else {
+    } else {
       setFailed(true);
       setPending(null);
     }
@@ -94,34 +120,26 @@ function Login({ error, discordEnabled, mockEnabled, guilds }: { error: string |
   const errorText = error === "expired" ? t("common.sessionExpired") : error ? translateDynamic(t, `login.errors.${error}`, undefined, t("login.errors.oauth")) : null;
 
   return (
-    <main className="grid min-h-dvh gap-6 p-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:p-6">
+    <main className="grid min-h-dvh gap-4 p-3 sm:p-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-6">
       <Hero guilds={guilds} />
-      <div className="mx-auto flex w-full max-w-md flex-col justify-center py-6 animate-rise">
-        <div className="mb-8 flex items-center justify-between">
-          {catalog ? (
-            <span className="flex items-center gap-2.5">
-              <GuildIcon guild="catalog" info={catalog} size={36} />
-              <span className="leading-tight">
-                <span className="block text-sm font-semibold">{catalog.name}</span>
-                <span className="block text-[11px] text-ink-3">Dashboard</span>
-              </span>
-            </span>
-          ) : (
-            <Logo />
-          )}
+      <div className="mx-auto flex w-full max-w-md flex-col justify-center py-4 animate-rise lg:py-8">
+        <div className="mb-6 flex items-center justify-end gap-1">
+          <Button variant="ghost" size="icon" onClick={theme.cycle} aria-label={`${t("shell.theme")}: ${t(`shell.themes.${theme.theme}`)}`} tip={`${t("shell.theme")}: ${t(`shell.themes.${theme.theme}`)}`}>
+            <Icon name={theme.theme === "dark" ? "moon" : theme.theme === "light" ? "sun" : "monitor"} size={20} />
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setLocale(locale === "ar" ? "en" : "ar")} aria-label={t("header.language")}>
-            <Languages aria-hidden className="size-4" />
+            <Icon name="languages" size={16} />
             <span lang={locale === "ar" ? "en" : "ar"}>{locale === "ar" ? "English" : "العربية"}</span>
           </Button>
         </div>
 
         <div className="glass rounded-[var(--radius-card)] p-6 sm:p-8">
-          <h1 className="text-xl font-semibold tracking-tight">{t("login.title")}</h1>
+          <h1 className="font-display text-2xl font-bold">{t("login.title")}</h1>
           <p className="mt-1.5 text-sm text-ink-3">{t("login.subtitle")}</p>
 
           {(errorText || failed) && (
-            <p role="alert" className="mt-5 flex items-start gap-2 rounded-xl bg-bad/10 px-3 py-2.5 text-sm text-bad ring-1 ring-bad/20">
-              <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0" />
+            <p role="alert" className="mt-5 flex items-start gap-2 rounded-xl bg-bad/10 px-3 py-2.5 text-sm font-medium text-bad">
+              <Icon name="warning" size={16} className="mt-0.5" />
               {failed ? t("common.error") : errorText}
             </p>
           )}
@@ -129,42 +147,44 @@ function Login({ error, discordEnabled, mockEnabled, guilds }: { error: string |
           <a
             href={discordEnabled ? "/api/auth/discord" : undefined}
             aria-disabled={!discordEnabled}
-            className={
-              "mt-6 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-[#5865F2] text-sm font-semibold text-white shadow-[0_10px_30px_-12px_#5865F2] transition hover:bg-[#4752c4] aria-disabled:pointer-events-none aria-disabled:opacity-40"
-            }
+            className="mt-6 flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl bg-[#5865F2] text-[15px] font-semibold text-white shadow-[0_12px_28px_-14px_#5865F2] transition hover:bg-[#4752c4] active:scale-[0.98] aria-disabled:pointer-events-none aria-disabled:opacity-40"
           >
             <DiscordMark />
             {t("login.discord")}
           </a>
           {!discordEnabled && <p className="mt-2 text-center text-xs text-ink-3">{t("login.discordMissing")}</p>}
+          <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-ink-3">
+            <Icon name="lock" size={14} />
+            {t("loginPage.secure")}
+          </p>
 
           {mockEnabled && (
-            <div className="mt-8 border-t border-line pt-6">
-              <h2 className="text-sm font-semibold">{t("login.mockTitle")}</h2>
+            <div className="mt-7 border-t border-dashed border-line-strong pt-6">
+              <h2 className="font-display flex items-center gap-2 text-sm font-semibold">
+                <Icon name="sparkle" size={16} className="text-warn" />
+                {t("login.mockTitle")}
+              </h2>
               <p className="mt-1 text-xs text-ink-3">{t("login.mockHint")}</p>
-              <ul className="mt-4 grid gap-2">
-                {ROLES.map((role) => {
-                  const Icon = ROLE_ICON[role];
-                  return (
-                    <li key={role}>
-                      <button
-                        type="button"
-                        onClick={() => mockLogin(role)}
-                        disabled={pending !== null}
-                        className="group flex w-full items-center gap-3 rounded-xl bg-white/[0.03] px-3 py-2.5 text-start text-sm ring-1 ring-inset ring-line transition hover:bg-white/[0.06] hover:ring-accent-400/40 disabled:opacity-60"
-                      >
-                        <span className="grid size-8 place-items-center rounded-lg bg-accent-500/12 text-accent-300 ring-1 ring-accent-400/20">
-                          <Icon aria-hidden className="size-4" />
-                        </span>
-                        <span className="flex-1">
-                          <span className="block text-xs text-ink-3">{t("login.mockAs")}</span>
-                          <span className="font-medium text-ink">{t(`roles.${role}`)}</span>
-                        </span>
-                        {pending === role && <span className="size-4 animate-spin rounded-full border-2 border-accent-300 border-t-transparent" aria-hidden />}
-                      </button>
-                    </li>
-                  );
-                })}
+              <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {ROLES.map((role) => (
+                  <li key={role} className={role === "owner" ? "sm:col-span-2" : undefined}>
+                    <button
+                      type="button"
+                      onClick={() => mockLogin(role)}
+                      disabled={pending !== null}
+                      className="group flex w-full items-center gap-3 rounded-2xl bg-surface-2 px-3 py-2.5 text-start text-sm ring-1 ring-inset ring-line transition hover:bg-surface hover:ring-line-strong active:scale-[0.98] disabled:opacity-60"
+                    >
+                      <span className="grid size-9 place-items-center rounded-xl text-white" style={{ background: ROLE_COLOR[role] }}>
+                        <Icon name={ROLE_ICON[role]} size={18} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[11px] text-ink-3">{t("login.mockAs")}</span>
+                        <span className="block truncate font-semibold text-ink">{t(`roles.${role}`)}</span>
+                      </span>
+                      {pending === role ? <Spinner className="text-accent-400" /> : <Icon name="arrowRight" size={16} mirror className="text-ink-4 transition group-hover:text-ink-2" />}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           )}

@@ -1,25 +1,31 @@
 "use client";
 
 import { forwardRef, useEffect, useRef, type ButtonHTMLAttributes } from "react";
-import { Loader2 } from "lucide-react";
 import { cn } from "./cn";
+import { Spinner } from "./spinner";
 import { Tooltip } from "./tooltip";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
-type Size = "sm" | "md" | "icon" | "icon-sm";
+type Variant = "primary" | "secondary" | "soft" | "ghost" | "danger";
+type Size = "sm" | "md" | "lg" | "icon" | "icon-sm";
 
 const VARIANT: Record<Variant, string> = {
+  /** The one main action of a view: brand red. */
   primary:
-    "bg-gradient-to-b from-accent-400 to-accent-600 text-white shadow-[0_8px_24px_-12px_var(--color-accent-500)] hover:from-accent-300 hover:to-accent-500 hover:shadow-[0_10px_28px_-10px_var(--color-accent-500)]",
-  secondary: "bg-white/[0.06] text-ink ring-1 ring-inset ring-line-strong hover:bg-white/[0.11] hover:ring-white/20",
-  ghost: "text-ink-2 hover:bg-white/[0.07] hover:text-ink",
-  danger: "bg-bad/15 text-bad ring-1 ring-inset ring-bad/30 hover:bg-bad/25 hover:ring-bad/50",
+    "bg-[linear-gradient(180deg,#ec2a55,#d01843)] text-white shadow-[0_1px_0_rgb(255_255_255/0.25)_inset,0_8px_20px_-10px_rgb(225_29_72/0.9)] enabled:hover:brightness-[1.06] aria-[disabled=true]:!bg-none aria-[disabled=true]:!bg-surface-3 aria-[disabled=true]:!text-ink-3 aria-[disabled=true]:shadow-none",
+  /** Everyday actions: a quiet surface button. */
+  secondary: "bg-surface text-ink shadow-[0_1px_2px_var(--color-shadow-1)] ring-1 ring-inset ring-line-strong enabled:hover:bg-surface-2 enabled:hover:ring-ink-4",
+  /** Tinted with the brand: secondary actions that still belong to the brand. */
+  soft: "bg-accent-500/10 text-accent-300 ring-1 ring-inset ring-accent-500/20 enabled:hover:bg-accent-500/16",
+  ghost: "text-ink-2 enabled:hover:bg-surface-3/70 enabled:hover:text-ink",
+  /** Destructive, always behind a confirm step. */
+  danger: "bg-bad text-white shadow-[0_8px_20px_-12px_var(--color-bad)] enabled:hover:brightness-110 dark:text-[#2a0a12]",
 };
 const SIZE: Record<Size, string> = {
   sm: "h-8 gap-1.5 rounded-lg px-2.5 text-xs",
   md: "h-10 gap-2 rounded-xl px-4 text-sm",
-  icon: "size-9 rounded-xl",
-  "icon-sm": "size-7 rounded-lg",
+  lg: "h-12 gap-2.5 rounded-2xl px-6 text-base",
+  icon: "size-10 rounded-xl",
+  "icon-sm": "size-8 rounded-lg",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -69,17 +75,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       aria-busy={loading || undefined}
       onClick={reasoned ? (e) => e.preventDefault() : onClick}
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,box-shadow,color,transform,opacity] duration-[var(--dur-fast)] ease-[var(--ease-out)] select-none",
-        "enabled:active:scale-[0.97] enabled:active:duration-[var(--dur-instant)] disabled:opacity-45 aria-disabled:opacity-45 aria-disabled:active:scale-100",
+        "relative inline-flex shrink-0 items-center justify-center font-semibold whitespace-nowrap transition-[background-color,box-shadow,color,transform,filter,opacity] duration-[var(--dur-fast)] ease-[var(--ease-out)] select-none",
+        "enabled:active:scale-[0.96] enabled:active:duration-[var(--dur-instant)] disabled:opacity-50 aria-disabled:opacity-60 aria-disabled:active:scale-100",
         VARIANT[variant],
         SIZE[size],
         attention && "needs-attention",
-        attention === "warning" && "[--attention-rgb:251_191_36]",
+        attention === "warning" && "[--attention-rgb:217_119_6]",
         className,
       )}
       {...restProps}
     >
-      {loading && <Loader2 aria-hidden className="size-4 animate-spin" />}
+      {loading && <Spinner size={size === "sm" || size === "icon-sm" ? 14 : 16} />}
       {children}
       {attention && (
         <span aria-hidden className={cn("absolute -end-0.5 -top-0.5 size-2.5 rounded-full ring-2 ring-surface", attention === "critical" ? "bg-bad" : "bg-warn")} />

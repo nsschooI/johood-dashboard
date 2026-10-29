@@ -1,8 +1,10 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Briefcase, Check, ChevronDown, Code2, Crown, Eye, Headset, KeyRound, LifeBuoy, Link2, ListChecks, Minus, ShieldCheck, Users, X, type LucideIcon } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Scene } from "@/components/art/scenes";
+import { AuditCard } from "@/components/members/audit-card";
+import { Icon, type IconName } from "@/components/icons/icon";
 import { ROLE_BINDINGS } from "@config/roles";
 import { useApp, useT, useWhyNot } from "@/components/providers/app-provider";
 import { Avatar } from "@/components/ui/avatar";
@@ -29,8 +31,20 @@ export interface AccessData {
   roles: { id: string; name: string; color: string }[];
 }
 
-const ROLE_ICON: Record<Role, LucideIcon> = { owner: Crown, manager: Briefcase, dev: Code2, head_support: LifeBuoy, support: Headset };
-const ROLE_COLOR: Record<Role, string> = { owner: "#f472b6", manager: "#a78bfa", dev: "#38bdf8", head_support: "#34d399", support: "#6ee7b7" };
+const ROLE_ICON: Record<Role, IconName> = {
+  owner: "crown",
+  manager: "briefcase",
+  dev: "code",
+  head_support: "tickets",
+  support: "headphones",
+};
+const ROLE_COLOR: Record<Role, string> = {
+  owner: "#e11d48",
+  manager: "#d97706",
+  dev: "#2a78d6",
+  head_support: "#0d9488",
+  support: "#7c6f75",
+};
 
 /** Actions grouped by their prefix, in matrix order. */
 function groups() {
@@ -45,6 +59,17 @@ function groups() {
 export function AccessView({ data }: { data: AccessData }) {
   const t = useT();
   const { permissions } = useApp();
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const canAudit = permissions.has("audit.view");
+  const tab = params.get("tab") === "audit" && canAudit ? "audit" : "who";
+  const setTab = (v: "who" | "audit") => {
+    const next = new URLSearchParams(params.toString());
+    if (v === "who") next.delete("tab");
+    else next.set("tab", v);
+    router.replace(`${pathname}?${next}`, { scroll: false });
+  };
   useHashFocus();
   const roleColor = useMemo(() => {
     const byName = new Map(data.roles.map((r) => [r.name.toLowerCase(), r.color]));
@@ -55,30 +80,55 @@ export function AccessView({ data }: { data: AccessData }) {
     <>
       <PageHeader
         eyebrow={
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.05] px-2.5 py-1 text-xs text-ink-2 ring-1 ring-inset ring-line">
-            <ShieldCheck aria-hidden className="size-3.5 text-accent-300" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 text-xs font-semibold text-ink-2 ring-1 ring-inset ring-line">
+            <Icon name="access" size={14} className="text-accent-400" />
             JoHood Catalog
           </span>
         }
         title={t("access.title")}
         subtitle={t("access.subtitle")}
+        art={<Scene name={tab === "audit" ? "audit" : "locked"} className="-my-2 h-28 w-auto" />}
       />
-      <div className="space-y-6">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-          <RoleLadder staff={data.staff} roleColor={roleColor} />
-          <YouPanel />
+      {canAudit && (
+        <div className="mb-5">
+          <Segmented
+            label={t("access.title")}
+            value={tab}
+            onChange={setTab}
+            options={[
+              {
+                value: "who" as const,
+                label: t("accessPage.tabs.who"),
+                icon: <Icon name="access" size={16} />,
+              },
+              {
+                value: "audit" as const,
+                label: t("accessPage.tabs.audit"),
+                icon: <Icon name="audit" size={16} />,
+              },
+            ]}
+          />
         </div>
-        {permissions.has("permissions.manage") && data.staff && <OverridesEditor staff={data.staff} />}
-        <Matrix />
-        <Mapping roleColor={roleColor} />
-      </div>
+      )}
+      {tab === "audit" ? (
+        <AuditCard />
+      ) : (
+        <div className="space-y-6">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+            <RoleLadder staff={data.staff} roleColor={roleColor} />
+            <YouPanel />
+          </div>
+          {permissions.has("permissions.manage") && data.staff && <OverridesEditor staff={data.staff} />}
+          <Matrix />
+          <Mapping roleColor={roleColor} />
+        </div>
+      )}
     </>
   );
 }
 
 function RoleGlyph({ role }: { role: Role }) {
-  const Icon = ROLE_ICON[role];
-  return <Icon aria-hidden className="me-1 inline size-3.5 align-[-2px]" style={{ color: ROLE_COLOR[role] }} />;
+  return <Icon name={ROLE_ICON[role]} size={14} className="me-1 inline align-[-2px]" style={{ color: ROLE_COLOR[role] }} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -88,31 +138,28 @@ function RoleLadder({ staff, roleColor }: { staff: StaffRow[] | null; roleColor:
   const { user } = useApp();
   return (
     <Card aria-labelledby="ladder-title">
-      <CardHeader id="ladder-title" title={t("access.ladder")} description={t("access.ladderHint")} icon={<Crown className="size-4" aria-hidden />} />
+      <CardHeader id="ladder-title" title={t("access.ladder")} description={t("access.ladderHint")} icon="crown" />
       <ol className="stagger relative space-y-2 px-5 pb-5">
-        <span aria-hidden className="absolute inset-y-6 start-[2.6rem] w-px bg-gradient-to-b from-accent-400/60 via-line to-transparent" />
+        <span aria-hidden className="absolute inset-y-6 start-[2.6rem] w-0.5 bg-gradient-to-b from-accent-500/50 via-line to-transparent" />
         {ROLES.map((role, i) => {
           const holders = staff?.filter((s) => s.roles.includes(role)) ?? null;
           const bindings = ROLE_BINDINGS.filter((b) => b.role === role);
           const grants = ROLE_PERMISSIONS[role];
           const mine = user?.roles.includes(role);
           return (
-            <li key={role} className={cn("relative rounded-2xl bg-white/[0.025] ring-1 ring-inset ring-line transition hover:bg-white/[0.04]", mine && "ring-accent-400/40")}>
+            <li key={role} className={cn("relative rounded-2xl bg-surface-2 ring-1 ring-inset ring-line transition hover:bg-surface-2", mine && "ring-2 ring-accent-500/35")}>
               <details className="group">
                 <summary className="flex list-none items-center gap-3 p-3 [&::-webkit-details-marker]:hidden">
                   <span
                     aria-hidden
-                    className="relative z-[1] grid size-10 shrink-0 place-items-center rounded-xl text-lg shadow-lg ring-1 ring-white/15"
-                    style={{ background: `linear-gradient(135deg, ${ROLE_COLOR[role]}cc, ${ROLE_COLOR[role]}44)` }}
+                    className="relative z-[1] grid size-10 shrink-0 place-items-center rounded-xl shadow-[0_6px_14px_-8px_var(--color-shadow-2)]"
+                    style={{ background: ROLE_COLOR[role] }}
                   >
-                    {(() => {
-                      const Icon = ROLE_ICON[role];
-                      return <Icon className="size-5 text-white" />;
-                    })()}
+                    <Icon name={ROLE_ICON[role]} size={20} className="text-white" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-ink">{t(`roles.${role}`)}</span>
+                      <span className="font-display text-[15px] font-semibold text-ink">{t(`roles.${role}`)}</span>
                       <span className="tabular text-[11px] text-ink-3">#{i + 1}</span>
                       {mine && <Badge tone="accent">{t("common.you")}</Badge>}
                     </span>
@@ -120,7 +167,10 @@ function RoleLadder({ staff, roleColor }: { staff: StaffRow[] | null; roleColor:
                       {bindings.map((b) => {
                         const c = roleColor(b.label, role);
                         return (
-                          <span key={b.discordRoleId} className="inline-flex items-center gap-1 rounded-full px-2 py-px text-[11px] font-medium" style={{ color: c, background: `${c}1f`, boxShadow: `inset 0 0 0 1px ${c}40` }}>
+                          <span
+                            key={b.discordRoleId}
+                            className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-px text-[11px] font-semibold text-ink-2 ring-1 ring-line ring-inset"
+                          >
                             <span aria-hidden className="size-1.5 rounded-full" style={{ background: c }} />
                             {b.label}
                           </span>
@@ -140,19 +190,21 @@ function RoleLadder({ staff, roleColor }: { staff: StaffRow[] | null; roleColor:
                             <Avatar key={h.discordId} name={h.name} src={h.avatarUrl} size={26} className="rounded-full ring-2 ring-surface" />
                           ))}
                           {holders.length > 5 && (
-                            <span className="tabular grid size-[26px] place-items-center rounded-full bg-surface-2 text-[10px] text-ink-2 ring-2 ring-surface">+{holders.length - 5}</span>
+                            <span className="tabular grid size-[26px] place-items-center rounded-full bg-surface-2 text-[10px] text-ink-2 ring-2 ring-surface">
+                              +{holders.length - 5}
+                            </span>
                           )}
                         </span>
                       </Tooltip>
                     )}
                     <span className="tabular text-[11px] text-ink-3">{t("access.grants", { n: grants.length })}</span>
                   </span>
-                  <ChevronDown aria-hidden className="size-4 shrink-0 text-ink-3 transition group-open:rotate-180" />
+                  <Icon name="chevronDown" size={16} className="shrink-0 text-ink-3 transition group-open:rotate-180" />
                 </summary>
                 <ul className="grid gap-1 border-t border-line px-4 py-3 sm:grid-cols-2">
                   {grants.map((a) => (
                     <li key={a} className="flex items-start gap-2 text-xs text-ink-2">
-                      <Check aria-hidden className="mt-0.5 size-3.5 shrink-0 text-good" />
+                      <Icon name="check" size={14} className="mt-0.5 shrink-0 text-good" />
                       {translateDynamic(t, `access.action.${a}`, undefined, a)}
                     </li>
                   ))}
@@ -177,7 +229,7 @@ function YouPanel() {
   const cant = ACTIONS.filter((a) => !permissions.has(a));
   return (
     <Card id="t-you" aria-labelledby="you-title" className="flex flex-col">
-      <CardHeader id="you-title" title={t("access.you")} icon={<Eye className="size-4" aria-hidden />} />
+      <CardHeader id="you-title" title={t("access.you")} icon="eye" />
       <div className="flex items-center gap-3 px-5 pb-3">
         {user && <Avatar name={user.name} src={user.avatarUrl} size={40} status="online" />}
         <div className="min-w-0 flex-1">
@@ -205,8 +257,8 @@ function YouPanel() {
       </div>
       <ul className="max-h-[26rem] min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
         {(show === "can" ? can : cant).map((a) => (
-          <li key={a} className="flex items-start gap-2.5 rounded-xl px-2 py-1.5 text-sm transition hover:bg-white/[0.03]">
-            {show === "can" ? <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-good" /> : <X aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3" />}
+          <li key={a} className="flex items-start gap-2.5 rounded-xl px-2 py-1.5 text-sm transition hover:bg-surface-2">
+            {show === "can" ? <Icon name="check" size={16} className="mt-0.5 shrink-0 text-good" /> : <Icon name="x" size={16} className="mt-0.5 shrink-0 text-ink-3" />}
             <span className="min-w-0 flex-1">
               <span className={show === "can" ? "text-ink" : "text-ink-2"}>{translateDynamic(t, `access.action.${a}`, undefined, a)}</span>
               {show === "can" && overrides.allow.includes(a) && <span className="ms-2 text-[11px] text-warn">({t("access.fromOverride")})</span>}
@@ -227,16 +279,23 @@ function Matrix() {
   const mine = new Set(user?.roles ?? []);
   return (
     <Card id="t-matrix" aria-labelledby="matrix-title" className="overflow-hidden">
-      <CardHeader id="matrix-title" title={t("access.matrix")} description={t("access.matrixHint")} icon={<ListChecks className="size-4" aria-hidden />} />
+      <CardHeader id="matrix-title" title={t("access.matrix")} description={t("access.matrixHint")} icon="listChecks" />
       <div className="overflow-x-auto pb-2">
         <table className="w-full min-w-[46rem] border-separate border-spacing-0 text-sm" aria-label={t("access.matrix")}>
           <thead>
             <tr>
-              <th scope="col" className="sticky start-0 z-[2] border-b border-line bg-surface px-5 py-2 text-start text-[11px] font-medium tracking-wide text-ink-3 uppercase">
+              <th scope="col" className="sticky start-0 z-[2] border-b border-line bg-surface px-5 py-2 text-start text-[11px] font-medium text-ink-3">
                 {t("audit.action")}
               </th>
               {ROLES.map((r) => (
-                <th key={r} scope="col" className={cn("border-b border-line px-3 py-2 text-center text-xs font-semibold whitespace-nowrap", mine.has(r) ? "bg-accent-500/10 text-accent-200" : "text-ink-2")}>
+                <th
+                  key={r}
+                  scope="col"
+                  className={cn(
+                    "border-b border-line px-3 py-2 text-center text-xs font-semibold whitespace-nowrap",
+                    mine.has(r) ? "bg-accent-500/10 text-accent-200" : "text-ink-2",
+                  )}
+                >
                   <RoleGlyph role={r} />
                   {t(`roles.${r}`)}
                 </th>
@@ -247,12 +306,12 @@ function Matrix() {
             {groups().map(([g, actions]) => (
               <Fragment key={g}>
                 <tr>
-                  <th colSpan={ROLES.length + 1} scope="colgroup" className="sticky start-0 bg-white/[0.02] px-5 pt-3 pb-1.5 text-start text-[11px] font-semibold tracking-wider text-ink-3 uppercase">
+                  <th colSpan={ROLES.length + 1} scope="colgroup" className="sticky start-0 bg-surface-2 px-5 pt-3 pb-1.5 text-start text-[11px] font-semibold text-ink-3">
                     {translateDynamic(t, `access.group.${g}`, undefined, g)}
                   </th>
                 </tr>
                 {actions.map((a) => (
-                  <tr key={a} className="group transition-colors hover:bg-white/[0.025]">
+                  <tr key={a} className="group transition-colors hover:bg-surface-2">
                     <th scope="row" className="sticky start-0 z-[1] border-b border-line/50 bg-surface px-5 py-2 text-start font-normal group-hover:bg-[#1a1622]">
                       <span className="block text-ink">{translateDynamic(t, `access.action.${a}`, undefined, a)}</span>
                       <code className="text-[11px] text-ink-3" dir="ltr">
@@ -265,10 +324,10 @@ function Matrix() {
                         <td key={r} className={cn("border-b border-line/50 px-3 py-2 text-center", mine.has(r) && "bg-accent-500/[0.06]")}>
                           {yes ? (
                             <span className="inline-grid size-6 place-items-center rounded-full bg-good/15 text-good ring-1 ring-good/25">
-                              <Check aria-label={t("common.yes")} className="size-3.5" />
+                              <Icon name="check" size={14} aria-label={t("common.yes")} />
                             </span>
                           ) : (
-                            <Minus aria-label={t("common.no")} className="mx-auto size-3.5 text-ink-3/50" />
+                            <Icon name="minus" size={14} className="mx-auto text-ink-3/50" aria-label={t("common.no")} />
                           )}
                         </td>
                       );
@@ -290,15 +349,15 @@ function Mapping({ roleColor }: { roleColor: (label: string, role: Role) => stri
   const t = useT();
   return (
     <Card aria-labelledby="mapping-title">
-      <CardHeader id="mapping-title" title={t("access.mapping")} description={t("access.mappingHint")} icon={<Link2 className="size-4" aria-hidden />} />
+      <CardHeader id="mapping-title" title={t("access.mapping")} description={t("access.mappingHint")} icon="link" />
       <ul className="grid gap-2 px-5 pb-5 sm:grid-cols-2 xl:grid-cols-3">
         {ROLE_BINDINGS.map((b) => {
           const c = roleColor(b.label, b.role);
           return (
-            <li key={b.discordRoleId} className="flex items-center gap-3 rounded-2xl bg-white/[0.025] px-3 py-2.5 ring-1 ring-inset ring-line">
-              <span aria-hidden className="size-3 shrink-0 rounded-full" style={{ background: c, boxShadow: `0 0 10px ${c}` }} />
+            <li key={b.discordRoleId} className="flex items-center gap-3 rounded-2xl bg-surface-2 px-3 py-2.5 ring-1 ring-inset ring-line">
+              <span aria-hidden className="size-3 shrink-0 rounded-full ring-2 ring-surface" style={{ background: c }} />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium" style={{ color: c }}>
+                <span className="block truncate text-sm font-semibold text-ink">
                   {b.label}
                 </span>
                 <span className="flex items-center gap-1 font-mono text-[11px] text-ink-3" dir="ltr">
@@ -331,7 +390,7 @@ function OverridesEditor({ staff: initial }: { staff: StaffRow[] }) {
 
   return (
     <Card id="t-overrides" aria-labelledby="overrides-title" className="scroll-mt-24">
-      <CardHeader id="overrides-title" title={t("access.overrides")} description={t("access.overridesHint")} icon={<KeyRound className="size-4" aria-hidden />} />
+      <CardHeader id="overrides-title" title={t("access.overrides")} description={t("access.overridesHint")} icon="access" />
       <div className="grid gap-5 px-5 pb-5 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <ul className="space-y-1" aria-label={t("members.staff")}>
           {staff.map((s) => {
@@ -342,7 +401,10 @@ function OverridesEditor({ staff: initial }: { staff: StaffRow[] }) {
                   type="button"
                   aria-pressed={s.discordId === selected}
                   onClick={() => setSelected(s.discordId)}
-                  className={cn("flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-start transition", s.discordId === selected ? "bg-accent-500/12 ring-1 ring-inset ring-accent-400/30" : "hover:bg-white/[0.04]")}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-start transition",
+                    s.discordId === selected ? "bg-accent-500/12 ring-1 ring-inset ring-accent-400/30" : "hover:bg-surface-2",
+                  )}
                 >
                   <Avatar name={s.name} src={s.avatarUrl} size={32} />
                   <span className="min-w-0 flex-1">
@@ -382,7 +444,10 @@ function PersonOverrides({ person, onSaved }: { person: StaffRow; onSaved: (o: P
   const [reason, setReason] = useState("");
   const [confirming, setConfirming] = useState(false);
 
-  const next: PermissionOverrides = { allow: ACTIONS.filter((a) => choices[a] === "allow"), deny: ACTIONS.filter((a) => choices[a] === "deny") };
+  const next: PermissionOverrides = {
+    allow: ACTIONS.filter((a) => choices[a] === "allow"),
+    deny: ACTIONS.filter((a) => choices[a] === "deny"),
+  };
   const before = permissionsFor({ roles: person.roles, overrides: initial });
   const after = permissionsFor({ roles: person.roles, overrides: next });
   const granted = ACTIONS.filter((a) => after.has(a) && !before.has(a));
@@ -391,21 +456,37 @@ function PersonOverrides({ person, onSaved }: { person: StaffRow; onSaved: (o: P
   const fromRole = new Set(person.roles.flatMap((r) => ROLE_PERMISSIONS[r]));
 
   const save = async () => {
-    const body = (o: PermissionOverrides, why?: string) => ({ ...o, reason: why || undefined, confirm: true });
-    const res = await run("save", () => api(`/api/permissions/${person.discordId}`, { method: "PUT", body: body(next, reason.trim()) }), t("members.permSaved"), {
-      undo: async () => {
-        await api(`/api/permissions/${person.discordId}`, { method: "PUT", body: body(initial, t("common.undo")) });
-        onSaved(initial);
-        setChoices(start);
-      },
+    const body = (o: PermissionOverrides, why?: string) => ({
+      ...o,
+      reason: why || undefined,
+      confirm: true,
     });
+    const res = await run(
+      "save",
+      () =>
+        api(`/api/permissions/${person.discordId}`, {
+          method: "PUT",
+          body: body(next, reason.trim()),
+        }),
+      t("members.permSaved"),
+      {
+        undo: async () => {
+          await api(`/api/permissions/${person.discordId}`, {
+            method: "PUT",
+            body: body(initial, t("common.undo")),
+          });
+          onSaved(initial);
+          setChoices(start);
+        },
+      },
+    );
     setConfirming(false);
     if (res) onSaved(next);
   };
 
   return (
     <div className="min-w-0 space-y-4">
-      <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] p-3 ring-1 ring-inset ring-line">
+      <div className="flex items-center gap-3 rounded-2xl bg-surface-2 p-3 ring-1 ring-inset ring-line">
         <Avatar name={person.name} src={person.avatarUrl} size={44} />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{person.name}</p>
@@ -413,20 +494,26 @@ function PersonOverrides({ person, onSaved }: { person: StaffRow; onSaved: (o: P
             {t("access.effective")}: <span className="tabular text-ink-2">{after.size}</span> / {ACTIONS.length}
           </p>
         </div>
-        <Users aria-hidden className="size-4 text-ink-3" />
+        <Icon name="members" size={16} className="text-ink-3" />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_16rem]">
         <div className="max-h-[30rem] space-y-4 overflow-y-auto pe-1">
           {groups().map(([g, actions]) => (
             <fieldset key={g}>
-              <legend className="mb-1.5 text-[11px] font-semibold tracking-wider text-ink-3 uppercase">{translateDynamic(t, `access.group.${g}`, undefined, g)}</legend>
+              <legend className="mb-1.5 text-[11px] font-semibold text-ink-3">{translateDynamic(t, `access.group.${g}`, undefined, g)}</legend>
               <ul className="space-y-1">
                 {actions.map((a) => (
-                  <li key={a} className={cn("flex flex-wrap items-center gap-2 rounded-xl px-2.5 py-1.5 ring-1 ring-inset", choices[a] !== start[a] ? "bg-accent-500/[0.07] ring-accent-400/25" : "ring-transparent")}>
+                  <li
+                    key={a}
+                    className={cn(
+                      "flex flex-wrap items-center gap-2 rounded-xl px-2.5 py-1.5 ring-1 ring-inset",
+                      choices[a] !== start[a] ? "bg-accent-500/[0.07] ring-accent-400/25" : "ring-transparent",
+                    )}
+                  >
                     <span className="min-w-0 flex-1 text-sm text-ink-2">
                       {translateDynamic(t, `access.action.${a}`, undefined, a)}
-                      {fromRole.has(a) && <Check aria-label={t("members.inherit")} className="ms-1.5 inline size-3.5 text-good" />}
+                      {fromRole.has(a) && <Icon name="check" size={14} className="ms-1.5 inline text-good" aria-label={t("members.inherit")} />}
                     </span>
                     <Segmented
                       size="sm"
@@ -435,7 +522,14 @@ function PersonOverrides({ person, onSaved }: { person: StaffRow; onSaved: (o: P
                       onChange={(v) => setChoices((c) => ({ ...c, [a]: v }))}
                       options={[
                         { value: "inherit", label: t("members.inherit") },
-                        ...(NON_GRANTABLE.includes(a) ? [] : [{ value: "allow" as const, label: t("members.allow") }]),
+                        ...(NON_GRANTABLE.includes(a)
+                          ? []
+                          : [
+                              {
+                                value: "allow" as const,
+                                label: t("members.allow"),
+                              },
+                            ]),
                         { value: "deny", label: t("members.deny") },
                       ]}
                     />
@@ -446,8 +540,8 @@ function PersonOverrides({ person, onSaved }: { person: StaffRow; onSaved: (o: P
           ))}
         </div>
 
-        <aside aria-label={t("access.diff")} className="h-fit space-y-3 rounded-2xl bg-white/[0.03] p-4 ring-1 ring-inset ring-line xl:sticky xl:top-20">
-          <h4 className="text-xs font-semibold tracking-wide text-ink-3 uppercase">{t("access.diff")}</h4>
+        <aside aria-label={t("access.diff")} className="h-fit space-y-3 rounded-2xl bg-surface-2 p-4 ring-1 ring-inset ring-line xl:sticky xl:top-20">
+          <h4 className="text-xs font-semibold text-ink-3">{t("access.diff")}</h4>
           {!changed || (granted.length === 0 && removed.length === 0) ? (
             <p className="text-sm text-ink-3">{t("access.noChanges")}</p>
           ) : (

@@ -5,7 +5,11 @@ import type { AttentionItem } from "@/lib/attention";
 import { translateDynamic } from "@/lib/i18n";
 import { safeStorage } from "@/lib/client/storage";
 import type { ActivityItem } from "@/lib/types";
-import { useApp } from "./app-provider";
+import { useRouter } from "next/navigation";
+import { DASHBOARD_CONFIG } from "@config/dashboard";
+import { useApp, useFormat } from "./app-provider";
+import { useGuild } from "./guild-provider";
+import { useToast } from "./toast-provider";
 import { useAttention } from "./attention-provider";
 import { useLiveEvent } from "./live-provider";
 import { useSound } from "./sound-provider";
@@ -36,6 +40,7 @@ const MAX = 60;
  */
 export function NotificationsProvider({ seed, children }: { seed: ActivityItem[]; children: ReactNode }) {
   const { t } = useApp();
+  const f = useFormat();
   const { items } = useAttention();
   const { play } = useSound();
   const [notices, setNotices] = useState<Notice[]>(() => seed.map((item) => ({ id: item.id, at: item.at, type: "activity" as const, item })));
@@ -55,6 +60,30 @@ export function NotificationsProvider({ seed, children }: { seed: ActivityItem[]
     else setBrowser(Notification.permission === "denied" ? "denied" : "off");
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Things staff must notice wherever they are: a new ticket, a big purchase.
+  const toast = useToast();
+  const { href } = useGuild();
+  const router = useRouter();
+  const known = useRef(new Set<string>());
+  useLiveEvent("ticket", (e) => {
+    const tk = e.data;
+    if (tk.status !== "open" || known.current.has(tk.id) || Date.now() - Date.parse(tk.openedAt) > 60_000) return;
+    known.current.add(tk.id);
+    play("alert");
+    toast({
+      tone: "info",
+      title: t("alerts.newTicket", { n: tk.number }),
+      description: t("alerts.newTicketBody", { name: tk.openedBy.name, subject: tk.subject }),
+      action: { label: t("alerts.open"), onClick: () => router.push(href("/tickets", { ticket: tk.id })) },
+    });
+  });
+  useLiveEvent("purchase", (e) => {
+    const p = e.data;
+    if (p.robux < DASHBOARD_CONFIG.bigPurchaseRobux) return;
+    play("purchase");
+    toast({ tone: "purchase", title: t("alerts.bigPurchase", { robux: f.robux(p.robux) }), description: t("alerts.bigPurchaseBody", { name: p.robloxName, item: p.item }) });
+  });
 
   useLiveEvent("activity", (e) => {
     setNotices((cur) => [{ id: e.data.id, at: e.data.at, type: "activity" as const, item: e.data }, ...cur.filter((n) => n.id !== e.data.id)].slice(0, MAX));

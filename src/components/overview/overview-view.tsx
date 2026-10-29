@@ -1,20 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Bot, Headphones } from "lucide-react";
-import { useT } from "@/components/providers/app-provider";
+import { useState } from "react";
+import { Scene } from "@/components/art/scenes";
+import { useApp } from "@/components/providers/app-provider";
+import { useAttention } from "@/components/providers/attention-provider";
 import { useLiveEvent } from "@/components/providers/live-provider";
-import { PageHeader } from "@/components/ui/card";
 import { ServerChip } from "@/components/shell/server-chip";
-import { TicketQueue } from "@/components/tickets/ticket-queue";
+import { PageHeader } from "@/components/ui/card";
+import { cn } from "@/components/ui/cn";
 import { useHashFocus } from "@/lib/client/anchors";
-import type { ActivityItem, Assistant, BotName, BotStatus, ServerStats, TicketSummary } from "@/lib/types";
-import { ActivityFeed } from "./activity-feed";
-import { AssistantCard } from "./assistant-card";
+import { DASHBOARD_TIMEZONE } from "@/lib/time";
+import type { ActivityItem, Assistant, BotStatus, PurchaseEvent, Redemption, ServerStats, TicketSummary, Transfer } from "@/lib/types";
+import { AssistantsList } from "./assistants-list";
 import { AttentionStrip } from "./attention-strip";
-import { BotCard } from "./bot-card";
-import { LogsDrawer } from "./logs-drawer";
-import { ServerCard } from "./server-card";
+import { LiveStream } from "./live-stream";
+import { BotsPulse, HourPulse, ServerPulse, WaitingPulse } from "./pulse";
+import { TicketsWaiting } from "./tickets-waiting";
 
 export interface OverviewData {
   bots: BotStatus[] | null;
@@ -22,83 +23,71 @@ export interface OverviewData {
   stats: ServerStats | null;
   activity: ActivityItem[] | null;
   tickets: TicketSummary[] | null;
+  purchases: PurchaseEvent[] | null;
+  transfers: Transfer[] | null;
+  redemptions: Redemption[] | null;
+  now: number;
 }
 
-function SectionTitle({ icon, children, id, count }: { icon: React.ReactNode; children: React.ReactNode; id: string; count?: number }) {
-  return (
-    <h2 id={id} className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink-2">
-      <span className="text-accent-300">{icon}</span>
-      {children}
-      {count !== undefined && <span className="tabular rounded-full bg-white/[0.06] px-2 text-xs text-ink-3">{count}</span>}
-    </h2>
-  );
+function greetingKey(now: number) {
+  const h = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hour12: false, timeZone: DASHBOARD_TIMEZONE }).format(now));
+  return h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
 }
 
+/**
+ * The overview answers four questions in five seconds — are the bots
+ * healthy, is anything waiting for me, what happened in the last hour, how
+ * is the server — then shows the live stream and the queue behind them.
+ */
 export function OverviewView({ data }: { data: OverviewData }) {
-  const t = useT();
+  const { t, user } = useApp();
+  const { items } = useAttention();
   const [bots, setBots] = useState(data.bots);
-  const [assistants, setAssistants] = useState(data.assistants);
-  const [logsFor, setLogsFor] = useState<BotName | null>(null);
+  const [stats, setStats] = useState(data.stats);
   useHashFocus();
-
   useLiveEvent("bot", (e) => setBots((cur) => cur?.map((b) => (b.name === e.data.name ? e.data : b)) ?? cur));
-  useLiveEvent("assistant", (e) => setAssistants((cur) => cur?.map((a) => (a.bot === e.data.bot ? e.data : a)) ?? cur));
+  useLiveEvent("stats", (e) => setStats((cur) => (cur && (e.data.guild ?? "main") === (cur.guild ?? "main") ? e.data : cur)));
 
-  const core = useMemo(() => bots?.filter((b) => b.kind === "core") ?? [], [bots]);
-  const byName = useMemo(() => new Map(bots?.map((b) => [b.name, b])), [bots]);
-  const online = core.filter((b) => b.state === "online").length;
-  const side = data.activity !== null || data.tickets !== null;
+  const critical = items.some((i) => i.severity === "critical");
+  const mood = critical ? "worried" : items.length ? "calm" : "happy";
+  const name = user?.name.split(" ")[0] ?? "";
+  const money = data.purchases || data.transfers || data.redemptions;
+  const pulses = [bots && "bots", (data.tickets || data.assistants) && "waiting", money && "hour", stats && "server"].filter(Boolean).length;
+  const side = data.tickets || data.assistants;
 
   return (
     <>
-      <PageHeader eyebrow={<ServerChip />} title={t("overview.title")} subtitle={t("overview.subtitle")} />
+      <PageHeader
+        eyebrow={<ServerChip />}
+        title={t(`shell.greeting.${greetingKey(data.now)}`, { name })}
+        subtitle={t("home.subtitle")}
+        art={<Scene name={mood === "worried" ? "botDown" : mood === "happy" ? "allClear" : "welcome"} className="-my-2 h-28 w-auto" />}
+      />
 
       <div className="space-y-6">
         <AttentionStrip />
-        {data.stats && <ServerCard initial={data.stats} />}
 
-        <div className={side ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_400px]" : ""}>
-          <div className="@container min-w-0 space-y-8">
-            {assistants && (
-              <section aria-labelledby="assistants-title">
-                <SectionTitle id="assistants-title" icon={<Headphones className="size-4" aria-hidden />} count={assistants.filter((a) => a.state === "busy").length}>
-                  {t("overview.assistants")}
-                </SectionTitle>
-                <div className="stagger grid gap-3 @lg:grid-cols-2 @4xl:grid-cols-3">
-                  {assistants.map((a) => {
-                    const bot = byName.get(a.bot);
-                    return bot ? <AssistantCard key={a.bot} assistant={a} bot={bot} /> : null;
-                  })}
-                </div>
-              </section>
-            )}
-
-            {bots && (
-              <section aria-labelledby="bots-title">
-                <SectionTitle id="bots-title" icon={<Bot className="size-4" aria-hidden />} count={online}>
-                  {t("overview.bots")}
-                </SectionTitle>
-                <div className="stagger grid gap-3 @lg:grid-cols-2 @5xl:grid-cols-3">
-                  {core.map((b) => (
-                    <BotCard key={b.name} bot={b} onLogs={() => setLogsFor(b.name)} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {data.tickets && !bots && !assistants && <TicketQueue initial={data.tickets} />}
+        {pulses > 0 && (
+          <div className={cn("stagger grid gap-4 sm:grid-cols-2", pulses >= 4 ? "xl:grid-cols-4" : pulses === 3 ? "xl:grid-cols-3" : "")}>
+            {bots && <BotsPulse bots={bots} />}
+            {(data.tickets || data.assistants) && <WaitingPulse tickets={data.tickets} assistants={data.assistants} now={data.now} />}
+            {money && <HourPulse purchases={data.purchases} transfers={data.transfers} redemptions={data.redemptions} now={data.now} />}
+            {stats && <ServerPulse stats={stats} />}
           </div>
+        )}
 
-          {side && (
-            <div className="min-w-0 space-y-6">
-              {data.tickets && (bots || assistants) && <TicketQueue initial={data.tickets} />}
-              {data.activity && <ActivityFeed initial={data.activity} />}
-            </div>
-          )}
-        </div>
+        {(money || side) && (
+          <div className={cn("grid items-start gap-6", money && side && "xl:grid-cols-[minmax(0,1fr)_380px]")}>
+            {money && <LiveStream purchases={data.purchases} transfers={data.transfers} redemptions={data.redemptions} />}
+            {side && (
+              <div className={cn("grid gap-6", !money && "md:grid-cols-2")}>
+                {data.tickets && <TicketsWaiting initial={data.tickets} />}
+                {data.assistants && <AssistantsList initial={data.assistants} />}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-
-      <LogsDrawer bot={logsFor ? (byName.get(logsFor) ?? null) : null} onClose={() => setLogsFor(null)} />
     </>
   );
 }

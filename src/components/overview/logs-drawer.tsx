@@ -14,10 +14,10 @@ import { useLoad } from "@/lib/client/use-load";
 import type { BotLogLine, BotStatus, LogLevel } from "@/lib/types";
 
 const LEVEL_CLASS: Record<LogLevel, string> = {
-  debug: "text-ink-3",
-  info: "text-info",
-  warn: "text-warn",
-  error: "text-bad",
+  debug: "text-[#9b8d92]",
+  info: "text-[#7dd3fc]",
+  warn: "text-[#fbbf24]",
+  error: "text-[#fb7185]",
 };
 const ORDER: LogLevel[] = ["debug", "info", "warn", "error"];
 
@@ -64,14 +64,14 @@ export function LogsDrawer({ bot, onClose }: { bot: BotStatus | null; onClose: (
           ))}
         </div>
       ) : lines.length === 0 ? (
-        <EmptyState title={t("bot.logsEmpty")} />
+        <EmptyState art="quiet" title={t("bot.logsEmpty")} />
       ) : (
-        <ol dir="ltr" className="space-y-0.5 font-mono text-[12px] leading-relaxed" aria-live="polite" aria-relevant="additions">
+        <ol dir="ltr" className="space-y-0.5 rounded-2xl bg-charcoal p-3 font-mono text-[12px] leading-relaxed text-[#e9dfe2]" aria-live="polite" aria-relevant="additions">
           {lines.map((l) => (
-            <li key={l.id} className="flex gap-3 rounded px-1 hover:bg-white/[0.03]">
-              <span className="tabular shrink-0 text-ink-3">{f.time(l.at)}</span>
+            <li key={l.id} className="flex gap-3 rounded px-1 hover:bg-white/[0.06]">
+              <span className="tabular shrink-0 text-[#9b8d92]">{f.time(l.at)}</span>
               <span className={cn("w-11 shrink-0 font-semibold", LEVEL_CLASS[l.level])}>{l.level.toUpperCase()}</span>
-              <span className="break-all text-ink-2">{l.message}</span>
+              <span className="break-all">{l.message}</span>
             </li>
           ))}
           <div ref={endRef} />

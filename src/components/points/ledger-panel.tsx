@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PersonAvatar } from "@/components/people/person";
-import { BookOpen, Minus, Plus, ShieldAlert } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { DASHBOARD_CONFIG } from "@config/dashboard";
 import { useCan, useFormat, useT } from "@/components/providers/app-provider";
 import { useLiveEvent } from "@/components/providers/live-provider";
@@ -35,7 +35,7 @@ export function LedgerPanel() {
 
   return (
     <Card id="t-ledger" aria-labelledby="ledger-title" className="scroll-mt-24">
-      <CardHeader id="ledger-title" title={t("points.ledger")} description={t("points.ledgerHint")} icon={<BookOpen className="size-4" aria-hidden />} />
+      <CardHeader id="ledger-title" title={t("points.ledger")} description={t("points.ledgerHint")} icon="file" />
       <div className="grid gap-6 px-5 pb-5 lg:grid-cols-[20rem_minmax(0,1fr)]">
         <MemberSearch onSelect={setMember} selectedId={member?.discordId} limit={8} guild="main" />
         <div className="min-w-0">
@@ -91,7 +91,7 @@ function MemberLedger({ member }: { member: Pick<MemberSummary, "discordId"> }) 
   const { profile, entries, cursor } = data;
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-white/[0.03] p-4 ring-1 ring-inset ring-line">
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-surface-2 p-4 ring-1 ring-inset ring-line">
         <Avatar name={profile.displayName} src={profile.avatarUrl} size={48} />
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 truncate font-medium text-ink">
@@ -131,7 +131,7 @@ function MemberLedger({ member }: { member: Pick<MemberSummary, "discordId"> }) 
             </thead>
             <tbody>
               {entries.map((e) => (
-                <tr key={e.id} className="hover:bg-white/[0.02]">
+                <tr key={e.id} className="hover:bg-surface-2">
                   <Td className="text-xs whitespace-nowrap text-ink-3">
                     <TimeAgo at={e.at} />
                   </Td>
@@ -234,7 +234,7 @@ function AdjustForm({ member }: { member: MemberProfile }) {
           <p className="text-xs text-ink-3">{t("points.adjustHint")}</p>
         </div>
         {Number.isFinite(limit) && (
-          <Badge tone="warn" icon={<ShieldAlert aria-hidden className="size-3" />}>
+          <Badge tone="warn" icon={<Icon name="safety" size={12} />}>
             {t("points.limit", { n: f.n(limit) })}
           </Badge>
         )}
@@ -263,7 +263,7 @@ function AdjustForm({ member }: { member: MemberProfile }) {
             step={1}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            leading={mode === "add" ? <Plus className="size-4" aria-hidden /> : <Minus className="size-4" aria-hidden />}
+            leading={mode === "add" ? <Icon name="plus" size={16} /> : <Icon name="minus" size={16} />}
             required
           />
         </Field>
@@ -296,7 +296,7 @@ function AdjustForm({ member }: { member: MemberProfile }) {
         onCancel={() => setConfirming(false)}
         onConfirm={() => submit(true)}
       >
-        <p className="rounded-xl bg-white/[0.04] px-3 py-2 text-sm text-ink-2 ring-1 ring-line">“{reason.trim()}”</p>
+        <p className="rounded-xl bg-surface-2 px-3 py-2 text-sm text-ink-2 ring-1 ring-line">“{reason.trim()}”</p>
       </ConfirmDialog>
     </form>
   );

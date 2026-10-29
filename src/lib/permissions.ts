@@ -35,6 +35,8 @@ export const ACTIONS = [
   "protection.manage",
   "audit.view",
   "permissions.manage",
+  "giveaways.view",
+  "giveaways.manage",
 ] as const;
 export type Action = (typeof ACTIONS)[number];
 
@@ -42,7 +44,7 @@ const ALL: readonly Action[] = ACTIONS;
 
 export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Action[]>> = {
   owner: ALL,
-  manager: ALL.filter((a) => a !== "permissions.manage" && a !== "points.adjust_limited"),
+  manager: ALL.filter((a) => a !== "permissions.manage" && a !== "points.adjust_limited" && a !== "giveaways.manage"),
   dev: ["bots.view", "bots.logs", "bots.restart", "assistants.view", "activity.view"],
   head_support: [
     "stats.view",
@@ -144,8 +146,13 @@ export function pointAdjustNeedsConfirm(delta: number): boolean {
 /** Pages and the permissions that make them visible. */
 export const PAGE_ACCESS = {
   overview: ["bots.view", "assistants.view", "stats.view", "tickets.view", "activity.view"],
-  points: ["purchases.view", "transfers.view", "points.view"],
-  members: ["members.view", "staff.view", "protection.view", "audit.view"],
+  tickets: ["tickets.view"],
+  activity: ["purchases.view", "transfers.view", "points.view", "activity.view"],
+  members: ["members.view", "staff.view"],
+  points: ["points.view"],
+  giveaways: ["giveaways.view", "giveaways.manage"],
+  bots: ["bots.view", "assistants.view"],
+  safety: ["protection.view"],
   /** Everyone signed in may see what they (and others) can do. */
   access: [],
 } as const satisfies Record<string, readonly Action[]>;

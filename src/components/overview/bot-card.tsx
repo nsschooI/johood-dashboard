@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, Copy, FileText, Play, RotateCw, Square } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useApp, useFormat, useT, useWhyNot } from "@/components/providers/app-provider";
 import { useAttentionFor } from "@/components/providers/attention-provider";
 import { BotTile } from "@/components/art/bot-tile";
@@ -56,12 +56,12 @@ export function useBotActions(bot: BotStatus, onLogs?: () => void) {
     {
       title: name,
       items: [
-        { key: "restart", label: t("bot.restart"), icon: <RotateCw />, onSelect: () => setConfirm("restart"), disabledReason: why("bots.restart") ?? (up ? null : t("bot.state.stopped")) },
+        { key: "restart", label: t("bot.restart"), icon: <Icon name="restart" size={18} />, onSelect: () => setConfirm("restart"), disabledReason: why("bots.restart") ?? (up ? null : t("bot.state.stopped")) },
         up
-          ? { key: "stop", label: t("bot.stop"), icon: <Square />, danger: true, onSelect: () => setConfirm("stop"), disabledReason: why("bots.stop") }
-          : { key: "start", label: t("bot.start"), icon: <Play />, onSelect: () => void exec("start"), disabledReason: why("bots.stop") },
-        { key: "logs", label: t("bot.logs"), icon: <FileText />, onSelect: onLogs, disabledReason: why("bots.logs") ?? (onLogs ? null : t("menu.notAvailable")) },
-        { key: "copy", label: "pm2: " + bot.name, icon: <Copy />, onSelect: () => void navigator.clipboard?.writeText(bot.name) },
+          ? { key: "stop", label: t("bot.stop"), icon: <Icon name="stop" size={18} />, danger: true, onSelect: () => setConfirm("stop"), disabledReason: why("bots.stop") }
+          : { key: "start", label: t("bot.start"), icon: <Icon name="play" size={18} />, onSelect: () => void exec("start"), disabledReason: why("bots.stop") },
+        { key: "logs", label: t("bot.logs"), icon: <Icon name="file" size={18} />, onSelect: onLogs, disabledReason: why("bots.logs") ?? (onLogs ? null : t("menu.notAvailable")) },
+        { key: "copy", label: "pm2: " + bot.name, icon: <Icon name="copy" size={18} />, onSelect: () => void navigator.clipboard?.writeText(bot.name) },
       ],
     },
   ];
@@ -102,7 +102,7 @@ export function BotControlsView({ bot, a, onLogs, compact }: { bot: BotStatus; a
     <div className="flex flex-wrap items-center gap-1.5">
       {!compact && onLogs && (
         <Button size="sm" variant="ghost" onClick={onLogs} disabledReason={a.why("bots.logs")}>
-          <FileText aria-hidden className="size-3.5" />
+          <Icon name="file" size={14} />
           {t("bot.logs")}
         </Button>
       )}
@@ -118,12 +118,13 @@ export function BotControlsView({ bot, a, onLogs, compact }: { bot: BotStatus; a
             tip={compact ? t("bot.restart") : undefined}
             aria-label={t("bot.restart")}
           >
-            <RotateCw aria-hidden className="size-3.5" />
+            <Icon name="restart" size={14} />
             {!compact && t("bot.restart")}
           </Button>
           <Button
             size="sm"
-            variant="danger"
+            variant="secondary"
+            className="text-bad!"
             onClick={() => a.setConfirm("stop")}
             loading={a.pending === "stop"}
             disabledReason={a.why("bots.stop")}
@@ -131,7 +132,7 @@ export function BotControlsView({ bot, a, onLogs, compact }: { bot: BotStatus; a
             tip={compact ? t("bot.stop") : undefined}
             aria-label={t("bot.stop")}
           >
-            <Square aria-hidden className="size-3.5" />
+            <Icon name="stop" size={14} />
             {!compact && t("bot.stop")}
           </Button>
         </>
@@ -146,7 +147,7 @@ export function BotControlsView({ bot, a, onLogs, compact }: { bot: BotStatus; a
             feedback={a.feedbackFor("start")}
             attention={restartAttention}
           >
-            <Play aria-hidden className="size-3.5" />
+            <Icon name="play" size={14} />
             {t("bot.start")}
           </Button>
         )
@@ -170,17 +171,17 @@ export function BotCard({ bot, onLogs }: { bot: BotStatus; onLogs: () => void })
       id={`t-bot-${bot.name}`}
       onContextMenu={ctx.onContextMenu}
       className={cn(
-        "glass lift relative flex scroll-mt-24 flex-col gap-4 overflow-hidden rounded-2xl p-4",
-        attention === "critical" && "border-bad/50 shadow-[0_0_0_1px_rgb(251_113_133/0.35),0_18px_40px_-20px_rgb(251_113_133/0.6)]",
-        attention === "warning" && "border-warn/40",
+        "glass lift relative flex scroll-mt-24 flex-col gap-4 overflow-hidden rounded-[var(--radius-card)] p-5",
+        attention === "critical" && "border-bad/50 ring-2 ring-bad/25",
+        attention === "warning" && "border-warn/45",
       )}
       aria-label={bot.displayName}
     >
-      {attention && <span aria-hidden className={cn("absolute inset-x-0 top-0 h-0.5", attention === "critical" ? "bg-bad" : "bg-warn")} />}
+      {attention && <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", attention === "critical" ? "bg-bad" : "bg-warn")} />}
       <div className="flex items-start gap-3">
-        <BotTile name={bot.name} avatarUrl={bot.avatarUrl} size={42} />
+        <BotTile name={bot.name} avatarUrl={bot.avatarUrl} size={48} />
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold tracking-tight">{bot.displayName}</h3>
+          <h3 className="font-display truncate text-base font-semibold">{bot.displayName}</h3>
           <p className="mt-0.5 font-mono text-[11px] text-ink-3 rtl:text-right" dir="ltr">
             {bot.name} · v{bot.version}
           </p>
@@ -189,30 +190,30 @@ export function BotCard({ bot, onLogs }: { bot: BotStatus; onLogs: () => void })
         <ActionMenuButton label={bot.displayName} sections={a.sections} />
       </div>
 
-      <dl className="grid grid-cols-3 gap-2 text-xs">
+      <dl className="grid grid-cols-3 gap-2 rounded-2xl bg-surface-2 p-3 text-xs">
         <div>
           <dt className="text-ink-3">{t("bot.uptime")}</dt>
-          <dd className="tabular mt-0.5 font-medium text-ink">{bot.startedAt && up ? <Since from={bot.startedAt} /> : "—"}</dd>
+          <dd className="font-display tabular mt-0.5 text-sm font-semibold text-ink">{bot.startedAt && up ? <Since from={bot.startedAt} /> : "—"}</dd>
         </div>
         <div>
           <dt className="text-ink-3">{t("bot.restarts")}</dt>
-          <dd className={cn("tabular mt-0.5 font-medium", bot.restarts24h > 2 ? "text-warn" : "text-ink")}>{f.n(bot.restarts24h)}</dd>
+          <dd className={cn("font-display tabular mt-0.5 text-sm font-semibold", bot.restarts24h > 2 ? "text-warn" : "text-ink")}>{f.n(bot.restarts24h)}</dd>
         </div>
         <div>
           <dt className="text-ink-3">{t("bot.ping")}</dt>
-          <dd className="tabular mt-0.5 font-medium text-ink">{bot.pingMs !== null ? `${bot.pingMs} ms` : "—"}</dd>
+          <dd className="font-display tabular mt-0.5 text-sm font-semibold text-ink">{bot.pingMs !== null ? `${bot.pingMs} ms` : "—"}</dd>
         </div>
       </dl>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-white/[0.025] px-2.5 pt-2 pb-1 ring-1 ring-inset ring-line">
+        <div className="rounded-xl px-1 pt-1">
           <p className="flex justify-between text-[11px] text-ink-3">
             <span>{t("bot.memory")}</span>
             <span className={cn("tabular", memPct > 85 ? "text-bad" : memPct > 65 ? "text-warn" : "text-ink-2")}>{up ? `${f.n(bot.memoryMb)} MB` : "—"}</span>
           </p>
-          <Sparkline values={samples.mem} max={bot.memoryLimitMb} label={t("bot.memTrend")} color={memPct > 85 ? "var(--color-bad)" : "var(--color-accent-400)"} />
+          <Sparkline values={samples.mem} max={bot.memoryLimitMb} label={t("bot.memTrend")} color={memPct > 85 ? "var(--color-bad)" : "var(--color-series-1)"} />
         </div>
-        <div className="rounded-xl bg-white/[0.025] px-2.5 pt-2 pb-1 ring-1 ring-inset ring-line">
+        <div className="rounded-xl px-1 pt-1">
           <p className="flex justify-between text-[11px] text-ink-3">
             <span>{t("bot.cpu")}</span>
             <span className="tabular text-ink-2">{up ? `${bot.cpuPct}%` : "—"}</span>
@@ -221,10 +222,10 @@ export function BotCard({ bot, onLogs }: { bot: BotStatus; onLogs: () => void })
         </div>
       </div>
 
-      <div className="min-h-9 rounded-xl bg-white/[0.025] px-3 py-2 text-xs ring-1 ring-inset ring-line">
+      <div className={cn("min-h-9 rounded-xl px-3 py-2 text-xs", bot.lastError ? "bg-bad/[0.07]" : "bg-surface-2")}>
         {bot.lastError ? (
           <div className="flex items-start gap-2">
-            <AlertCircle aria-hidden className="mt-px size-3.5 shrink-0 text-bad" />
+            <Icon name="alert" size={14} className="mt-px shrink-0 text-bad" />
             <div className="min-w-0">
               <p className="truncate font-mono text-ink-2 rtl:text-right" dir="ltr" title={bot.lastError.message}>
                 {bot.lastError.message}
@@ -235,7 +236,10 @@ export function BotCard({ bot, onLogs }: { bot: BotStatus; onLogs: () => void })
             </div>
           </div>
         ) : (
-          <p className="text-ink-3">{t("bot.noErrors")}</p>
+          <p className="flex items-center gap-1.5 text-ink-3">
+            <Icon name="success" size={14} className="text-good" />
+            {t("bot.noErrors")}
+          </p>
         )}
       </div>
 

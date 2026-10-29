@@ -8,7 +8,6 @@ import { NotificationsProvider } from "@/components/providers/notifications-prov
 import { SoundProvider } from "@/components/providers/sound-provider";
 import { ToastProvider } from "@/components/providers/toast-provider";
 import { Shell } from "@/components/shell/shell";
-import { TicketDrawerProvider } from "@/components/tickets/ticket-drawer-provider";
 import { permissionsFor } from "@/lib/permissions";
 import { getProvider } from "@/lib/provider";
 import { GUILD_COOKIE } from "@/lib/server/guild";
@@ -41,9 +40,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             <LiveProvider>
               <AttentionProvider seed={shell.attention}>
                 <NotificationsProvider seed={shell.activity}>
-                  <TicketDrawerProvider>
-                    <Shell>{children}</Shell>
-                  </TicketDrawerProvider>
+                  <Shell>{children}</Shell>
                 </NotificationsProvider>
               </AttentionProvider>
             </LiveProvider>

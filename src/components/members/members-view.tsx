@@ -1,18 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { ArrowRight, KeyRound } from "lucide-react";
-import { useCan, useT } from "@/components/providers/app-provider";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Icon } from "@/components/icons/icon";
+import { useApp } from "@/components/providers/app-provider";
 import { useGuild } from "@/components/providers/guild-provider";
 import { Avatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/card";
+import { Segmented } from "@/components/ui/segmented";
 import { ServerChip } from "@/components/shell/server-chip";
 import { useHashFocus } from "@/lib/client/anchors";
-import type { MemberSummary, ProtectionSettings, RankInfo, RoleInfo } from "@/lib/types";
-import { AuditCard } from "./audit-card";
+import type { MemberSummary, RankInfo, RoleInfo } from "@/lib/types";
 import { MembersPanel } from "./member-profile";
-import { ProtectionCard } from "./protection-card";
 import { RanksCard, RolesCard } from "./ranks-roles";
 import type { StaffRow } from "@/components/access/access-view";
 
@@ -21,52 +20,66 @@ export interface MembersData {
   ranks: RankInfo[] | null;
   roles: RoleInfo[] | null;
   staff: StaffRow[] | null;
-  protection: ProtectionSettings | null;
 }
 
-/** Staff now live on the Access page; this card links there with their faces. */
-function StaffTeaser({ staff }: { staff: StaffRow[] }) {
-  const t = useT();
+type Tab = "directory" | "ranks";
+
+/** Staff and their access live on the Access page; this links there with their faces. */
+function StaffLink({ staff }: { staff: StaffRow[] }) {
+  const { t } = useApp();
   const { href } = useGuild();
   return (
-    <Link href={href("/access")} transitionTypes={["nav"]} className="glass lift group flex items-center gap-4 rounded-[var(--radius-card)] p-5">
-      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-500/15 text-accent-200 ring-1 ring-accent-400/25">
-        <KeyRound aria-hidden className="size-5" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold">{t("members.staff")}</span>
-        <span className="block text-xs text-ink-3">{t("access.subtitle")}</span>
-      </span>
-      <span className="hidden -space-x-2 sm:flex rtl:space-x-reverse">
-        {staff.slice(0, 6).map((s) => (
-          <Avatar key={s.discordId} name={s.name} src={s.avatarUrl} size={30} className="rounded-full ring-2 ring-surface" />
+    <Link href={href("/access")} transitionTypes={["nav"]} className="glass lift group inline-flex items-center gap-3 rounded-2xl py-2 ps-2 pe-3">
+      <span className="flex -space-x-2 rtl:space-x-reverse">
+        {staff.slice(0, 4).map((s) => (
+          <Avatar key={s.discordId} name={s.name} src={s.avatarUrl} size={28} className="rounded-full ring-2 ring-surface" />
         ))}
       </span>
-      <ArrowRight aria-hidden className="size-4 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-ink rtl:-scale-x-100" />
+      <span className="text-start leading-tight">
+        <span className="block text-sm font-semibold">{t("people.staffTitle")}</span>
+        <span className="block text-[11px] text-ink-3">{t("people.staffHint", { n: staff.length })}</span>
+      </span>
+      <Icon name="arrowRight" size={16} mirror className="text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-ink rtl:group-hover:-translate-x-0.5" />
     </Link>
   );
 }
 
 export function MembersView({ data }: { data: MembersData }) {
-  const t = useT();
-  const can = useCan();
-  const member = useSearchParams().get("member") ?? "";
+  const { t } = useApp();
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const tab: Tab = params.get("tab") === "ranks" && (data.ranks || data.roles) ? "ranks" : "directory";
   useHashFocus();
+  const setTab = (v: Tab) => {
+    const next = new URLSearchParams(params.toString());
+    if (v === "directory") next.delete("tab");
+    else next.set("tab", v);
+    router.replace(`${pathname}?${next}`, { scroll: false });
+  };
   return (
     <>
-      <PageHeader eyebrow={<ServerChip />} title={t("members.title")} subtitle={t("members.subtitle")} />
-      <div className="space-y-6">
-        {data.members && <MembersPanel key={member} initial={data.members} />}
-        {(data.ranks || data.roles) && (
-          <div className="grid gap-6 xl:grid-cols-2">
-            {data.ranks && <RanksCard ranks={data.ranks} />}
-            {data.roles && <RolesCard roles={data.roles} />}
-          </div>
-        )}
-        {data.protection && <ProtectionCard initial={data.protection} />}
-        {data.staff && <StaffTeaser staff={data.staff} />}
-        {can("audit.view") && <AuditCard />}
-      </div>
+      <PageHeader eyebrow={<ServerChip />} title={t("nav.members")} subtitle={t("members.subtitle")} actions={data.staff && <StaffLink staff={data.staff} />} />
+      {data.members && (data.ranks || data.roles) && (
+        <div className="mb-5">
+          <Segmented
+            label={t("nav.members")}
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: "directory" as Tab, label: t("people.tabs.directory"), icon: <Icon name="members" size={16} /> },
+              { value: "ranks" as Tab, label: t("people.tabs.ranks"), icon: <Icon name="award" size={16} /> },
+            ]}
+          />
+        </div>
+      )}
+      {tab === "directory" && data.members && <MembersPanel initial={data.members} />}
+      {(tab === "ranks" || !data.members) && (data.ranks || data.roles) && (
+        <div className="grid items-start gap-5 xl:grid-cols-2">
+          {data.ranks && <RanksCard ranks={data.ranks} />}
+          {data.roles && <RolesCard roles={data.roles} />}
+        </div>
+      )}
     </>
   );
 }

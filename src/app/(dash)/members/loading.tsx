@@ -1,22 +1,28 @@
-import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
+import { HeaderSkeleton, ListSkeleton } from "@/components/ui/page-skeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 
+/** Directory + profile. */
 export default function Loading() {
   return (
-    <div aria-busy="true" className="space-y-6">
-      <div>
-        <Skeleton className="mb-2 h-7 w-56" />
-        <Skeleton className="h-4 w-96 max-w-full" />
+    <div aria-busy="true">
+      <HeaderSkeleton />
+      <Skeleton className="mb-5 h-10 w-64 rounded-xl" />
+      <div className="grid gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <ListSkeleton rows={8} thumb={36} />
+        <div className="space-y-4">
+          <div className="glass overflow-hidden rounded-[var(--radius-card)]">
+            <Skeleton className="h-28 rounded-none" />
+            <div className="flex items-end gap-4 px-5 pb-5">
+              <Skeleton className="-mt-10 size-24 rounded-full" />
+              <Skeleton className="mb-2 h-6 w-48" />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Skeleton className="h-28 rounded-[var(--radius-card)]" />
+            <Skeleton className="h-28 rounded-[var(--radius-card)]" />
+          </div>
+        </div>
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        {Array.from({ length: 6 }, (_, i) => (
-          <Skeleton key={i} className="h-20 rounded-2xl" />
-        ))}
-      </div>
-      <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-        <Skeleton className="h-80 rounded-[var(--radius-card)]" />
-        <SkeletonCard lines={8} />
-      </div>
-      <SkeletonCard lines={10} />
     </div>
   );
 }

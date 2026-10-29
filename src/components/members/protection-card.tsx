@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Ban, Link2Off, Lock, ShieldAlert, ShieldCheck, Siren } from "lucide-react";
+import { Icon, type IconName } from "@/components/icons/icon";
 import { useCan, useT, useWhyNot } from "@/components/providers/app-provider";
 import { anchorId } from "@/lib/client/anchors";
 import { useLiveEvent } from "@/components/providers/live-provider";
@@ -17,12 +17,14 @@ import type { ProtectionPatch, ProtectionSettings } from "@/lib/types";
 
 type Dangerous = "lockdown" | "raidMode";
 
-function Row({ icon, title, hint, children, danger, id }: { icon: React.ReactNode; title: string; hint?: string; children: React.ReactNode; danger?: boolean; id?: string }) {
+function Row({ icon, title, hint, children, danger, id }: { icon: IconName; title: string; hint?: string; children: React.ReactNode; danger?: boolean; id?: string }) {
   return (
-    <div id={id} className={cn("flex scroll-mt-24 items-center gap-4 rounded-2xl px-4 py-3 ring-1 ring-inset transition-colors duration-[var(--dur-base)]", danger ? "bg-bad/[0.07] ring-bad/30" : "bg-white/[0.025] ring-line")}>
-      <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", danger ? "bg-bad/15 text-bad needs-attention" : "bg-white/[0.05] text-ink-2")}>{icon}</span>
+    <div id={id} className={cn("flex scroll-mt-24 flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl px-4 py-3.5 ring-1 ring-inset transition-colors duration-[var(--dur-base)]", danger ? "bg-bad/[0.08] ring-bad/35" : "bg-surface-2 ring-line")}>
+      <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", danger ? "bg-bad text-white needs-attention dark:text-[#2a0a12]" : "bg-surface text-ink-2 ring-1 ring-line")}>
+        <Icon name={icon} size={20} duo />
+      </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-ink">{title}</p>
+        <p className="text-sm font-semibold text-ink">{title}</p>
         {hint && <p className="text-xs text-ink-3">{hint}</p>}
       </div>
       {children}
@@ -93,7 +95,7 @@ export function ProtectionCard({ initial }: { initial: ProtectionSettings }) {
       <CardHeader
         id="protection-title"
         title={t("protection.title")}
-        icon={<ShieldCheck className="size-4" aria-hidden />}
+        icon="safety"
         description={
           <>
             {t("protection.lastChange")} <TimeAgo at={p.updatedAt} />
@@ -101,33 +103,33 @@ export function ProtectionCard({ initial }: { initial: ProtectionSettings }) {
         }
       />
       <div className="space-y-3 px-5 pb-5">
-        {!editable && <p className="rounded-xl bg-white/[0.03] px-3 py-2 text-xs text-ink-3 ring-1 ring-inset ring-line">{t("protection.readOnly")}</p>}
+        {!editable && <p className="rounded-xl bg-surface-2 px-3 py-2 text-xs text-ink-3 ring-1 ring-inset ring-line">{t("protection.readOnly")}</p>}
 
-        <Row id={anchorId("protection:lockdown")} icon={<Lock className="size-4" aria-hidden />} title={t("protection.lockdown")} hint={t("protection.lockdownHint")} danger={p.lockdown}>
+        <Row id={anchorId("protection:lockdown")} icon="lock" title={t("protection.lockdown")} hint={t("protection.lockdownHint")} danger={p.lockdown}>
           <Switch tone="bad" label={t("protection.lockdown")} checked={p.lockdown} disabledReason={why("protection.manage")} onChange={(v) => setConfirm({ key: "lockdown", value: v })} />
         </Row>
-        <Row id={anchorId("protection:raidMode")} icon={<Siren className="size-4" aria-hidden />} title={t("protection.raidMode")} hint={t("protection.raidModeHint")} danger={p.raidMode}>
+        <Row id={anchorId("protection:raidMode")} icon="siren" title={t("protection.raidMode")} hint={t("protection.raidModeHint")} danger={p.raidMode}>
           <Switch tone="bad" label={t("protection.raidMode")} checked={p.raidMode} disabledReason={why("protection.manage")} onChange={(v) => setConfirm({ key: "raidMode", value: v })} />
         </Row>
-        <Row icon={<ShieldAlert className="size-4" aria-hidden />} title={t("protection.raidThreshold")}>
+        <Row icon="members" title={t("protection.raidThreshold")}>
           {numberField("raidJoinThreshold", t("protection.joinsPerMinute"), 2, 200)}
         </Row>
-        <Row icon={<ShieldAlert className="size-4" aria-hidden />} title={t("protection.minAge")}>
+        <Row icon="calendar" title={t("protection.minAge")}>
           {numberField("minAccountAgeDays", t("protection.days"), 0, 365)}
         </Row>
-        <Row icon={<Link2Off className="size-4" aria-hidden />} title={t("protection.antiLinks")} hint={t("protection.antiLinksHint")}>
+        <Row icon="linkOff" title={t("protection.antiLinks")} hint={t("protection.antiLinksHint")}>
           <Switch label={t("protection.antiLinks")} checked={p.antiLinks} disabled={pending !== null} disabledReason={why("protection.manage")} onChange={(v) => patch({ antiLinks: v }, "antiLinks")} />
         </Row>
 
-        <h3 className="flex items-center gap-2 pt-2 text-xs font-semibold tracking-wide text-ink-3 uppercase">
-          <Ban aria-hidden className="size-3.5" />
+        <h3 className="font-display flex items-center gap-2 pt-3 text-sm font-semibold text-ink-2">
+          <Icon name="ban" size={14} />
           {t("protection.blockedWords")}
         </h3>
         <ul className="grid gap-2 sm:grid-cols-2">
           {p.blockedWords.map((b) => (
-            <li key={b.id} className="flex items-center gap-3 rounded-xl bg-white/[0.025] px-3 py-2.5 ring-1 ring-inset ring-line">
+            <li key={b.id} className="flex items-center gap-3 rounded-2xl bg-surface-2 px-3.5 py-3 ring-1 ring-inset ring-line">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-ink">{t(`protection.category.${b.category}`)}</p>
+                <p className="truncate text-sm font-semibold text-ink">{t(`protection.category.${b.category}`)}</p>
                 <p className="text-[11px] text-ink-3">{t("protection.words", { n: b.words })}</p>
               </div>
               <Switch

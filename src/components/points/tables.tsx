@@ -16,7 +16,7 @@ export function Th({ className, end, ...rest }: ThHTMLAttributes<HTMLTableCellEl
     <th
       scope="col"
       className={cn(
-        "sticky top-0 z-[1] border-b border-line bg-surface/90 px-3 py-2 text-[11px] font-medium tracking-wide text-ink-3 uppercase backdrop-blur first:ps-5 last:pe-5",
+        "sticky top-0 z-[1] border-b border-line bg-surface-2 px-3 py-2.5 text-xs font-semibold text-ink-3 first:ps-5 last:pe-5",
         end ? "text-end" : "text-start",
         className,
       )}
@@ -26,5 +26,5 @@ export function Th({ className, end, ...rest }: ThHTMLAttributes<HTMLTableCellEl
 }
 
 export function Td({ className, end, children }: { className?: string; end?: boolean; children: ReactNode }) {
-  return <td className={cn("border-b border-line/60 px-3 py-2.5 first:ps-5 last:pe-5", end ? "text-end" : "text-start", className)}>{children}</td>;
+  return <td className={cn("border-b border-line px-3 py-3 first:ps-5 last:pe-5", end ? "text-end" : "text-start", className)}>{children}</td>;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, type MouseEvent } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useT } from "@/components/providers/app-provider";
 import { Button } from "./button";
 import { MenuPopover, useMenu, type MenuSection } from "./menu";
@@ -24,7 +24,7 @@ export function ActionMenuButton({ label, sections, size = "icon-sm" }: { label:
           menu.openFromButton(e.currentTarget);
         }}
       >
-        <MoreHorizontal aria-hidden className="size-4" />
+        <Icon name="more" size={18} />
       </Button>
       <MenuPopover anchor={menu.anchor} onClose={menu.close} sections={sections} label={t("menu.label", { name: label })} />
     </>

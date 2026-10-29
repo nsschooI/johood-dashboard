@@ -3,7 +3,7 @@
  * is deterministic from its seed, so the same member always gets the same
  * face. Real mode never produces `mock:` URLs.
  */
-import { createElement } from "react";
+import { createElement, useId } from "react";
 import {
   Backpack,
   Bird,
@@ -221,14 +221,14 @@ export function ItemArt({ seed, item, className }: { seed: string; item?: string
 }
 
 const GUILD_COLORS: Record<GuildKey, [string, string, string]> = {
-  main: ["#c58cf9", "#9a52e0", "#f08bd0"],
-  catalog: ["#38bdf8", "#6366f1", "#14b8a6"],
+  main: ["#fb4d6d", "#d01843", "#fbbf24"],
+  catalog: ["#fbbf24", "#d97706", "#e11d48"],
 };
 
 /** Server icon artwork (mock). */
 export function GuildIconArt({ guild, className }: { guild: GuildKey; className?: string }) {
   const [a, b, c] = GUILD_COLORS[guild];
-  const id = `g${guild}`;
+  const id = `g${guild}${useId().replace(/:/g, "")}`;
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden>
       <defs>
@@ -259,7 +259,7 @@ export function GuildIconArt({ guild, className }: { guild: GuildKey; className?
 /** Server banner artwork (mock): aurora blobs over a geometric pattern. */
 export function GuildBannerArt({ guild, className }: { guild: GuildKey; className?: string }) {
   const [a, b, c] = GUILD_COLORS[guild];
-  const id = `b${guild}`;
+  const id = `b${guild}${useId().replace(/:/g, "")}`;
   return (
     <svg viewBox="0 0 400 140" preserveAspectRatio="xMidYMid slice" className={className} aria-hidden>
       <defs>
@@ -271,7 +271,7 @@ export function GuildBannerArt({ guild, className }: { guild: GuildKey; classNam
           <feGaussianBlur stdDeviation="22" />
         </filter>
       </defs>
-      <rect width="400" height="140" fill="#110e18" />
+      <rect width="400" height="140" fill="#2a1a1f" />
       <g filter={`url(#${id}f)`}>
         <ellipse cx="80" cy="30" rx="120" ry="60" fill={a} opacity=".75" />
         <ellipse cx="260" cy="110" rx="140" ry="55" fill={b} opacity=".7" />

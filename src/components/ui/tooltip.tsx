@@ -44,7 +44,7 @@ export function Tooltip({
         role="tooltip"
         style={{ translate: "calc(-50% + var(--tip-nudge, 0px)) 0" }}
         className={cn(
-          "pointer-events-none absolute left-1/2 z-50 w-max max-w-64 rounded-lg bg-[#211c2c] px-2.5 py-1.5 text-xs leading-snug font-medium text-ink opacity-0 shadow-xl ring-1 ring-line-strong transition-[opacity,transform] duration-[var(--dur-fast)]",
+          "pointer-events-none absolute left-1/2 z-50 w-max max-w-64 rounded-lg bg-charcoal px-2.5 py-1.5 text-xs leading-snug font-medium text-[#fbf2ee] opacity-0 shadow-[var(--shadow-pop)] dark:bg-[#3a3135] dark:ring-1 dark:ring-white/10 transition-[opacity,transform] duration-[var(--dur-fast)]",
           "group-hover/tip:opacity-100 group-focus-within/tip:opacity-100 group-hover/tip:delay-300",
           side === "top" ? "bottom-full mb-2 translate-y-1 group-hover/tip:translate-y-0" : "top-full mt-2 -translate-y-1 group-hover/tip:translate-y-0",
         )}

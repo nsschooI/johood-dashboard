@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { Search } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useT } from "@/components/providers/app-provider";
 import { Avatar } from "@/components/ui/avatar";
 import { RANK_TEXT, RankIcon } from "@/components/art/rank-icon";
@@ -57,11 +57,11 @@ export function MemberSearch({
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder={t("members.searchPlaceholder")}
-        leading={<Search className="size-4" aria-hidden />}
+        leading={<Icon name="search" size={16} />}
         autoComplete="off"
         maxLength={64}
       />
-      <ul className="mt-2 space-y-0.5" aria-busy={loading}>
+      <ul className="mt-2 space-y-0.5" aria-busy={loading} aria-label={t("members.search")}>
         {results === null
           ? Array.from({ length: 4 }, (_, i) => (
               <li key={i} className="flex items-center gap-3 px-2 py-2">
@@ -78,13 +78,13 @@ export function MemberSearch({
                     onClick={() => onSelect(m)}
                     aria-pressed={selectedId === m.discordId}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-start transition",
-                      selectedId === m.discordId ? "bg-accent-500/12 ring-1 ring-inset ring-accent-400/30" : "hover:bg-white/[0.04]",
+                      "flex w-full items-center gap-3 rounded-2xl px-2.5 py-2.5 text-start transition active:scale-[0.99]",
+                      selectedId === m.discordId ? "bg-[color-mix(in_oklab,var(--color-accent-500)_9%,var(--color-surface))] ring-1 ring-inset ring-accent-500/25" : "hover:bg-surface-2",
                     )}
                   >
-                    <Avatar name={m.displayName} src={m.avatarUrl} size={32} />
+                    <Avatar name={m.displayName} src={m.avatarUrl} size={36} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-ink">{m.displayName}</span>
+                      <span className="block truncate text-sm font-semibold text-ink"><bdi>{m.displayName}</bdi></span>
                       <span className="rtl:text-right block truncate text-xs text-ink-3" dir="ltr">
                         {m.robloxName ?? m.username}
                       </span>
@@ -99,12 +99,12 @@ export function MemberSearch({
 }
 
 const RANK_STYLE: Record<MemberSummary["rank"], string> = {
-  newcomer: "ring-line",
-  bronze: "ring-orange-400/30 bg-orange-400/[0.06]",
-  silver: "ring-slate-300/30 bg-slate-300/[0.05]",
-  gold: "ring-amber-300/35 bg-amber-300/[0.07]",
-  diamond: "ring-cyan-300/35 bg-cyan-300/[0.07]",
-  legend: "ring-fuchsia-300/40 bg-fuchsia-400/10",
+  newcomer: "ring-line bg-surface-2",
+  bronze: "ring-orange-400/35 bg-orange-400/[0.08]",
+  silver: "ring-slate-400/35 bg-slate-300/[0.1]",
+  gold: "ring-amber-400/40 bg-amber-300/[0.12]",
+  diamond: "ring-cyan-400/40 bg-cyan-300/[0.1]",
+  legend: "ring-fuchsia-400/40 bg-fuchsia-400/10",
 };
 
 export function RankBadge({ rank, size = "sm" }: { rank: MemberSummary["rank"]; size?: "sm" | "md" }) {
@@ -112,7 +112,7 @@ export function RankBadge({ rank, size = "sm" }: { rank: MemberSummary["rank"]; 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full font-medium whitespace-nowrap ring-1 ring-inset",
+        "inline-flex items-center gap-1 rounded-full font-semibold whitespace-nowrap ring-1 ring-inset",
         size === "md" ? "py-0.5 ps-1 pe-2.5 text-xs" : "py-px ps-0.5 pe-2 text-[11px]",
         RANK_STYLE[rank],
         RANK_TEXT[rank],

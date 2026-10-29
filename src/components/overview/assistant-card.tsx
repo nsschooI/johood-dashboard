@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Mic2, Radio } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useFormat, useT, useWhyNot } from "@/components/providers/app-provider";
 import { useAttentionFor } from "@/components/providers/attention-provider";
 import { BotTile } from "@/components/art/bot-tile";
@@ -32,7 +32,7 @@ export function AssistantCard({ assistant, bot }: { assistant: Assistant; bot: B
     {
       ...a.sections[0],
       items: [
-        { key: "disconnect", label: t("assistant.disconnect"), icon: <LogOut className="rtl:-scale-x-100" />, onSelect: () => void disconnect(), disabledReason: why("assistants.control") ?? (busy ? null : t("assistant.idle")) },
+        { key: "disconnect", label: t("assistant.disconnect"), icon: <Icon name="logOut" size={18} mirror />, onSelect: () => void disconnect(), disabledReason: why("assistants.control") ?? (busy ? null : t("assistant.idle")) },
         ...a.sections[0].items,
       ],
     },
@@ -45,22 +45,22 @@ export function AssistantCard({ assistant, bot }: { assistant: Assistant; bot: B
       aria-label={assistant.displayName}
       onContextMenu={ctx.onContextMenu}
       className={cn(
-        "glass lift relative flex scroll-mt-24 flex-col gap-4 overflow-hidden rounded-2xl p-4",
+        "glass lift relative flex scroll-mt-24 flex-col gap-4 overflow-hidden rounded-[var(--radius-card)] p-5",
         busy && "before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(28rem_12rem_at_0%_0%,color-mix(in_oklab,var(--color-accent-500)_16%,transparent),transparent)] rtl:before:bg-[radial-gradient(28rem_12rem_at_100%_0%,color-mix(in_oklab,var(--color-accent-500)_16%,transparent),transparent)]",
         attention && "border-warn/40",
       )}
     >
       <div className="relative flex items-center gap-3">
         <span className="relative">
-          <BotTile name={assistant.bot} avatarUrl={assistant.avatarUrl ?? bot.avatarUrl} size={42} />
+          <BotTile name={assistant.bot} avatarUrl={assistant.avatarUrl ?? bot.avatarUrl} size={48} badge={false} />
           {busy && (
             <span aria-hidden className="absolute -end-1 -bottom-1 grid size-5 place-items-center rounded-full bg-accent-500 text-white ring-2 ring-surface">
-              <Radio className="size-3 motion-safe:animate-pulse" />
+              <Icon name="radio" size={12} className="motion-safe:animate-pulse" />
             </span>
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold">{assistant.displayName}</h3>
+          <h3 className="font-display truncate text-base font-semibold">{assistant.displayName}</h3>
           <p className="tabular text-[11px] text-ink-3" dir="ltr">
             {bot.pingMs !== null ? `${bot.pingMs} ms` : "—"} · {f.n(bot.memoryMb)} MB
           </p>
@@ -71,11 +71,11 @@ export function AssistantCard({ assistant, bot }: { assistant: Assistant; bot: B
         <ActionMenuButton label={assistant.displayName} sections={sections} />
       </div>
 
-      <div className="relative min-h-[5.25rem] rounded-xl bg-white/[0.03] px-3 py-2.5 ring-1 ring-inset ring-line">
+      <div className="relative min-h-[5.25rem] rounded-2xl bg-surface-2 px-3.5 py-3">
         {busy && assistant.room ? (
           <dl className="space-y-2.5 text-xs">
             <div className="flex items-center gap-2">
-              <Mic2 aria-hidden className="size-3.5 shrink-0 text-accent-300" />
+              <Icon name="mic" size={14} className="shrink-0 text-accent-300" />
               <dt className="sr-only">{t("assistant.in")}</dt>
               <dd className="min-w-0 flex-1 truncate font-medium text-ink">{assistant.room.name}</dd>
               <dd className="shrink-0 text-ink-3">{t("assistant.listeners", { n: assistant.room.listeners })}</dd>
@@ -86,10 +86,10 @@ export function AssistantCard({ assistant, bot }: { assistant: Assistant; bot: B
                 <dt className="sr-only">{t("assistant.calledBy")}</dt>
                 <dd className="min-w-0 flex-1">
                   <span className="block text-[10px] text-ink-3">{t("assistant.calledBy")}</span>
-                  <bdi className="block truncate text-ink">{assistant.calledBy.name}</bdi>
+                  <span className="block truncate font-semibold text-ink"><bdi>{assistant.calledBy.name}</bdi></span>
                 </dd>
                 {assistant.since && (
-                  <dd className="tabular shrink-0 rounded-md bg-white/[0.05] px-1.5 py-0.5 text-ink-2">
+                  <dd className="tabular shrink-0 rounded-md bg-surface px-1.5 py-0.5 font-semibold text-ink-2 ring-1 ring-line">
                     <Since from={assistant.since} />
                   </dd>
                 )}
@@ -104,7 +104,7 @@ export function AssistantCard({ assistant, bot }: { assistant: Assistant; bot: B
       <div className="relative flex flex-wrap items-center gap-1.5">
         {busy && (
           <Button size="sm" loading={pending === "disconnect"} onClick={() => void disconnect()} disabledReason={why("assistants.control")} feedback={feedbackFor("disconnect")}>
-            <LogOut aria-hidden className="size-3.5 rtl:-scale-x-100" />
+            <Icon name="logOut" size={14} mirror />
             {t("assistant.disconnect")}
           </Button>
         )}

@@ -1,7 +1,7 @@
 import { cn } from "./cn";
 
-export function Skeleton({ className }: { className?: string }) {
-  return <div aria-hidden className={cn("skeleton", className)} />;
+export function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <div aria-hidden className={cn("skeleton", className)} style={style} />;
 }
 
 export function SkeletonCard({ className, lines = 3 }: { className?: string; lines?: number }) {

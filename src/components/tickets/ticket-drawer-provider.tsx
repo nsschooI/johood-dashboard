@@ -1,21 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { TicketDrawer } from "./ticket-drawer";
+import { useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useGuild } from "@/components/providers/guild-provider";
 
-const Ctx = createContext<(id: string) => void>(() => {});
-
-/** One ticket drawer for the whole app: open it from rows, menus or ⌘K. */
-export function TicketDrawerProvider({ children }: { children: ReactNode }) {
-  const [id, setId] = useState<string | null>(null);
-  const open = useCallback((ticketId: string) => setId(ticketId), []);
-  const value = useMemo(() => open, [open]);
-  return (
-    <Ctx value={value}>
-      {children}
-      <TicketDrawer ticketId={id} onClose={() => setId(null)} />
-    </Ctx>
-  );
+/** Open a ticket from anywhere (rows, menus, ⌘K): it opens in the Tickets inbox. */
+export function useOpenTicket() {
+  const router = useRouter();
+  const { href } = useGuild();
+  return useCallback((id: string) => router.push(href("/tickets", { ticket: id })), [router, href]);
 }
-
-export const useOpenTicket = () => useContext(Ctx);

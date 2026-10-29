@@ -8,7 +8,12 @@ export function Sparkline({ values, max, color = "var(--color-accent-400)", clas
   const id = useId().replace(/:/g, "");
   const w = 100;
   const h = 28;
-  if (values.length < 2) return <div className={cn("h-7", className)} aria-label={label} role="img" />;
+  if (values.length < 2)
+    return (
+      <svg viewBox="0 0 100 28" preserveAspectRatio="none" className={cn("h-7 w-full", className)} role="img" aria-label={label}>
+        <path d="M0 22H100" stroke="var(--color-line-strong)" strokeWidth="1.5" strokeDasharray="3 4" vectorEffect="non-scaling-stroke" />
+      </svg>
+    );
   const top = max ?? Math.max(...values) * 1.15;
   const min = max !== undefined ? 0 : Math.min(...values) * 0.85;
   const span = Math.max(1e-6, top - min);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeftRight, MessageSquare } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useCan, useFormat, useT } from "@/components/providers/app-provider";
 import { Badge, type Tone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,7 +55,7 @@ export function TransfersTable({ initial, live, fresh }: { initial: Page<Transfe
       <CardHeader
         id="transfers-title"
         title={t("points.transfers")}
-        icon={<ArrowLeftRight className="size-4" aria-hidden />}
+        icon="transfer"
         actions={
           <Segmented
             size="sm"
@@ -89,8 +89,8 @@ export function TransfersTable({ initial, live, fresh }: { initial: Page<Transfe
               <tr
                 key={x.id}
                 className={cn(
-                  "transition-colors hover:bg-white/[0.025]",
-                  fresh.has(x.id) && "motion-safe:animate-slide-in",
+                  "transition-colors hover:bg-surface-2",
+                  fresh.has(x.id) && "live-in",
                   targets.get(`transfer:${x.id}`) === "warning" && "bg-bad/[0.05]",
                   targets.get(`transfer:${x.id}`) === "info" && "bg-warn/[0.04]",
                 )}
@@ -128,7 +128,7 @@ export function TransfersTable({ initial, live, fresh }: { initial: Page<Transfe
                 <Td>
                   {x.ticketId && can("tickets.view") ? (
                     <Button size="sm" variant="ghost" onClick={() => openTicket(x.ticketId!)} className="text-accent-300">
-                      <MessageSquare aria-hidden className="size-3.5" />
+                      <Icon name="message" size={14} />
                       {t("tickets.title")}
                     </Button>
                   ) : (

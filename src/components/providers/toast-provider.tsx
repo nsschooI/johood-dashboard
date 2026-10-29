@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
-import { CheckCircle2, AlertTriangle, Info, ShoppingBag, X } from "lucide-react";
+import { Icon, type IconName } from "@/components/icons/icon";
 import { useT } from "./app-provider";
 
 type Tone = "success" | "error" | "info" | "purchase";
@@ -16,12 +16,12 @@ interface Toast {
 
 const ToastContext = createContext<(t: Omit<Toast, "id">) => void>(() => {});
 
-const ICON = { success: CheckCircle2, error: AlertTriangle, info: Info, purchase: ShoppingBag };
+const ICON: Record<Tone, IconName> = { success: "success", error: "warning", info: "info", purchase: "bag" };
 const TONE = {
   success: "text-good",
   error: "text-bad",
   info: "text-info",
-  purchase: "text-accent-300",
+  purchase: "text-accent-400",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -49,16 +49,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         className="pointer-events-none fixed inset-x-4 bottom-24 z-[60] lg:bottom-6 flex flex-col items-center gap-2 sm:inset-x-auto sm:end-6 sm:items-end"
       >
         {toasts.map((toast) => {
-          const Icon = ICON[toast.tone];
           return (
             <div
               key={toast.id}
               role={toast.tone === "error" ? "alert" : "status"}
-              className="glass pointer-events-auto flex w-full max-w-sm animate-pop items-start gap-3 rounded-2xl bg-surface/90 px-4 py-3 shadow-2xl"
+              className="glass pointer-events-auto flex w-full max-w-sm animate-pop items-start gap-3 rounded-2xl px-4 py-3 shadow-[var(--shadow-pop)]"
             >
-              <Icon aria-hidden className={`mt-0.5 size-5 shrink-0 ${TONE[toast.tone]}`} />
+              <span className={`mt-0.5 ${TONE[toast.tone]}`}>
+                <Icon name={ICON[toast.tone]} size={20} duo />
+              </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-ink">{toast.title}</p>
+                <p className="text-sm font-semibold text-ink">{toast.title}</p>
                 {toast.description && <p className="mt-0.5 text-sm text-ink-2">{toast.description}</p>}
               </div>
               {toast.action && (
@@ -68,7 +69,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                     dismiss(toast.id);
                     void toast.action!.onClick();
                   }}
-                  className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold text-accent-200 ring-1 ring-accent-400/40 transition hover:bg-accent-500/15 active:scale-95"
+                  className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold text-accent-300 ring-1 ring-accent-500/30 transition hover:bg-accent-500/10 active:scale-95"
                 >
                   {toast.action.label}
                 </button>
@@ -76,10 +77,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={() => dismiss(toast.id)}
-                className="rounded-md p-1 text-ink-3 transition hover:bg-white/5 hover:text-ink"
+                className="rounded-md p-1 text-ink-3 transition hover:bg-surface-3 hover:text-ink"
                 aria-label={t("common.close")}
               >
-                <X className="size-4" aria-hidden />
+                <Icon name="x" size={16} />
               </button>
             </div>
           );

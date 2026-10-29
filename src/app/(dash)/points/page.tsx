@@ -6,7 +6,7 @@ import { getPointsData } from "@/lib/server/queries";
 import { requireSession } from "@/lib/server/session";
 import { NoAccess } from "../no-access";
 
-export const metadata: Metadata = { title: "Points & Purchases" };
+export const metadata: Metadata = { title: "Points" };
 
 export default async function PointsPage() {
   const { user } = await requireSession();

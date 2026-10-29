@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useId, useState } from "react";
-import { ChevronDown, RefreshCw, ScrollText, Search } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useFormat, useT } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -75,10 +75,10 @@ export function AuditCard() {
       <CardHeader
         id="audit-title"
         title={t("audit.title")}
-        icon={<ScrollText className="size-4" aria-hidden />}
+        icon="audit"
         actions={
           <Button size="sm" variant="ghost" onClick={reload} aria-label={t("common.refresh")}>
-            <RefreshCw aria-hidden className="size-3.5" />
+            <Icon name="refresh" size={14} />
             {t("common.refresh")}
           </Button>
         }
@@ -93,7 +93,7 @@ export function AuditCard() {
         <label className="sr-only" htmlFor={`${id}-q`}>
           {t("common.search")}
         </label>
-        <Input id={`${id}-q`} value={filters.q} onChange={set("q")} placeholder={t("common.search")} leading={<Search className="size-4" aria-hidden />} maxLength={64} />
+        <Input id={`${id}-q`} value={filters.q} onChange={set("q")} placeholder={t("common.search")} leading={<Icon name="search" size={16} />} maxLength={64} />
         <label className="sr-only" htmlFor={`${id}-actor`}>
           {t("audit.actor")}
         </label>
@@ -172,7 +172,7 @@ export function AuditCard() {
               const hasDiff = e.before !== null || e.after !== null;
               return (
                 <Fragment key={e.id}>
-                  <tr className="hover:bg-white/[0.02]">
+                  <tr className="hover:bg-surface-2">
                     <Td className="text-xs whitespace-nowrap text-ink-3">{f.dateTime(e.at)}</Td>
                     <Td>
                       <span className="flex items-center gap-2">
@@ -202,14 +202,14 @@ export function AuditCard() {
                     <Td>
                       {hasDiff && (
                         <Button size="sm" variant="ghost" onClick={() => setOpen(expanded ? null : e.id)} aria-expanded={expanded} aria-label={t("audit.details")}>
-                          <ChevronDown aria-hidden className={cn("size-4 transition", expanded && "rotate-180")} />
+                          <Icon name="chevronDown" size={18} className={cn("size-4 transition", expanded && "rotate-180")} />
                         </Button>
                       )}
                     </Td>
                   </tr>
                   {expanded && (
                     <tr>
-                      <td colSpan={7} className="border-b border-line bg-white/[0.02] px-5 py-3">
+                      <td colSpan={7} className="border-b border-line bg-surface-2 px-5 py-3">
                         <div className="grid gap-3 sm:grid-cols-2" dir="ltr">
                           <Diff label={t("audit.before")} value={e.before} />
                           <Diff label={t("audit.after")} value={e.after} />
@@ -237,7 +237,7 @@ export function AuditCard() {
 function Diff({ label, value }: { label: string; value: unknown }) {
   return (
     <div>
-      <p className="mb-1 text-[11px] font-medium tracking-wide text-ink-3 uppercase">{label}</p>
+      <p className="mb-1 text-[11px] font-medium text-ink-3">{label}</p>
       <pre className="overflow-x-auto rounded-xl bg-bg/60 p-3 font-mono text-[11px] leading-relaxed text-ink-2 ring-1 ring-inset ring-line">
         {value === null || value === undefined ? "—" : JSON.stringify(value, null, 2)}
       </pre>

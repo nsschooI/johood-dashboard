@@ -48,6 +48,8 @@ const EXPECTED: Record<Action, Role[]> = {
   "protection.manage": ["owner", "manager"],
   "audit.view": ["owner", "manager"],
   "permissions.manage": ["owner"],
+  "giveaways.view": ["owner", "manager"],
+  "giveaways.manage": ["owner"],
 };
 
 describe("permission matrix", () => {
@@ -139,13 +141,21 @@ describe("point adjustment limits", () => {
 });
 
 describe("page access", () => {
-  it("dev sees only the overview", () => {
-    expect(canSeePage(u(["dev"]), "overview")).toBe(true);
-    expect(canSeePage(u(["dev"]), "points")).toBe(false);
-    expect(canSeePage(u(["dev"]), "members")).toBe(false);
+  const pages = (roles: Role[]) => (["overview", "tickets", "activity", "members", "points", "giveaways", "bots", "safety", "access"] as const).filter((p) => canSeePage(u(roles), p));
+  it("each role sees the pages its actions need", () => {
+    expect(pages(["owner"])).toEqual(["overview", "tickets", "activity", "members", "points", "giveaways", "bots", "safety", "access"]);
+    expect(pages(["manager"])).toEqual(["overview", "tickets", "activity", "members", "points", "giveaways", "bots", "safety", "access"]);
+    expect(pages(["dev"])).toEqual(["overview", "activity", "bots", "access"]);
+    expect(pages(["head_support"])).toEqual(["overview", "tickets", "activity", "members", "points", "access"]);
+    expect(pages(["support"])).toEqual(["overview", "tickets", "activity", "members", "access"]);
   });
-  it("support sees all three pages (scoped content)", () => {
-    for (const p of ["overview", "points", "members"] as const) expect(canSeePage(u(["support"]), p)).toBe(true);
+  it("giveaways: Owners (and Founders) manage; Managers can look but not run them", () => {
+    expect(can(u(["owner"]), "giveaways.manage")).toBe(true);
+    expect(can(u(["manager"]), "giveaways.manage")).toBe(false);
+    expect(can(u(["manager"]), "giveaways.view")).toBe(true);
+    expect(can(u(["head_support"]), "giveaways.view")).toBe(false);
+    const founder = rolesFromDiscord([ROLE_BINDINGS.find((b) => b.label === "Founder")!.discordRoleId]);
+    expect(can(u(founder), "giveaways.manage")).toBe(true);
   });
 });
 

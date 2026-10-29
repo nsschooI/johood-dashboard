@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
+import "@fontsource-variable/rubik/wght.css";
 import "@fontsource/ibm-plex-sans-arabic/400.css";
 import "@fontsource/ibm-plex-sans-arabic/500.css";
 import "@fontsource/ibm-plex-sans-arabic/600.css";
 import "@fontsource/ibm-plex-sans-arabic/700.css";
 import "./globals.css";
 import { dirOf } from "@/lib/i18n";
-import { getLocale } from "@/lib/server/i18n";
+import { getLocale, getTheme } from "@/lib/server/i18n";
 import { getGuildIdentity, realUrl } from "@/lib/server/identity";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,14 +32,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#0b0a10",
-  colorScheme: "dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf5ef" },
+    { media: "(prefers-color-scheme: dark)", color: "#121012" },
+  ],
+  colorScheme: "light dark",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await getLocale();
+  const [locale, theme] = await Promise.all([getLocale(), getTheme()]);
   return (
-    <html lang={locale} dir={dirOf(locale)} className="h-full">
+    <html lang={locale} dir={dirOf(locale)} data-theme={theme} className="h-full" suppressHydrationWarning>
       <body className="min-h-full font-sans antialiased">{children}</body>
     </html>
   );

@@ -14,7 +14,7 @@ export function RobloxHeadshot({ userId, name, size = 32, className }: { userId?
       {url === undefined ? (
         <span aria-hidden className="skeleton size-full rounded-[28%]" />
       ) : (
-        <Img src={url} sizes={`${size}px`} className="size-full rounded-[28%] bg-surface-2 ring-1 ring-white/10" fallback={<Initials name={name} size={size} />} />
+        <Img src={url} sizes={`${size}px`} className="size-full rounded-[28%] bg-surface-2 ring-1 ring-line" fallback={<Initials name={name} size={size} />} />
       )}
     </span>
   );
@@ -32,7 +32,7 @@ export function ItemThumb({ assetId, item, size = 36, className }: { assetId?: s
           src={url}
           itemHint={item}
           sizes={`${size}px`}
-          className="size-full rounded-xl bg-surface-2 ring-1 ring-white/10"
+          className="size-full rounded-xl bg-surface-2 ring-1 ring-line"
           fallback={<ItemArt seed={item} item={item} className="absolute inset-0" />}
         />
       )}

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { Rank } from "@/lib/types";
 
 const RANK_COLORS: Record<Rank, [string, string]> = {
@@ -10,18 +11,18 @@ const RANK_COLORS: Record<Rank, [string, string]> = {
 };
 
 export const RANK_TEXT: Record<Rank, string> = {
-  newcomer: "text-zinc-300",
-  bronze: "text-orange-300",
-  silver: "text-slate-200",
-  gold: "text-amber-200",
-  diamond: "text-cyan-200",
-  legend: "text-fuchsia-200",
+  newcomer: "text-zinc-600 dark:text-zinc-300",
+  bronze: "text-orange-800 dark:text-orange-300",
+  silver: "text-slate-600 dark:text-slate-200",
+  gold: "text-amber-800 dark:text-amber-200",
+  diamond: "text-cyan-800 dark:text-cyan-200",
+  legend: "text-fuchsia-800 dark:text-fuchsia-200",
 };
 
 /** Rank badge artwork: a shield that gains detail as the rank rises. */
 export function RankIcon({ rank, size = 20, className }: { rank: Rank; size?: number; className?: string }) {
   const [a, b] = RANK_COLORS[rank];
-  const id = `rk-${rank}`;
+  const id = `rk-${rank}${useId().replace(/:/g, "")}`;
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} className={className} aria-hidden>
       <defs>

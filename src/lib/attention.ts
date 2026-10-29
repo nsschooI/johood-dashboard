@@ -51,9 +51,10 @@ export const ATTENTION_RULES = {
 
 /** "15 min", "3 h", "2 d" — compact and language-neutral enough for both locales. */
 export function formatAge(minutes: number) {
-  if (minutes < 60) return `${minutes} min`;
-  if (minutes < 48 * 60) return `${Math.round(minutes / 60)} h`;
-  return `${Math.round(minutes / 1440)} d`;
+  // No-break space: "37 h" never wraps between the number and the unit.
+  if (minutes < 60) return `${minutes}\u00a0min`;
+  if (minutes < 48 * 60) return `${Math.round(minutes / 60)}\u00a0h`;
+  return `${Math.round(minutes / 1440)}\u00a0d`;
 }
 
 const RANK: Record<AttentionSeverity, number> = { critical: 0, warning: 1, info: 2 };
@@ -64,7 +65,7 @@ export function computeAttention(input: AttentionInput, user?: Pick<SessionUser,
 
   const downBots = new Set<string>();
   for (const b of input.bots ?? []) {
-    const base = { page: "overview" as const, target: `bot:${b.name}`, permission: "bots.view" as const, params: { bot: b.displayName } };
+    const base = { page: "bots" as const, target: `bot:${b.name}`, permission: "bots.view" as const, params: { bot: b.displayName } };
     if (b.state === "offline") {
       downBots.add(b.name);
       items.push({ ...base, id: `bot-offline:${b.name}`, severity: "critical", key: "botOffline", since: b.lastError?.at });
@@ -81,7 +82,7 @@ export function computeAttention(input: AttentionInput, user?: Pick<SessionUser,
 
   for (const a of input.assistants ?? []) {
     if (a.state === "offline" && !downBots.has(a.bot)) {
-      items.push({ id: `assistant-offline:${a.bot}`, severity: "warning", page: "overview", target: `bot:${a.bot}`, permission: "assistants.view", key: "assistantOffline", params: { bot: a.displayName } });
+      items.push({ id: `assistant-offline:${a.bot}`, severity: "warning", page: "bots", target: `bot:${a.bot}`, permission: "assistants.view", key: "assistantOffline", params: { bot: a.displayName } });
     }
   }
 
@@ -92,7 +93,7 @@ export function computeAttention(input: AttentionInput, user?: Pick<SessionUser,
     items.push({
       id: "tickets-unclaimed",
       severity: age >= ATTENTION_RULES.unclaimedTicketCriticalMinutes ? "critical" : "warning",
-      page: "overview",
+      page: "tickets",
       target: "tickets:unclaimed",
       related: unclaimed.map((t) => `ticket:${t.id}`),
       permission: "tickets.view",
@@ -107,7 +108,7 @@ export function computeAttention(input: AttentionInput, user?: Pick<SessionUser,
     items.push({
       id: "transfers-failed",
       severity: "warning",
-      page: "points",
+      page: "activity",
       target: "transfers:failed",
       related: failed.map((t) => `transfer:${t.id}`),
       permission: "transfers.view",
@@ -121,7 +122,7 @@ export function computeAttention(input: AttentionInput, user?: Pick<SessionUser,
     items.push({
       id: "transfers-stuck",
       severity: "info",
-      page: "points",
+      page: "activity",
       target: "transfers:stuck",
       related: stuck.map((t) => `transfer:${t.id}`),
       permission: "transfers.view",
@@ -131,8 +132,8 @@ export function computeAttention(input: AttentionInput, user?: Pick<SessionUser,
   }
 
   const p = input.protection;
-  if (p?.lockdown) items.push({ id: "lockdown", severity: "critical", page: "members", target: "protection:lockdown", permission: "protection.view", key: "lockdownOn", params: {}, since: p.updatedAt });
-  if (p?.raidMode) items.push({ id: "raid", severity: "critical", page: "members", target: "protection:raidMode", permission: "protection.view", key: "raidOn", params: {}, since: p.updatedAt });
+  if (p?.lockdown) items.push({ id: "lockdown", severity: "critical", page: "safety", target: "protection:lockdown", permission: "protection.view", key: "lockdownOn", params: {}, since: p.updatedAt });
+  if (p?.raidMode) items.push({ id: "raid", severity: "critical", page: "safety", target: "protection:raidMode", permission: "protection.view", key: "raidOn", params: {}, since: p.updatedAt });
 
   return items
     .filter((i) => user === undefined || can(user, i.permission))

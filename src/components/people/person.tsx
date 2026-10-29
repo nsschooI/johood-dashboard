@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { BookOpen, Coins, Copy, ExternalLink, KeyRound, UserRound } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useRouter } from "next/navigation";
 import { useApp, useCan, useFormat, useWhyNot } from "@/components/providers/app-provider";
 import { useGuild } from "@/components/providers/guild-provider";
@@ -79,11 +79,11 @@ function PersonCard({ person }: { person: MemberRef }) {
   const top = data?.roles.slice(0, 4) ?? [];
   const color = top[0]?.color ?? "#b06ef2";
   return (
-    <span role="tooltip" className="block w-72 overflow-hidden rounded-2xl bg-[#1a1624] text-start shadow-2xl ring-1 ring-line-strong animate-pop">
+    <span role="tooltip" className="block w-72 overflow-hidden rounded-2xl bg-surface text-start shadow-[var(--shadow-pop)] ring-1 ring-line animate-pop">
       <span aria-hidden className="block h-12" style={{ background: `linear-gradient(120deg, ${color}66, transparent 75%), radial-gradient(circle at 90% 0, #f08bd033, transparent 60%)` }} />
       <span className="-mt-7 block px-4 pb-4">
         <span className="flex items-end gap-3">
-          <Avatar name={person.name} src={person.avatarUrl} size={52} ring={color} className="ring-4 ring-[#1a1624]" />
+          <Avatar name={person.name} src={person.avatarUrl} size={52} ring={color} className="ring-4 ring-surface" />
           <span className="min-w-0 flex-1 pb-1">
             <span className="block truncate font-semibold text-ink">{person.name}</span>
             <span className="flex items-center gap-1 text-[11px] text-ink-3" dir="ltr">
@@ -103,7 +103,7 @@ function PersonCard({ person }: { person: MemberRef }) {
             <span className="flex flex-wrap items-center gap-1.5">
               <RankBadge rank={data.rank} />
               {top.map((r) => (
-                <span key={r.id} className="inline-flex items-center gap-1 rounded-full bg-white/[0.05] px-2 py-0.5 text-[11px] text-ink-2 ring-1 ring-inset ring-line">
+                <span key={r.id} className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] text-ink-2 ring-1 ring-inset ring-line">
                   <span aria-hidden className="size-1.5 rounded-full" style={{ background: r.color }} />
                   {r.name}
                 </span>
@@ -126,7 +126,7 @@ function PersonCard({ person }: { person: MemberRef }) {
         )}
         {key && (
           <Link href={href("/members", { member: person.discordId })} className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent-300 hover:text-accent-200">
-            <ExternalLink aria-hidden className="size-3.5" />
+            <Icon name="external" size={14} />
             {t("menu.openProfile")}
           </Link>
         )}
@@ -147,11 +147,11 @@ export function usePersonSections(person: MemberRef, opts: { onLedger?: () => vo
     {
       title: person.name,
       items: [
-        { key: "profile", label: t("menu.openProfile"), icon: <UserRound />, onSelect: go(href("/members", { member: person.discordId })), disabledReason: why("members.view") },
-        { key: "copy", label: t("menu.copyId"), icon: <Copy />, onSelect: () => void navigator.clipboard?.writeText(person.discordId) },
-        { key: "ledger", label: t("menu.viewLedger"), icon: <BookOpen />, onSelect: opts.onLedger ?? go(href("/points", { member: person.discordId })), disabledReason: why("points.view") },
-        { key: "adjust", label: t("menu.adjustPoints"), icon: <Coins />, onSelect: opts.onAdjust ?? go(href("/points", { member: person.discordId, adjust: "1" })), disabledReason: adjustReason },
-        { key: "access", label: t("menu.manageAccess"), icon: <KeyRound />, onSelect: go(href("/access", { staff: person.discordId })), disabledReason: why("permissions.manage") },
+        { key: "profile", label: t("menu.openProfile"), icon: <Icon name="user" size={18} />, onSelect: go(href("/members", { member: person.discordId })), disabledReason: why("members.view") },
+        { key: "copy", label: t("menu.copyId"), icon: <Icon name="copy" size={18} />, onSelect: () => void navigator.clipboard?.writeText(person.discordId) },
+        { key: "ledger", label: t("menu.viewLedger"), icon: <Icon name="file" size={18} />, onSelect: opts.onLedger ?? go(href("/points", { member: person.discordId })), disabledReason: why("points.view") },
+        { key: "adjust", label: t("menu.adjustPoints"), icon: <Icon name="coin" size={18} />, onSelect: opts.onAdjust ?? go(href("/points", { member: person.discordId, adjust: "1" })), disabledReason: adjustReason },
+        { key: "access", label: t("menu.manageAccess"), icon: <Icon name="access" size={18} />, onSelect: go(href("/access", { staff: person.discordId })), disabledReason: why("permissions.manage") },
       ],
     },
   ];

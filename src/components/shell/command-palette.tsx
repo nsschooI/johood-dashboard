@@ -2,14 +2,14 @@
 
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Keyboard, Languages, LifeBuoy, LogOut, Search, Volume2 } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { useApp, useCan } from "@/components/providers/app-provider";
 import { useGuild } from "@/components/providers/guild-provider";
 import { useSound } from "@/components/providers/sound-provider";
-import { useOpenTicket } from "@/components/tickets/ticket-drawer-provider";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/components/ui/cn";
-import { Illustration } from "@/components/art/illustrations";
+import { Scene } from "@/components/art/scenes";
+import { useTheme } from "@/lib/client/theme";
 import { api, qs } from "@/lib/client/api";
 import { PAGE_ACCESS } from "@/lib/permissions";
 import type { MemberSummary, Page, TicketSummary } from "@/lib/types";
@@ -32,7 +32,7 @@ export function CommandPalette({ open, onClose, onShortcuts, onSignOut }: { open
   const router = useRouter();
   const { guild, guilds, href, setGuild } = useGuild();
   const sound = useSound();
-  const openTicket = useOpenTicket();
+  const theme = useTheme();
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const listId = useId();
@@ -84,7 +84,7 @@ export function CommandPalette({ open, onClose, onShortcuts, onSignOut }: { open
     for (const n of NAV) {
       const needs = PAGE_ACCESS[n.key];
       if (needs.length && !needs.some((a) => can(a))) continue;
-      list.push({ id: `page:${n.key}`, group: t("palette.pages"), label: t(n.label), hint: `G ${n.shortcut.toUpperCase()}`, icon: <n.icon className="size-4" />, run: close(() => router.push(href(n.href))) });
+      list.push({ id: `page:${n.key}`, group: t("palette.pages"), label: t(n.label), hint: `G ${n.shortcut.toUpperCase()}`, icon: <Icon name={n.icon} size={18} />, keywords: t(n.hint), run: close(() => router.push(href(n.href))) });
     }
     for (const g of guilds) {
       list.push({
@@ -98,10 +98,11 @@ export function CommandPalette({ open, onClose, onShortcuts, onSignOut }: { open
       });
     }
     list.push(
-      { id: "lang", group: t("palette.actions"), label: t("palette.toggleLanguage"), hint: "⇧ L", icon: <Languages className="size-4" />, keywords: "arabic english عربي", run: close(() => setLocale(locale === "ar" ? "en" : "ar")) },
-      { id: "sound", group: t("palette.actions"), label: t("palette.toggleSound"), hint: "⇧ S", icon: <Volume2 className="size-4" />, run: close(sound.toggle) },
-      { id: "keys", group: t("palette.actions"), label: t("palette.showShortcuts"), hint: "?", icon: <Keyboard className="size-4" />, run: close(onShortcuts) },
-      { id: "out", group: t("palette.actions"), label: t("palette.signOut"), icon: <LogOut className="size-4 rtl:-scale-x-100" />, run: close(onSignOut) },
+      { id: "lang", group: t("palette.actions"), label: t("palette.toggleLanguage"), hint: "⇧ L", icon: <Icon name="languages" size={18} />, keywords: "arabic english عربي", run: close(() => setLocale(locale === "ar" ? "en" : "ar")) },
+      { id: "sound", group: t("palette.actions"), label: t("palette.toggleSound"), hint: "⇧ S", icon: <Icon name="volumeOn" size={18} />, run: close(sound.toggle) },
+      { id: "keys", group: t("palette.actions"), label: t("palette.showShortcuts"), hint: "?", icon: <Icon name="keyboard" size={18} />, run: close(onShortcuts) },
+      { id: "theme", group: t("palette.actions"), label: `${t("shell.theme")}: ${t(`shell.themes.${theme.theme}`)}`, hint: "⇧ T", icon: <Icon name={theme.theme === "dark" ? "moon" : theme.theme === "light" ? "sun" : "monitor"} size={18} />, keywords: "dark light theme مظهر", run: close(theme.cycle) },
+      { id: "out", group: t("palette.actions"), label: t("palette.signOut"), icon: <Icon name="logOut" size={18} mirror />, run: close(onSignOut) },
     );
     const filtered = term ? list.filter((c) => `${c.label} ${c.keywords ?? ""}`.toLowerCase().includes(term)) : list;
     if (term.length >= 2) {
@@ -116,11 +117,11 @@ export function CommandPalette({ open, onClose, onShortcuts, onSignOut }: { open
         });
       }
       for (const tk of tickets) {
-        filtered.push({ id: `ticket:${tk.id}`, group: t("palette.tickets"), label: `#${tk.number} · ${tk.subject}`, hint: tk.openedBy.name, icon: <LifeBuoy className="size-4" />, run: close(() => openTicket(tk.id)) });
+        filtered.push({ id: `ticket:${tk.id}`, group: t("palette.tickets"), label: `#${tk.number} · ${tk.subject}`, hint: tk.openedBy.name, icon: <Icon name="tickets" size={18} />, run: close(() => router.push(href("/tickets", { ticket: tk.id }))) });
       }
     }
     return filtered;
-  }, [q, t, can, guilds, guild, members, tickets, locale, router, href, setGuild, setLocale, sound.toggle, onClose, onShortcuts, onSignOut, openTicket]);
+  }, [q, t, can, guilds, guild, members, tickets, locale, router, href, setGuild, setLocale, sound.toggle, onClose, onShortcuts, onSignOut, theme]);
 
   const idx = Math.min(active, Math.max(0, commands.length - 1));
   const groups = useMemo(() => {
@@ -152,10 +153,10 @@ export function CommandPalette({ open, onClose, onShortcuts, onSignOut }: { open
         }
       }}
       onClose={reset}
-      className="glass fixed inset-x-0 top-[12vh] m-auto h-fit max-h-[70vh] w-[min(38rem,calc(100vw-1.5rem))] overflow-hidden rounded-[var(--radius-card)] bg-[#17131f]/95 p-0 text-ink shadow-2xl backdrop:bg-transparent open:flex open:flex-col open:animate-pop"
+      className="glass fixed inset-x-0 top-[12vh] m-auto h-fit max-h-[70vh] w-[min(40rem,calc(100vw-1.5rem))] overflow-hidden rounded-[var(--radius-card)] p-0 text-ink shadow-[var(--shadow-pop)] backdrop:bg-transparent open:flex open:flex-col open:animate-pop"
     >
       <div className="flex items-center gap-3 border-b border-line px-4">
-        <Search aria-hidden className="size-4 shrink-0 text-ink-3" />
+        <Icon name="search" size={20} className="text-ink-3" />
         <input
           ref={input}
           value={q}
@@ -181,20 +182,20 @@ export function CommandPalette({ open, onClose, onShortcuts, onSignOut }: { open
           aria-controls={listId}
           aria-activedescendant={commands[idx] ? `${listId}-${commands[idx].id}` : undefined}
           placeholder={t("palette.placeholder")}
-          className="h-14 min-w-0 flex-1 bg-transparent text-[15px] text-ink placeholder:text-ink-3 focus:outline-none"
+          className="h-14 min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-ink-3 focus:outline-none"
         />
-        <kbd className="hidden rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-ink-3 ring-1 ring-line sm:block">Esc</kbd>
+        <kbd className="hidden rounded-md bg-surface-3 px-1.5 py-0.5 text-[10px] font-semibold text-ink-3 sm:block">Esc</kbd>
       </div>
       <div id={listId} role="listbox" aria-label={t("palette.open")} className="min-h-0 flex-1 overflow-y-auto p-2">
         {commands.length === 0 ? (
           <div className="py-8 text-center">
-            <Illustration name="search" className="mx-auto h-20 w-auto" />
+            <Scene name="search" className="mx-auto h-24 w-auto" />
             <p className="mt-2 text-sm text-ink-3">{t("palette.empty", { q })}</p>
           </div>
         ) : (
           groups.map(([group, items]) => (
             <div key={group} role="group" aria-label={group} className="mb-1">
-              <p className="px-2.5 pt-2 pb-1 text-[10px] font-semibold tracking-wider text-ink-3 uppercase">{group}</p>
+              <p className="px-2.5 pt-2 pb-1 text-[11px] font-semibold text-ink-3">{group}</p>
               {items.map((c) => {
                 const i = commands.indexOf(c);
                 return (
@@ -208,9 +209,9 @@ export function CommandPalette({ open, onClose, onShortcuts, onSignOut }: { open
                       c.run();
                       reset();
                     }}
-                    className={cn("flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-colors duration-[var(--dur-instant)]", i === idx ? "bg-white/[0.08] text-ink" : "text-ink-2")}
+                    className={cn("flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-colors duration-[var(--dur-instant)]", i === idx ? "bg-accent-500/10 text-ink" : "text-ink-2")}
                   >
-                    <span className="grid size-6 shrink-0 place-items-center text-ink-2">{c.icon}</span>
+                    <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-surface-2 text-ink-2">{c.icon}</span>
                     <span className="min-w-0 flex-1 truncate">{c.label}</span>
                     {c.hint && <span className="shrink-0 truncate text-xs text-ink-3">{c.hint}</span>}
                   </div>

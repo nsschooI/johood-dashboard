@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Check } from "lucide-react";
+import { Icon } from "@/components/icons/icon";
 import { cn } from "./cn";
 
 export interface MenuItem {
@@ -99,7 +99,7 @@ export function MenuPopover({
       role="menu"
       aria-label={label}
       style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999, width }}
-      className="glass fixed z-[70] max-h-[70vh] overflow-y-auto rounded-2xl bg-[#1a1624]/95 p-1.5 shadow-2xl animate-pop"
+      className="glass fixed z-[70] max-h-[70vh] overflow-y-auto rounded-2xl p-1.5 shadow-[var(--shadow-pop)] animate-pop"
       onKeyDown={(e) => {
         const move = { ArrowDown: 1, ArrowUp: -1, Home: "first", End: "last" } as const;
         if (e.key in move) {
@@ -110,7 +110,7 @@ export function MenuPopover({
     >
       {sections.map((sec, si) => (
         <div key={si} role="group" aria-label={sec.title} className={cn(si > 0 && "mt-1 border-t border-line pt-1")}>
-          {sec.title && <p className="px-2.5 pt-1.5 pb-1 text-[10px] font-semibold tracking-wider text-ink-3 uppercase">{sec.title}</p>}
+          {sec.title && <p className="px-2.5 pt-1.5 pb-1 text-[11px] font-semibold text-ink-3">{sec.title}</p>}
           {sec.items.map((it) => {
             const disabled = Boolean(it.disabledReason);
             return (
@@ -134,10 +134,10 @@ export function MenuPopover({
                 }}
                 className={cn(
                   "group flex items-start gap-2.5 rounded-xl px-2.5 py-2 text-sm outline-none transition-colors duration-[var(--dur-fast)]",
-                  disabled ? "text-ink-3" : it.danger ? "text-bad hover:bg-bad/10 focus:bg-bad/10" : "text-ink hover:bg-white/[0.07] focus:bg-white/[0.07]",
+                  disabled ? "text-ink-3" : it.danger ? "text-bad hover:bg-bad/10 focus:bg-bad/10" : "text-ink hover:bg-surface-2 focus:bg-surface-2",
                 )}
               >
-                {it.icon && <span className={cn("mt-0.5 shrink-0 [&>svg]:size-4", disabled ? "opacity-50" : it.danger ? "" : "text-ink-2")}>{it.icon}</span>}
+                {it.icon && <span className={cn("mt-0.5 shrink-0 [&>svg]:size-[18px]", disabled ? "opacity-50" : it.danger ? "" : "text-ink-2")}>{it.icon}</span>}
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
                     <span className={cn("truncate", disabled && "opacity-70")}>{it.label}</span>
@@ -149,7 +149,7 @@ export function MenuPopover({
                     it.hint && <span className="mt-0.5 block text-[11px] text-ink-3">{it.hint}</span>
                   )}
                 </span>
-                {it.checked && <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-accent-300" />}
+                {it.checked && <Icon name="check" size={16} className="mt-0.5 text-accent-400" />}
               </div>
             );
           })}
