@@ -17,6 +17,7 @@ const defaultSettings = {
   editKey:       'F',
   resetKey:      'G',
   selectKey:     'LButton',
+  selectDelay:   45,
   ping:          30,
   macroOn:       false
 }
@@ -79,7 +80,7 @@ global Delay        := ${delay}
 `
     }
     if (s.selectEnabled) {
-      script += `    Sleep(20)
+      script += `    Sleep(${Math.max(0, s.selectDelay ?? 45)})
     Send("{Blind}{${sk}}")
 `
     }

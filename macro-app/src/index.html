@@ -392,6 +392,17 @@ input[type="range"]::-webkit-slider-thumb {
     <div class="note">
       💡 افتراضياً Left Click — هو نفسه اللي بيحدد المربع بفورت نايت. اضغط الزر وكبس ماوس أو لوحة مفاتيح لتغييره
     </div>
+    <div class="divider"></div>
+    <div class="ping-top">
+      <div>
+        <div class="card-desc">توقيت السيليكت: <strong id="selectDelayVal" style="color:var(--red)">45ms</strong></div>
+      </div>
+    </div>
+    <input type="range" id="selectDelaySlider" min="0" max="150" value="45" oninput="onSelectDelay(this.value)">
+    <div class="ping-ticks"><span>0</span><span>40</span><span>80</span><span>120</span><span>150</span></div>
+    <div class="note">
+      💡 لو السيليكت أحياناً ما بينحسب، زوّد الرقم شوي. لو حاسس فيه تأخير واضح، نزّله
+    </div>
   </div>
 
   <!-- FEATURE 2 -->
@@ -489,6 +500,8 @@ function applySettings(s) {
   document.getElementById('selectKeyBtn').textContent = keys.selectKey
   onPing(s.ping ?? 30)
   document.getElementById('pingSlider').value = s.ping ?? 30
+  onSelectDelay(s.selectDelay ?? 45)
+  document.getElementById('selectDelaySlider').value = s.selectDelay ?? 45
 }
 
 // ── Key listening ─────────────────────────────────
@@ -567,12 +580,22 @@ function onPing(val) {
     `linear-gradient(to right,#9B0000 0%,#9B0000 ${pct}%,#E0E0E0 ${pct}%)`
 }
 
+// ── Select Delay ──────────────────────────────────
+function onSelectDelay(val) {
+  val = parseInt(val)
+  document.getElementById('selectDelayVal').textContent = val + 'ms'
+  const pct = (val/150)*100
+  document.getElementById('selectDelaySlider').style.background =
+    `linear-gradient(to right,#9B0000 0%,#9B0000 ${pct}%,#E0E0E0 ${pct}%)`
+}
+
 // ── Save ──────────────────────────────────────────
 function getSettings() {
   return {
     eorEnabled:    document.getElementById('eorToggle').checked,
     resetEnabled:  document.getElementById('resetToggle').checked,
     selectEnabled: document.getElementById('selectToggle').checked,
+    selectDelay:   parseInt(document.getElementById('selectDelaySlider').value),
     editKey:       keys.editKey,
     resetKey:      keys.resetKey,
     selectKey:     keys.selectKey,
@@ -588,6 +611,7 @@ function saveAll() {
 ['eorToggle','resetToggle','selectToggle'].forEach(id =>
   document.getElementById(id).addEventListener('change', saveAll))
 document.getElementById('pingSlider').addEventListener('change', () => saveAll())
+document.getElementById('selectDelaySlider').addEventListener('change', () => saveAll())
 
 // ── Macro toggle ──────────────────────────────────
 async function toggleMacro() {
@@ -669,6 +693,7 @@ window.api.onUpdateStatus(async (data) => {
 
 // init
 onPing(30)
+onSelectDelay(45)
 </script>
 </body>
 </html>
