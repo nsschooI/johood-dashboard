@@ -72,7 +72,6 @@ global Delay        := ${delay}
         Send("{Blind}{${ek} Down}")
         return
     }
-    Critical()  ; يمنع أي تضارب مع معالجة الرفع لحد ما نخلص هون بالكامل
     EditHeld := true
     Send("{Blind}{${ek} Down}")
 `
@@ -85,11 +84,10 @@ global Delay        := ${delay}
     }
     if (s.selectEnabled) {
       script += `    Sleep(${Math.max(0, s.selectDelay ?? 45)})
-    Send("{Blind}{${sk}}")
+    Send("{Blind}{${sk} Down}")
 `
     }
-    script += `    Critical("Off")
-}
+    script += `}
 
 *${ek} Up:: {
     global MacroEnabled, EditHeld, Delay
@@ -98,12 +96,18 @@ global Delay        := ${delay}
         EditHeld := false
         return
     }
-    Critical()  ; بما إن Critical بتأخر أي حدث لحد ما تخلص، هاد بيضمن السيليكت خلص قبل ما نوصل هون
-    Sleep(Delay)
-    Send("{Blind}{${sk}}")
     EditHeld := false
-    Critical("Off")
-}
+`
+    if (s.selectEnabled) {
+      script += `    Sleep(Delay)
+    Send("{Blind}{${sk} Up}")  ; رفع زر السيليكت هو اللي بيعمل الكونفيرم تلقائياً
+`
+    } else {
+      script += `    Sleep(Delay)
+    Send("{Blind}{${sk}}")
+`
+    }
+    script += `}
 
 `
   }
