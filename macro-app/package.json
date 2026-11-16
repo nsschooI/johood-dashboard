@@ -1,6 +1,6 @@
 {
   "name": "johood-macro",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "JoHood Fortnite Macro - تطبيق فورت نايت",
   "main": "src/main.js",
   "scripts": {

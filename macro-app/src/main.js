@@ -94,7 +94,7 @@ global Delay        := ${delay}
     }
     EditHeld := false
     Sleep(Delay)
-    Send("{Blind}{${ek}}")
+    Send("{Blind}{${sk}}")
 }
 
 `
