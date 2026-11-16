@@ -12,7 +12,7 @@ const defaultSettings = {
   selectEnabled: false,
   editKey:       'F',
   resetKey:      'G',
-  selectKey:     'E',
+  selectKey:     'LButton',
   ping:          30,
   macroOn:       false
 }

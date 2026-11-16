@@ -378,7 +378,7 @@ input[type="range"]::-webkit-slider-thumb {
     <div class="card-row">
       <div>
         <div class="card-label" style="font-size:14px">🖱️ تحديد قبل الأديت (Select)</div>
-        <div class="card-desc">يبعت زر السيليكت أول قبل ما يفتح الإديت</div>
+        <div class="card-desc">يبعت كبسة قبل ما يفتح الإديت لتحديد المربع تحت التصويبة</div>
       </div>
       <label class="toggle">
         <input type="checkbox" id="selectToggle">
@@ -386,8 +386,11 @@ input[type="range"]::-webkit-slider-thumb {
       </label>
     </div>
     <div class="key-row">
-      <span class="key-label">🔑 زر السيليكت</span>
-      <button class="key-btn" id="selectKeyBtn" onclick="startListen('selectKey',this)">E</button>
+      <span class="key-label">🔑 زر/كبسة السيليكت</span>
+      <button class="key-btn" id="selectKeyBtn" onclick="startListen('selectKey',this)">LButton</button>
+    </div>
+    <div class="note">
+      💡 افتراضياً Left Click — هو نفسه اللي بيحدد المربع بفورت نايت. اضغط الزر وكبس ماوس أو لوحة مفاتيح لتغييره
     </div>
   </div>
 
@@ -451,7 +454,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 <script>
 // ── State ─────────────────────────────────────────
-const keys  = { editKey: 'F', resetKey: 'G', selectKey: 'E' }
+const keys  = { editKey: 'F', resetKey: 'G', selectKey: 'LButton' }
 let macroOn = false
 let listen  = null
 
@@ -466,7 +469,7 @@ function applySettings(s) {
   document.getElementById('selectToggle').checked = s.selectEnabled ?? false
   keys.editKey   = s.editKey   ?? 'F'
   keys.resetKey  = s.resetKey  ?? 'G'
-  keys.selectKey = s.selectKey ?? 'E'
+  keys.selectKey = s.selectKey ?? 'LButton'
   document.getElementById('editKeyBtn').textContent   = keys.editKey
   document.getElementById('resetKeyBtn').textContent  = keys.resetKey
   document.getElementById('selectKeyBtn').textContent = keys.selectKey
@@ -482,16 +485,30 @@ function startListen(keyName, btn) {
   }
   listen = { name: keyName, btn }
   btn.classList.add('listen')
-  btn.textContent = '...'
-  document.addEventListener('keydown', captureKey, { once: true })
+  btn.textContent = '... (أو كبسة ماوس)'
+  // small delay so the click that opened listening mode doesn't get captured as the mouse button
+  setTimeout(() => {
+    document.addEventListener('keydown', captureKey)
+    document.addEventListener('mousedown', captureMouse)
+    document.addEventListener('contextmenu', preventMenu)
+  }, 150)
+}
+
+function preventMenu(e) { e.preventDefault() }
+
+function stopListening() {
+  document.removeEventListener('keydown', captureKey)
+  document.removeEventListener('mousedown', captureMouse)
+  document.removeEventListener('contextmenu', preventMenu)
 }
 
 function captureKey(e) {
   e.preventDefault()
   if (!listen) return
   const { name, btn } = listen
-  listen = null
   if (e.key === 'Escape') {
+    stopListening()
+    listen = null
     btn.classList.remove('listen')
     btn.textContent = keys[name]
     return
@@ -499,10 +516,25 @@ function captureKey(e) {
   let k = e.key
   if (k.length === 1) k = k.toUpperCase()
   else k = e.code.replace('Key','').replace('Digit','').replace('Numpad','Num').replace('Arrow','')
+  finishCapture(name, btn, k)
+}
+
+function captureMouse(e) {
+  e.preventDefault()
+  if (!listen) return
+  const { name, btn } = listen
+  const mouseNames = { 0: 'LButton', 1: 'MButton', 2: 'RButton' }
+  const k = mouseNames[e.button] ?? 'LButton'
+  finishCapture(name, btn, k)
+}
+
+function finishCapture(name, btn, k) {
+  stopListening()
+  listen = null
   keys[name] = k
   btn.textContent = k
   btn.classList.remove('listen')
-  toast(`✅ تم تحديد زر "${k}"`)
+  toast(`✅ تم تحديد "${k}"`)
   saveAll()
 }
 
