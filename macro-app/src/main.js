@@ -54,7 +54,6 @@ SetKeyDelay(-1, -1)
 
 global MacroEnabled := true
 global EditHeld     := false
-global SelectSent   := false
 global Delay        := ${delay}
 
 ; ─── يشتغل بس لما فورت نايت تكون النافذة النشطة ───
@@ -65,7 +64,7 @@ global Delay        := ${delay}
   if (s.eorEnabled) {
     script += `; ─── أديت عند الرفع ────────────────────────
 *${ek}:: {
-    global MacroEnabled, EditHeld, SelectSent
+    global MacroEnabled, EditHeld
     if (EditHeld) {
         return  ; تجاهل التكرار التلقائي من الويندوز لما تضل كابس
     }
@@ -73,8 +72,8 @@ global Delay        := ${delay}
         Send("{Blind}{${ek} Down}")
         return
     }
+    Critical()  ; يمنع أي تضارب مع معالجة الرفع لحد ما نخلص هون بالكامل
     EditHeld := true
-    SelectSent := false
     Send("{Blind}{${ek} Down}")
 `
     if (s.resetEnabled) {
@@ -89,25 +88,21 @@ global Delay        := ${delay}
     Send("{Blind}{${sk}}")
 `
     }
-    script += `    SelectSent := true
+    script += `    Critical("Off")
 }
 
 *${ek} Up:: {
-    global MacroEnabled, EditHeld, Delay, SelectSent
+    global MacroEnabled, EditHeld, Delay
     Send("{Blind}{${ek} Up}")
     if (!MacroEnabled or !EditHeld) {
         EditHeld := false
         return
     }
-    ; ما نأكد الإديت إلا بعد ما نتأكد إن السيليكت صار فعلياً
-    waitCount := 0
-    while (!SelectSent and waitCount < 100) {
-        Sleep(5)
-        waitCount += 1
-    }
-    EditHeld := false
+    Critical()  ; بما إن Critical بتأخر أي حدث لحد ما تخلص، هاد بيضمن السيليكت خلص قبل ما نوصل هون
     Sleep(Delay)
     Send("{Blind}{${sk}}")
+    EditHeld := false
+    Critical("Off")
 }
 
 `
