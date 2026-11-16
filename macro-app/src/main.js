@@ -165,6 +165,7 @@ function stopMacro() {
 let mainWindow = null
 let tray       = null
 let settings   = loadSettings()
+let isQuitting = false
 
 function createTrayIcon() {
   // Simple 16x16 red square as tray icon (fallback if no ico)
@@ -184,7 +185,7 @@ function updateTrayMenu() {
     { type: 'separator' },
     { label: '⚙️ الإعدادات', click: showWindow },
     { type: 'separator' },
-    { label: '❌ إغلاق', click: () => { stopMacro(); app.quit() } }
+    { label: '❌ إغلاق', click: () => { isQuitting = true; stopMacro(); app.quit() } }
   ])
   tray.setContextMenu(menu)
 }
@@ -224,6 +225,7 @@ function createWindow() {
   })
 
   mainWindow.on('close', (e) => {
+    if (isQuitting) return
     e.preventDefault()
     mainWindow.hide()
     // Show tray balloon on first minimize
@@ -321,5 +323,6 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
+  isQuitting = true
   stopMacro()
 })
