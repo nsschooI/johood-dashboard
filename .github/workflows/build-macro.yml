@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: build-macro-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-windows:
     name: Build Windows .exe
@@ -52,8 +56,6 @@ jobs:
         with:
           tag_name: v1.0.0
           name: JoHood Macro v1.0.0
-          files: |
-            macro-app/release/JoHood_Macro_Portable.exe
-            macro-app/release/*.exe
+          files: macro-app/release/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
