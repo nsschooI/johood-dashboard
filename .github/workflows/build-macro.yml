@@ -4,10 +4,10 @@ on:
   push:
     paths:
       - 'macro-app/**'
-    branches:
-      - main
-      - master
   workflow_dispatch:   # يخليك تشغّله يدوياً بضغطة زر
+
+permissions:
+  contents: write
 
 jobs:
   build-windows:
@@ -49,3 +49,14 @@ jobs:
           name: JoHood-Macro-Installer
           path: macro-app/release/*.exe
           retention-days: 30
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: JoHood Macro v1.0.0
+          files: |
+            macro-app/release/JoHood_Macro_Portable.exe
+            macro-app/release/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
