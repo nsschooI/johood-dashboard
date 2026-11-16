@@ -1,6 +1,6 @@
 {
   "name": "johood-macro",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "JoHood Fortnite Macro - تطبيق فورت نايت",
   "main": "src/main.js",
   "scripts": {
@@ -25,7 +25,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "JoHood Macro"
+      "shortcutName": "JoHood Macro",
+      "artifactName": "JoHood_Macro_Setup.exe"
     },
     "portable": {
       "artifactName": "JoHood_Macro_Portable.exe"
