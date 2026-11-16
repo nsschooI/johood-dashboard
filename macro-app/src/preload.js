@@ -11,6 +11,11 @@ contextBridge.exposeInMainWorld('api', {
   windowMinimize: () => ipcRenderer.send('window-minimize'),
   windowClose:    () => ipcRenderer.send('window-close'),
 
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate:  () => ipcRenderer.invoke('download-update'),
+  installUpdate:   () => ipcRenderer.invoke('install-update'),
+
   onSettingsLoaded: (cb) => ipcRenderer.on('settings-loaded', (_, data) => cb(data)),
-  onMacroStatus:    (cb) => ipcRenderer.on('macro-status',    (_, data) => cb(data))
+  onMacroStatus:    (cb) => ipcRenderer.on('macro-status',    (_, data) => cb(data)),
+  onUpdateStatus:   (cb) => ipcRenderer.on('update-status',   (_, data) => cb(data))
 })

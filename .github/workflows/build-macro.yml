@@ -37,6 +37,14 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
+      - name: Read app version
+        id: pkg
+        working-directory: macro-app
+        shell: pwsh
+        run: |
+          $v = (Get-Content package.json | ConvertFrom-Json).version
+          echo "version=$v" >> $env:GITHUB_OUTPUT
+
       - name: Upload Portable EXE
         uses: actions/upload-artifact@v4
         with:
@@ -54,8 +62,12 @@ jobs:
       - name: Publish to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: JoHood Macro v1.0.0
-          files: macro-app/release/*.exe
+          tag_name: v${{ steps.pkg.outputs.version }}
+          name: JoHood Macro v${{ steps.pkg.outputs.version }}
+          make_latest: true
+          files: |
+            macro-app/release/*.exe
+            macro-app/release/*.blockmap
+            macro-app/release/latest.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -2,6 +2,10 @@ const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell } = require(
 const path = require('path')
 const fs   = require('fs')
 const { exec, spawn } = require('child_process')
+const { autoUpdater } = require('electron-updater')
+
+autoUpdater.autoDownload = false
+autoUpdater.autoInstallOnAppQuit = true
 
 // ── Settings store (simple JSON) ──────────────────────────────────────────
 const settingsPath = path.join(app.getPath('userData'), 'settings.json')
@@ -231,6 +235,18 @@ function createWindow() {
   }
 }
 
+// ── Auto Update ───────────────────────────────────────────────────────────
+function sendUpdateStatus(status, data) {
+  mainWindow?.webContents.send('update-status', { status, ...data })
+}
+
+autoUpdater.on('checking-for-update', () => sendUpdateStatus('checking'))
+autoUpdater.on('update-available', (info) => sendUpdateStatus('available', { version: info.version }))
+autoUpdater.on('update-not-available', () => sendUpdateStatus('not-available'))
+autoUpdater.on('error', (err) => sendUpdateStatus('error', { message: err?.message || String(err) }))
+autoUpdater.on('download-progress', (p) => sendUpdateStatus('downloading', { percent: Math.round(p.percent) }))
+autoUpdater.on('update-downloaded', () => sendUpdateStatus('downloaded'))
+
 // ── IPC Handlers ──────────────────────────────────────────────────────────
 ipcMain.handle('get-settings', () => settings)
 
@@ -261,6 +277,29 @@ ipcMain.handle('open-ahk-site', () => {
   return {}
 })
 
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    await autoUpdater.checkForUpdates()
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err?.message || String(err) }
+  }
+})
+
+ipcMain.handle('download-update', async () => {
+  try {
+    await autoUpdater.downloadUpdate()
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err?.message || String(err) }
+  }
+})
+
+ipcMain.handle('install-update', () => {
+  autoUpdater.quitAndInstall()
+  return {}
+})
+
 ipcMain.on('window-minimize', () => mainWindow?.minimize())
 ipcMain.on('window-close',    () => mainWindow?.hide())
 
@@ -268,6 +307,8 @@ ipcMain.on('window-close',    () => mainWindow?.hide())
 app.whenReady().then(() => {
   createWindow()
   createTrayIcon()
+
+  setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 3000)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

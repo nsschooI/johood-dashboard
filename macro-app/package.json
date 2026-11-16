@@ -1,6 +1,6 @@
 {
   "name": "johood-macro",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JoHood Fortnite Macro - تطبيق فورت نايت",
   "main": "src/main.js",
   "scripts": {
@@ -21,6 +21,7 @@
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
@@ -32,7 +33,12 @@
     "files": [
       "src/**/*",
       "assets/**/*"
-    ]
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "nsschooI",
+      "repo": "johood-dashboard"
+    }
   },
   "author": "JoHood",
   "license": "MIT",
@@ -41,6 +47,7 @@
     "electron-builder": "^24.0.0"
   },
   "dependencies": {
-    "electron-store": "^8.1.0"
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.1.7"
   }
 }

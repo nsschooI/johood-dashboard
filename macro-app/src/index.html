@@ -443,6 +443,20 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
   </div>
 
+  <!-- UPDATE -->
+  <div class="card" style="padding:12px 18px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">🔄</span>
+        <div>
+          <div class="card-label" style="font-size:13px">التحديثات</div>
+          <div class="card-desc" id="updateStatusText">اضغط للتحقق من وجود نسخة أحدث</div>
+        </div>
+      </div>
+      <button class="key-btn" id="updateBtn" onclick="checkUpdates()" style="white-space:nowrap">تحقق</button>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <div class="footer">
     صُنع بـ ❤️ من <strong>JoHood</strong> — سيرفر فورت نايت العربي
@@ -622,6 +636,36 @@ function toast(msg) {
   clearTimeout(toastT)
   toastT = setTimeout(() => el.classList.remove('show'), 2200)
 }
+
+// ── Updates ───────────────────────────────────────
+function setUpdateText(t) {
+  document.getElementById('updateStatusText').textContent = t
+}
+
+async function checkUpdates() {
+  setUpdateText('بيتحقق...')
+  await window.api.checkForUpdates()
+}
+
+window.api.onUpdateStatus(async (data) => {
+  const btn = document.getElementById('updateBtn')
+  if (data.status === 'checking') {
+    setUpdateText('بيتحقق من وجود تحديث...')
+  } else if (data.status === 'not-available') {
+    setUpdateText('عندك آخر نسخة ✅')
+  } else if (data.status === 'available') {
+    setUpdateText(`في نسخة جديدة (v${data.version}) — بينزّل...`)
+    await window.api.downloadUpdate()
+  } else if (data.status === 'downloading') {
+    setUpdateText(`بينزّل التحديث... ${data.percent}%`)
+  } else if (data.status === 'downloaded') {
+    setUpdateText('التحديث جاهز — بيتثبت عند إعادة التشغيل')
+    btn.textContent = 'إعادة التشغيل الآن'
+    btn.onclick = () => window.api.installUpdate()
+  } else if (data.status === 'error') {
+    setUpdateText('ما قدر يتحقق من التحديث (يشتغل بس مع نسخة Setup.exe)')
+  }
+})
 
 // init
 onPing(30)
