@@ -54,6 +54,7 @@ SetKeyDelay(-1, -1)
 
 global MacroEnabled := true
 global EditHeld     := false
+global SelectSent   := false
 global Delay        := ${delay}
 
 ; ─── يشتغل بس لما فورت نايت تكون النافذة النشطة ───
@@ -64,12 +65,16 @@ global Delay        := ${delay}
   if (s.eorEnabled) {
     script += `; ─── أديت عند الرفع ────────────────────────
 *${ek}:: {
-    global MacroEnabled, EditHeld
+    global MacroEnabled, EditHeld, SelectSent
+    if (EditHeld) {
+        return  ; تجاهل التكرار التلقائي من الويندوز لما تضل كابس
+    }
     if !MacroEnabled {
         Send("{Blind}{${ek} Down}")
         return
     }
     EditHeld := true
+    SelectSent := false
     Send("{Blind}{${ek} Down}")
 `
     if (s.resetEnabled) {
@@ -84,14 +89,21 @@ global Delay        := ${delay}
     Send("{Blind}{${sk}}")
 `
     }
-    script += `}
+    script += `    SelectSent := true
+}
 
 *${ek} Up:: {
-    global MacroEnabled, EditHeld, Delay
+    global MacroEnabled, EditHeld, Delay, SelectSent
     Send("{Blind}{${ek} Up}")
     if (!MacroEnabled or !EditHeld) {
         EditHeld := false
         return
+    }
+    ; ما نأكد الإديت إلا بعد ما نتأكد إن السيليكت صار فعلياً
+    waitCount := 0
+    while (!SelectSent and waitCount < 100) {
+        Sleep(5)
+        waitCount += 1
     }
     EditHeld := false
     Sleep(Delay)
