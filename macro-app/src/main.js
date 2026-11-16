@@ -51,6 +51,9 @@ global MacroEnabled := true
 global EditHeld     := false
 global Delay        := ${delay}
 
+; ─── يشتغل بس لما فورت نايت تكون النافذة النشطة ───
+#HotIf WinActive("ahk_exe FortniteClient-Win64-Shipping.exe")
+
 `
 
   if (s.eorEnabled) {
@@ -104,6 +107,8 @@ F9:: {
         ToolTip("❌ JoHood OFF")
     SetTimer(() => ToolTip(), -1500)
 }
+
+#HotIf
 `
   return script
 }
