@@ -7,12 +7,14 @@ const { exec, spawn } = require('child_process')
 const settingsPath = path.join(app.getPath('userData'), 'settings.json')
 
 const defaultSettings = {
-  eorEnabled:   true,
-  resetEnabled: false,
-  editKey:      'F',
-  resetKey:     'G',
-  ping:         30,
-  macroOn:      false
+  eorEnabled:    true,
+  resetEnabled:  false,
+  selectEnabled: false,
+  editKey:       'F',
+  resetKey:      'G',
+  selectKey:     'E',
+  ping:          30,
+  macroOn:       false
 }
 
 function loadSettings() {
@@ -33,6 +35,7 @@ function generateAHK(s) {
   const delay = Math.max(10, Math.round(s.ping * 0.25) + 15)
   const ek = s.editKey
   const rk = s.resetKey
+  const sk = s.selectKey
 
   let script = `; ============================================
 ;  JoHood Macro v1.0 - فورت نايت
@@ -59,7 +62,13 @@ global Delay        := ${delay}
         return
     }
     EditHeld := true
-    Send("{Blind}{${ek} Down}")
+`
+    if (s.selectEnabled) {
+      script += `    Send("{Blind}{${sk}}")
+    Sleep(5)
+`
+    }
+    script += `    Send("{Blind}{${ek} Down}")
 `
     if (s.resetEnabled) {
       script += `    Sleep(10)

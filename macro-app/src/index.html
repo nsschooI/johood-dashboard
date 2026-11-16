@@ -374,6 +374,21 @@ input[type="range"]::-webkit-slider-thumb {
       <span class="key-label">🔑 زر الأديت</span>
       <button class="key-btn" id="editKeyBtn" onclick="startListen('editKey',this)">F</button>
     </div>
+    <div class="divider"></div>
+    <div class="card-row">
+      <div>
+        <div class="card-label" style="font-size:14px">🖱️ تحديد قبل الأديت (Select)</div>
+        <div class="card-desc">يبعت زر السيليكت أول قبل ما يفتح الإديت</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="selectToggle">
+        <span class="track"></span>
+      </label>
+    </div>
+    <div class="key-row">
+      <span class="key-label">🔑 زر السيليكت</span>
+      <button class="key-btn" id="selectKeyBtn" onclick="startListen('selectKey',this)">E</button>
+    </div>
   </div>
 
   <!-- FEATURE 2 -->
@@ -436,7 +451,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 <script>
 // ── State ─────────────────────────────────────────
-const keys  = { editKey: 'F', resetKey: 'G' }
+const keys  = { editKey: 'F', resetKey: 'G', selectKey: 'E' }
 let macroOn = false
 let listen  = null
 
@@ -446,12 +461,15 @@ window.api.onSettingsLoaded(s => applySettings(s))
 window.api.onMacroStatus(running => setMacroUI(running))
 
 function applySettings(s) {
-  document.getElementById('eorToggle').checked   = s.eorEnabled   ?? true
-  document.getElementById('resetToggle').checked = s.resetEnabled ?? false
-  keys.editKey  = s.editKey  ?? 'F'
-  keys.resetKey = s.resetKey ?? 'G'
-  document.getElementById('editKeyBtn').textContent  = keys.editKey
-  document.getElementById('resetKeyBtn').textContent = keys.resetKey
+  document.getElementById('eorToggle').checked    = s.eorEnabled    ?? true
+  document.getElementById('resetToggle').checked  = s.resetEnabled  ?? false
+  document.getElementById('selectToggle').checked = s.selectEnabled ?? false
+  keys.editKey   = s.editKey   ?? 'F'
+  keys.resetKey  = s.resetKey  ?? 'G'
+  keys.selectKey = s.selectKey ?? 'E'
+  document.getElementById('editKeyBtn').textContent   = keys.editKey
+  document.getElementById('resetKeyBtn').textContent  = keys.resetKey
+  document.getElementById('selectKeyBtn').textContent = keys.selectKey
   onPing(s.ping ?? 30)
   document.getElementById('pingSlider').value = s.ping ?? 30
 }
@@ -506,11 +524,13 @@ function onPing(val) {
 // ── Save ──────────────────────────────────────────
 function getSettings() {
   return {
-    eorEnabled:   document.getElementById('eorToggle').checked,
-    resetEnabled: document.getElementById('resetToggle').checked,
-    editKey:      keys.editKey,
-    resetKey:     keys.resetKey,
-    ping:         parseInt(document.getElementById('pingSlider').value)
+    eorEnabled:    document.getElementById('eorToggle').checked,
+    resetEnabled:  document.getElementById('resetToggle').checked,
+    selectEnabled: document.getElementById('selectToggle').checked,
+    editKey:       keys.editKey,
+    resetKey:      keys.resetKey,
+    selectKey:     keys.selectKey,
+    ping:          parseInt(document.getElementById('pingSlider').value)
   }
 }
 
@@ -519,7 +539,7 @@ function saveAll() {
 }
 
 // Auto-save on toggle changes
-['eorToggle','resetToggle'].forEach(id =>
+['eorToggle','resetToggle','selectToggle'].forEach(id =>
   document.getElementById(id).addEventListener('change', saveAll))
 document.getElementById('pingSlider').addEventListener('change', () => saveAll())
 
