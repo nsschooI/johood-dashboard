@@ -69,19 +69,18 @@ global Delay        := ${delay}
         return
     }
     EditHeld := true
-`
-    if (s.selectEnabled) {
-      script += `    Send("{Blind}{${sk}}")
-    Sleep(5)
-`
-    }
-    script += `    Send("{Blind}{${ek} Down}")
+    Send("{Blind}{${ek} Down}")
 `
     if (s.resetEnabled) {
       script += `    Sleep(10)
     Send("{Blind}{${rk}}")
     Sleep(10)
     Send("{Blind}{${ek}}")
+`
+    }
+    if (s.selectEnabled) {
+      script += `    Sleep(20)
+    Send("{Blind}{${sk}}")
 `
     }
     script += `}
