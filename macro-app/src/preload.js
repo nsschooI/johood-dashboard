@@ -15,6 +15,10 @@ contextBridge.exposeInMainWorld('api', {
   downloadUpdate:  () => ipcRenderer.invoke('download-update'),
   installUpdate:   () => ipcRenderer.invoke('install-update'),
 
+  discordLogin:  () => ipcRenderer.invoke('discord-login'),
+  discordLogout: () => ipcRenderer.invoke('discord-logout'),
+  setAutoLaunch: (v) => ipcRenderer.invoke('set-auto-launch', v),
+
   onSettingsLoaded: (cb) => ipcRenderer.on('settings-loaded', (_, data) => cb(data)),
   onMacroStatus:    (cb) => ipcRenderer.on('macro-status',    (_, data) => cb(data)),
   onUpdateStatus:   (cb) => ipcRenderer.on('update-status',   (_, data) => cb(data))

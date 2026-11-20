@@ -1,11 +1,23 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell } = require('electron')
 const path = require('path')
 const fs   = require('fs')
+const http = require('http')
+const crypto = require('crypto')
 const { exec, spawn } = require('child_process')
 const { autoUpdater } = require('electron-updater')
 
 autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
+
+const APP_VERSION = app.getVersion()
+
+// ── Discord OAuth config ───────────────────────────────────────────────────
+// عشان تفعّل ربط ديسكورد: أنشئ تطبيق على https://discord.com/developers/applications
+// وحط الـ Client ID هنا، وأضف redirect: http://127.0.0.1:53712/callback
+const DISCORD_CLIENT_ID = ''          // ← ضع Client ID هنا لتفعيل الربط
+const DISCORD_CLIENT_SECRET = ''      // اختياري (الأفضل عبر باك-إند لاحقاً)
+const DISCORD_PORT = 53712
+const DISCORD_REDIRECT = `http://127.0.0.1:${DISCORD_PORT}/callback`
 
 // ── Settings store (simple JSON) ──────────────────────────────────────────
 const settingsPath = path.join(app.getPath('userData'), 'settings.json')
@@ -19,7 +31,11 @@ const defaultSettings = {
   selectKey:     'LButton',
   selectDelay:   45,
   ping:          30,
-  macroOn:       false
+  macroOn:       false,
+  theme:         'dark',
+  launchOnBoot:  false,
+  startMinimized:false,
+  discord:       null
 }
 
 function loadSettings() {
@@ -211,14 +227,14 @@ function showWindow() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width:  480,
-    height: 760,
-    minWidth:  420,
-    minHeight: 600,
+    width:  980,
+    height: 648,
+    minWidth:  900,
+    minHeight: 580,
     resizable: true,
     frame: false,          // custom title bar
     transparent: false,
-    backgroundColor: '#F7F2F2',
+    backgroundColor: '#0c0c11',
     icon: path.join(__dirname, '..', 'assets', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -231,8 +247,8 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'index.html'))
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
-    mainWindow.webContents.send('settings-loaded', settings)
+    if (!settings.startMinimized) mainWindow.show()
+    mainWindow.webContents.send('settings-loaded', { ...settings, version: APP_VERSION })
     mainWindow.webContents.send('macro-status', !!ahkProcess)
   })
 
@@ -260,8 +276,96 @@ autoUpdater.on('error', (err) => sendUpdateStatus('error', { message: err?.messa
 autoUpdater.on('download-progress', (p) => sendUpdateStatus('downloading', { percent: Math.round(p.percent) }))
 autoUpdater.on('update-downloaded', () => sendUpdateStatus('downloaded'))
 
+// ── Discord OAuth (loopback + PKCE) ─────────────────────────────────────────
+function b64url(buf) {
+  return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function discordLogin() {
+  return new Promise((resolve) => {
+    if (!DISCORD_CLIENT_ID) { resolve({ ok: false, error: 'not-configured' }); return }
+
+    const verifier  = b64url(crypto.randomBytes(32))
+    const challenge = b64url(crypto.createHash('sha256').update(verifier).digest())
+    const state     = b64url(crypto.randomBytes(16))
+    let settled = false
+
+    const server = http.createServer(async (req, res) => {
+      try {
+        const u = new URL(req.url, DISCORD_REDIRECT)
+        if (u.pathname !== '/callback') { res.writeHead(404); res.end(); return }
+        const code = u.searchParams.get('code')
+        const retState = u.searchParams.get('state')
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+        res.end('<html dir="rtl"><body style="font-family:sans-serif;background:#0c0c11;color:#fff;display:grid;place-items:center;height:100vh;margin:0"><div style="text-align:center"><h2 style="color:#ff2e4d">✅ تم الربط بنجاح</h2><p>ترجع للتطبيق الآن</p></div></body></html>')
+        server.close()
+        if (settled) return
+        settled = true
+        if (!code || retState !== state) { resolve({ ok: false, error: 'bad-callback' }); return }
+
+        const body = new URLSearchParams({
+          client_id: DISCORD_CLIENT_ID,
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: DISCORD_REDIRECT,
+          code_verifier: verifier
+        })
+        if (DISCORD_CLIENT_SECRET) body.set('client_secret', DISCORD_CLIENT_SECRET)
+
+        const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString()
+        })
+        const token = await tokenRes.json()
+        if (!token.access_token) { resolve({ ok: false, error: 'token-failed' }); return }
+
+        const meRes = await fetch('https://discord.com/api/users/@me', {
+          headers: { Authorization: `Bearer ${token.access_token}` }
+        })
+        const me = await meRes.json()
+        const user = {
+          id: me.id, username: me.username,
+          globalName: me.global_name, avatar: me.avatar
+        }
+        settings.discord = user
+        saveSettings(settings)
+        resolve({ ok: true, user })
+      } catch (err) {
+        if (!settled) { settled = true; resolve({ ok: false, error: String(err) }) }
+      }
+    })
+
+    server.listen(DISCORD_PORT, '127.0.0.1', () => {
+      const authUrl = 'https://discord.com/oauth2/authorize?' + new URLSearchParams({
+        client_id: DISCORD_CLIENT_ID,
+        response_type: 'code',
+        redirect_uri: DISCORD_REDIRECT,
+        scope: 'identify',
+        state,
+        code_challenge: challenge,
+        code_challenge_method: 'S256'
+      }).toString()
+      shell.openExternal(authUrl)
+    })
+
+    setTimeout(() => { if (!settled) { settled = true; try { server.close() } catch {} resolve({ ok: false, error: 'timeout' }) } }, 180000)
+  })
+}
+
+// ── Auto-launch on Windows boot ─────────────────────────────────────────────
+function applyAutoLaunch(enabled) {
+  try {
+    app.setLoginItemSettings({ openAtLogin: !!enabled, args: ['--hidden'] })
+  } catch {}
+}
+
 // ── IPC Handlers ──────────────────────────────────────────────────────────
-ipcMain.handle('get-settings', () => settings)
+ipcMain.handle('get-settings', () => ({ ...settings, version: APP_VERSION }))
+
+ipcMain.handle('discord-login', () => discordLogin())
+ipcMain.handle('discord-logout', () => { settings.discord = null; saveSettings(settings); return { ok: true } })
+ipcMain.handle('set-auto-launch', (_, enabled) => { applyAutoLaunch(enabled); return { ok: true } })
 
 ipcMain.handle('save-settings', (_, newSettings) => {
   settings = { ...settings, ...newSettings }
@@ -318,6 +422,10 @@ ipcMain.on('window-close',    () => mainWindow?.hide())
 
 // ── App lifecycle ─────────────────────────────────────────────────────────
 app.whenReady().then(() => {
+  // لو انفتح من بدء تشغيل الويندوز بوسم --hidden، يبدأ مصغّر بالـ Tray
+  if (process.argv.includes('--hidden')) settings.startMinimized = true
+  applyAutoLaunch(settings.launchOnBoot)
+
   createWindow()
   createTrayIcon()
 

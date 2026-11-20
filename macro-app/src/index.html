@@ -1,699 +1,711 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JoHood Macro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-  --red:      #9B0000;
-  --red-dk:   #6B0000;
-  --red-bg:   #FFF5F5;
-  --red-bdr:  #F0D0D0;
-  --white:    #FFFFFF;
-  --bg:       #F7F2F2;
-  --text:     #1A1A1A;
-  --muted:    #888;
-  --radius:   14px;
-  --shadow:   0 4px 20px rgba(155,0,0,0.10);
+/* ═══════════════ THEME TOKENS ═══════════════ */
+:root, [data-theme="dark"] {
+  --bg:        #0c0c11;
+  --bg-grad:   radial-gradient(1200px 600px at 80% -10%, rgba(255,46,77,0.10), transparent 60%),
+               radial-gradient(900px 500px at -10% 110%, rgba(255,46,77,0.06), transparent 55%);
+  --surface:   #16161d;
+  --surface-2: #1d1d26;
+  --elevated:  #20202b;
+  --border:    #2a2a36;
+  --border-soft:#22222d;
+  --text:      #f5f5f8;
+  --text-2:    #b2b2c2;
+  --muted:     #70707f;
+  --red:       #ff2e4d;
+  --red-2:     #e01e3c;
+  --red-soft:  rgba(255,46,77,0.14);
+  --red-line:  rgba(255,46,77,0.32);
+  --green:     #31d07f;
+  --green-soft:rgba(49,208,127,0.14);
+  --shadow:    0 18px 50px rgba(0,0,0,0.55);
+  --shadow-sm: 0 6px 20px rgba(0,0,0,0.4);
+  --track:     #2c2c38;
+}
+[data-theme="light"] {
+  --bg:        #eef0f6;
+  --bg-grad:   radial-gradient(1200px 600px at 80% -10%, rgba(224,30,60,0.10), transparent 60%),
+               radial-gradient(900px 500px at -10% 110%, rgba(224,30,60,0.06), transparent 55%);
+  --surface:   #ffffff;
+  --surface-2: #f7f8fc;
+  --elevated:  #ffffff;
+  --border:    #e4e6ef;
+  --border-soft:#edeff5;
+  --text:      #14141d;
+  --text-2:    #51515f;
+  --muted:     #9393a3;
+  --red:       #e01e3c;
+  --red-2:     #c0162f;
+  --red-soft:  rgba(224,30,60,0.09);
+  --red-line:  rgba(224,30,60,0.22);
+  --green:     #15a35c;
+  --green-soft:rgba(21,163,92,0.10);
+  --shadow:    0 18px 50px rgba(30,30,60,0.14);
+  --shadow-sm: 0 6px 20px rgba(30,30,60,0.08);
+  --track:     #e0e2ec;
 }
 
-html, body {
-  height: 100%;
-  overflow: hidden;
+html, body { height: 100%; }
+body {
+  font-family: 'Cairo', system-ui, sans-serif;
   background: var(--bg);
-  font-family: 'Cairo', sans-serif;
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
   color: var(--text);
+  overflow: hidden;
   user-select: none;
+  transition: background-color .35s ease, color .25s ease;
 }
 
-/* ── CUSTOM TITLE BAR ─────────────────────── */
+::-webkit-scrollbar { width: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ═══════════════ TITLEBAR ═══════════════ */
 .titlebar {
   -webkit-app-region: drag;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  background: var(--white);
-  border-bottom: 1px solid var(--red-bdr);
-  flex-shrink: 0;
-}
-
-.titlebar-logo {
-  font-family: 'Cinzel Decorative', cursive;
-  font-size: 20px;
-  font-weight: 900;
-  color: var(--red);
-  text-shadow: 1px 1px 0 #7a0000, 2px 2px 4px rgba(155,0,0,0.2);
-}
-
-.titlebar-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--muted);
-}
-
-.titlebar-btns {
-  -webkit-app-region: no-drag;
-  display: flex;
-  gap: 8px;
-}
-
-.tb-btn {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
-  color: var(--muted);
-}
-
-.tb-btn:hover { background: var(--bg); }
-.tb-btn.close:hover { background: #FFE0E0; color: var(--red); }
-
-/* ── SCROLL AREA ──────────────────────────── */
-.scroll {
-  height: calc(100vh - 54px);
-  overflow-y: auto;
-  padding: 14px 14px 30px;
-}
-
-.scroll::-webkit-scrollbar { width: 4px; }
-.scroll::-webkit-scrollbar-track { background: transparent; }
-.scroll::-webkit-scrollbar-thumb { background: var(--red-bdr); border-radius: 4px; }
-
-/* ── HEADER ───────────────────────────────── */
-.header {
-  text-align: center;
-  padding: 16px 0 12px;
-}
-
-.jh-logo {
-  font-family: 'Cinzel Decorative', cursive;
-  font-size: 52px;
-  font-weight: 900;
-  color: var(--red);
-  text-shadow:
-    1px 1px 0 #7a0000,
-    2px 2px 0 #5a0000,
-    3px 3px 5px rgba(155,0,0,0.25);
-  letter-spacing: -2px;
-  display: block;
-  line-height: 1;
-  margin-bottom: 8px;
-}
-
-.header-title { font-size: 20px; font-weight: 900; color: var(--red); }
-.header-sub   { font-size: 12px; color: var(--muted); margin-top: 3px; }
-.header-line  {
-  width: 50px; height: 2px;
-  background: linear-gradient(to right, transparent, var(--red), transparent);
-  margin: 12px auto 0; border-radius: 2px;
-}
-
-/* ── CARDS ────────────────────────────────── */
-.card {
-  background: var(--white);
-  border-radius: var(--radius);
-  padding: 16px 18px;
-  margin-bottom: 10px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--red-bdr);
-}
-
-.card-row {
+  height: 52px;
   display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px 0 18px;
+  border-bottom: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  backdrop-filter: blur(14px);
+}
+.tb-left { display: flex; align-items: center; gap: 12px; }
+.logo-badge {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--red), var(--red-2));
+  display: grid; place-items: center;
+  font-weight: 900; font-size: 15px; color: #fff; letter-spacing: -.5px;
+  box-shadow: 0 6px 16px var(--red-soft), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.tb-title { font-weight: 800; font-size: 15px; letter-spacing: .2px; }
+.tb-title span { color: var(--red); }
+.ver-chip {
+  font-size: 10.5px; font-weight: 700; color: var(--muted);
+  background: var(--surface-2); border: 1px solid var(--border-soft);
+  padding: 2px 7px; border-radius: 20px; margin-right: 2px;
+}
+.tb-right { display: flex; align-items: center; gap: 6px; -webkit-app-region: no-drag; }
+
+.icon-btn {
+  width: 34px; height: 34px; border: none; border-radius: 9px;
+  background: transparent; color: var(--text-2); cursor: pointer;
+  display: grid; place-items: center; font-size: 15px;
+  transition: background .15s, color .15s, transform .1s;
+}
+.icon-btn:hover { background: var(--surface-2); color: var(--text); }
+.icon-btn:active { transform: scale(.92); }
+.icon-btn.close:hover { background: var(--red); color: #fff; }
+.theme-btn { font-size: 16px; }
+
+/* ═══════════════ LAYOUT ═══════════════ */
+.app {
+  display: grid;
+  grid-template-columns: 292px 1fr;
+  height: calc(100vh - 52px);
 }
 
-.card-label   { font-size: 15px; font-weight: 700; }
-.card-desc    { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
-.divider      { height: 1px; background: var(--red-bdr); margin: 12px 0; }
-
-/* ── MASTER CARD ──────────────────────────── */
-.card-master {
-  background: linear-gradient(135deg, var(--red), var(--red-dk));
-  border: none;
-  box-shadow: 0 6px 24px rgba(155,0,0,0.30);
+/* ─── SIDEBAR ─── */
+.sidebar {
+  border-left: 1px solid var(--border-soft);
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 16px;
+  overflow-y: auto;
 }
-.card-master .card-label { color: #fff; font-size: 16px; }
-.card-master .card-desc  { color: rgba(255,255,255,0.75); }
 
-/* ── MACRO STATUS BADGE ───────────────────── */
-.macro-status {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 5px 14px;
+/* Master toggle */
+.master {
+  position: relative; overflow: hidden;
   border-radius: 20px;
-  font-size: 13px;
-  font-weight: 700;
-  margin-top: 10px;
-  transition: all 0.3s;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 22px 20px 20px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: border-color .3s, box-shadow .3s;
 }
-.macro-status.on  { background: rgba(76,175,80,0.20); color: #81C784; }
-.macro-status.off { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
-.status-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: currentColor;
+.master.on {
+  border-color: var(--red-line);
+  box-shadow: 0 0 0 1px var(--red-line), 0 10px 40px var(--red-soft);
 }
-.macro-status.on .status-dot { animation: blink 2s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.master::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(400px 160px at 50% -40%, var(--red-soft), transparent 70%);
+  opacity: 0; transition: opacity .4s;
+}
+.master.on::before { opacity: 1; }
+.master-label { position: relative; font-size: 12.5px; color: var(--text-2); font-weight: 600; margin-bottom: 16px; }
+.ring {
+  position: relative; width: 112px; height: 112px; margin: 0 auto 16px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: conic-gradient(var(--track) 0 100%);
+  transition: background .4s;
+}
+.master.on .ring { background: conic-gradient(var(--red) 0 100%, var(--track) 0); }
+.ring::after {
+  content: ''; position: absolute; inset: 7px; border-radius: 50%;
+  background: var(--surface);
+}
+.ring-core {
+  position: relative; z-index: 1;
+  width: 78px; height: 78px; border-radius: 50%;
+  display: grid; place-items: center; gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.ring-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--muted); transition: background .3s, box-shadow .3s; }
+.master.on .ring-dot { background: var(--green); box-shadow: 0 0 0 4px var(--green-soft), 0 0 14px var(--green); }
+.ring-state { font-size: 11px; font-weight: 800; color: var(--muted); }
+.master.on .ring-state { color: var(--green); }
 
-/* ── BIG TOGGLE BUTTON ────────────────────── */
-.macro-btn {
-  width: 100%; padding: 13px;
-  border-radius: 10px; border: none;
-  font-family: 'Cairo', sans-serif;
-  font-size: 16px; font-weight: 900;
-  cursor: pointer;
-  margin-top: 12px;
-  transition: all 0.2s;
+.master-btn {
+  position: relative; z-index: 1;
+  width: 100%; padding: 13px; border: none; border-radius: 13px;
+  font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
+  color: #fff; background: linear-gradient(135deg, var(--red), var(--red-2));
+  box-shadow: 0 8px 22px var(--red-soft); transition: transform .12s, filter .2s;
 }
-.macro-btn.start {
-  background: rgba(255,255,255,0.90);
-  color: var(--red);
-}
-.macro-btn.stop {
-  background: rgba(255,255,255,0.20);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.3);
-}
-.macro-btn:hover { opacity: 0.85; transform: translateY(-1px); }
-.macro-btn:active { transform: translateY(0); }
+.master-btn:hover { filter: brightness(1.07); }
+.master-btn:active { transform: scale(.97); }
+.master.on .master-btn { background: var(--surface-2); color: var(--text); box-shadow: none; border: 1px solid var(--border); }
 
-/* ── SECTION BADGE ────────────────────────── */
-.badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  background: var(--red-bg); color: var(--red);
-  font-size: 10px; font-weight: 700;
-  padding: 2px 9px; border-radius: 20px;
-  border: 1px solid var(--red-bdr);
-  margin-bottom: 8px;
+/* Discord card */
+.dc-card {
+  border-radius: 18px; background: var(--surface); border: 1px solid var(--border);
+  padding: 16px; box-shadow: var(--shadow-sm);
 }
+.dc-head { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-bottom: 14px; }
+.dc-brand { color: #5865F2; }
+.dc-guest { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 6px 0 2px; }
+.dc-ava-ph {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--surface-2); border: 1px dashed var(--border);
+  display: grid; place-items: center; font-size: 24px; color: var(--muted);
+}
+.dc-guest p { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+.dc-btn {
+  width: 100%; padding: 11px; border: none; border-radius: 11px; cursor: pointer;
+  font-family: inherit; font-weight: 800; font-size: 13px; color: #fff;
+  background: #5865F2; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: filter .2s, transform .12s;
+}
+.dc-btn:hover { filter: brightness(1.08); }
+.dc-btn:active { transform: scale(.97); }
+.dc-user { display: flex; align-items: center; gap: 12px; }
+.dc-ava { width: 46px; height: 46px; border-radius: 50%; border: 2px solid #5865F2; object-fit: cover; }
+.dc-meta { flex: 1; min-width: 0; }
+.dc-name { font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dc-tag { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.dc-online { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+.dc-logout { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; padding: 6px; border-radius: 8px; }
+.dc-logout:hover { background: var(--surface-2); color: var(--red); }
 
-/* ── TOGGLE ───────────────────────────────── */
-.toggle { position: relative; width: 50px; height: 27px; flex-shrink: 0; }
-.toggle input { opacity:0; width:0; height:0; }
-.track {
-  position:absolute; inset:0;
-  background:#DDD; border-radius:27px;
-  cursor:pointer; transition: background 0.3s;
+/* sidebar footer hint */
+.hint {
+  margin-top: auto; border-radius: 14px; background: var(--surface-2);
+  border: 1px solid var(--border-soft); padding: 12px 14px;
+  display: flex; align-items: center; gap: 11px;
 }
-.track::before {
-  content:''; position:absolute;
-  width:19px; height:19px;
-  left:4px; bottom:4px;
-  background:#fff; border-radius:50%;
-  transition: transform 0.3s;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.20);
+.kbd {
+  font-size: 12px; font-weight: 800; color: var(--text);
+  background: var(--elevated); border: 1px solid var(--border);
+  border-bottom-width: 2px; border-radius: 7px; padding: 4px 9px; min-width: 30px; text-align: center;
 }
-.toggle input:checked + .track           { background: var(--red); }
-.toggle input:checked + .track::before  { transform: translateX(23px); }
+.hint-txt { font-size: 11.5px; color: var(--text-2); line-height: 1.5; }
+.hint-txt b { color: var(--text); }
 
-/* ── KEY BUTTON ───────────────────────────── */
-.key-row   { display:flex; align-items:center; gap:10px; }
-.key-label { font-size:12px; color:var(--muted); flex:1; }
-.key-btn {
-  background: var(--bg);
-  border: 2px solid var(--red-bdr);
-  border-radius: 9px;
-  padding: 6px 16px;
-  font-family: 'Cairo', sans-serif;
-  font-size: 15px; font-weight: 700;
-  color: var(--red); cursor: pointer;
-  min-width: 60px; text-align:center;
-  transition: all 0.2s; outline:none;
-  user-select:none;
+/* ─── MAIN ─── */
+.main { padding: 18px 20px; overflow-y: auto; }
+.grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  grid-auto-rows: min-content;
 }
-.key-btn:hover  { border-color: var(--red); background: var(--red-bg); }
-.key-btn.listen {
-  border-color: var(--red); background: var(--red-bg);
-  color: var(--muted); animation: kp 0.9s infinite;
+.card {
+  border-radius: 18px; background: var(--surface); border: 1px solid var(--border);
+  padding: 18px; box-shadow: var(--shadow-sm);
+  transition: border-color .2s, transform .15s;
 }
-@keyframes kp {
-  0%,100%{box-shadow:0 0 0 0 rgba(155,0,0,0.3)}
-  50%    {box-shadow:0 0 0 6px rgba(155,0,0,0)}
+.card:hover { border-color: var(--border); transform: translateY(-1px); }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.card-tag {
+  font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase;
+  color: var(--red); background: var(--red-soft); border: 1px solid var(--red-line);
+  padding: 3px 9px; border-radius: 20px; margin-bottom: 12px; display: inline-block;
 }
+.card-title { font-size: 15.5px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.card-title .emo { font-size: 17px; }
+.card-desc { font-size: 11.5px; color: var(--muted); margin-top: 4px; line-height: 1.55; }
 
-/* ── PING ─────────────────────────────────── */
-.ping-top  { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:9px; }
-.ping-ms   { font-size:24px; font-weight:900; color:var(--red); line-height:1; }
-.ping-ms span { font-size:13px; font-weight:600; }
-
-input[type="range"] {
-  -webkit-appearance:none; appearance:none;
-  width:100%; height:6px; border-radius:6px;
-  background:#E0E0E0; outline:none; cursor:pointer;
+/* toggle switch */
+.sw { position: relative; display: inline-block; width: 46px; height: 27px; flex: none; cursor: pointer; }
+.sw input { opacity: 0; width: 0; height: 0; }
+.sw .track {
+  position: absolute; inset: 0; border-radius: 30px; background: var(--track);
+  transition: background .25s; border: 1px solid var(--border);
 }
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance:none;
-  width:22px; height:22px; border-radius:50%;
-  background:var(--red); cursor:pointer;
-  box-shadow:0 2px 8px rgba(155,0,0,0.4);
+.sw .track::before {
+  content: ''; position: absolute; top: 2.5px; right: 2.5px;
+  width: 20px; height: 20px; border-radius: 50%; background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35); transition: transform .25s;
 }
-.ping-ticks { display:flex; justify-content:space-between; margin-top:5px; font-size:10px; color:#CCC; }
+.sw input:checked + .track { background: linear-gradient(135deg, var(--red), var(--red-2)); border-color: transparent; }
+.sw input:checked + .track::before { transform: translateX(-19px); }
 
-/* ── NOTE ─────────────────────────────────── */
+.divider { height: 1px; background: var(--border-soft); margin: 15px 0; }
+
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.row-label { font-size: 13px; font-weight: 600; color: var(--text-2); display: flex; align-items: center; gap: 7px; }
+
+/* key button */
+.keybtn {
+  min-width: 68px; padding: 9px 14px; border-radius: 11px; cursor: pointer;
+  font-family: inherit; font-weight: 800; font-size: 13.5px; color: var(--text);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-bottom-width: 2px; transition: all .15s; text-align: center;
+}
+.keybtn:hover { border-color: var(--red-line); color: var(--red); }
+.keybtn.listen { border-color: var(--red); color: var(--red); background: var(--red-soft); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+/* sliders */
+.slider-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.slider-val { font-size: 22px; font-weight: 900; color: var(--text); line-height: 1; }
+.slider-val small { font-size: 12px; font-weight: 700; color: var(--muted); }
+.slider-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.slider-sub b { color: var(--red); }
+.pill { font-size: 11px; font-weight: 800; padding: 4px 11px; border-radius: 20px; }
+.pill.low  { color: var(--green); background: var(--green-soft); }
+.pill.mid  { color: #e59b00; background: rgba(229,155,0,.12); }
+.pill.high { color: var(--red); background: var(--red-soft); }
+
+input[type=range] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 7px;
+  border-radius: 10px; background: var(--track); outline: none; cursor: pointer; margin: 4px 0;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--red);
+  box-shadow: 0 2px 8px rgba(0,0,0,.3); cursor: grab;
+}
+input[type=range]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.12); }
+.ticks { display: flex; justify-content: space-between; font-size: 9.5px; color: var(--muted); margin-top: 4px; }
+
 .note {
-  background:var(--red-bg); border-inline-end:3px solid var(--red);
-  border-radius:7px; padding:9px 11px;
-  margin-top:10px; font-size:11px; color:#777; line-height:1.6;
+  margin-top: 13px; font-size: 11px; color: var(--text-2); line-height: 1.6;
+  background: var(--surface-2); border-right: 2px solid var(--red-line);
+  padding: 9px 12px; border-radius: 9px;
 }
 
-/* ── AHK WARNING ──────────────────────────── */
-.ahk-warn {
-  background:#FFF3E0; border:1px solid #FFCC80;
-  border-radius: var(--radius);
-  padding:14px 16px;
-  margin-bottom:10px;
-  display:none;
-}
-.ahk-warn.show { display:block; }
-.ahk-warn p  { font-size:12px; color:#E65100; line-height:1.6; }
-.ahk-link {
-  display:inline-block; margin-top:8px;
-  background:#E65100; color:#fff;
-  padding:6px 14px; border-radius:8px;
-  font-size:12px; font-weight:700;
-  border:none; cursor:pointer;
-  font-family:'Cairo',sans-serif;
-}
-.ahk-link:hover { background:#BF360C; }
+/* option rows (startup) */
+.opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; }
+.opt:not(:last-child) { border-bottom: 1px solid var(--border-soft); }
+.opt-txt .t { font-size: 13px; font-weight: 700; }
+.opt-txt .d { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
 
-/* ── FOOTER ───────────────────────────────── */
-.footer {
-  text-align:center; padding:16px 0 4px;
-  font-size:11px; color:#CCC;
+/* updates */
+.upd-row { display: flex; align-items: center; gap: 12px; }
+.upd-ico { font-size: 22px; }
+.upd-main { flex: 1; }
+.upd-status { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.btn-ghost {
+  padding: 9px 16px; border-radius: 11px; cursor: pointer; white-space: nowrap;
+  font-family: inherit; font-weight: 800; font-size: 12.5px; color: var(--text);
+  background: var(--surface-2); border: 1px solid var(--border); transition: all .15s;
 }
-.footer strong { color:var(--red); font-weight:700; }
+.btn-ghost:hover { border-color: var(--red-line); color: var(--red); }
 
-/* ── TOAST ────────────────────────────────── */
+/* span full width card */
+.span-2 { grid-column: 1 / -1; }
+
+/* toast */
 .toast {
-  position:fixed; bottom:20px; left:50%;
-  transform:translateX(-50%) translateY(70px);
-  background:#1A1A1A; color:#fff;
-  padding:10px 22px; border-radius:50px;
-  font-size:13px; font-weight:600;
-  font-family:'Cairo',sans-serif;
-  box-shadow:0 6px 20px rgba(0,0,0,0.3);
-  transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-  z-index:999; white-space:nowrap; pointer-events:none;
+  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--elevated); color: var(--text); border: 1px solid var(--border);
+  padding: 12px 22px; border-radius: 13px; font-size: 13px; font-weight: 700;
+  box-shadow: var(--shadow); opacity: 0; pointer-events: none;
+  transition: opacity .25s, transform .25s; z-index: 100;
 }
-.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
-<!-- TITLE BAR -->
-<div class="titlebar">
-  <div style="display:flex;align-items:center;gap:10px">
-    <span class="titlebar-logo">JH</span>
-    <span class="titlebar-name">JoHood Macro</span>
+<!-- ═══════════ TITLEBAR ═══════════ -->
+<header class="titlebar">
+  <div class="tb-left">
+    <div class="logo-badge">JH</div>
+    <div>
+      <div class="tb-title">JoHood <span>Macro</span></div>
+    </div>
+    <span class="ver-chip" id="verChip">v1.0</span>
   </div>
-  <div class="titlebar-btns">
-    <button class="tb-btn" onclick="api.windowMinimize()" title="تصغير">─</button>
-    <button class="tb-btn close" onclick="api.windowClose()" title="إخفاء">✕</button>
+  <div class="tb-right">
+    <button class="icon-btn theme-btn" id="themeBtn" title="الوضع الليلي / الصباحي">🌙</button>
+    <button class="icon-btn" id="minBtn" title="تصغير">—</button>
+    <button class="icon-btn close" id="closeBtn" title="إغلاق">✕</button>
   </div>
-</div>
+</header>
 
-<!-- SCROLL AREA -->
-<div class="scroll">
+<div class="app">
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar">
 
-  <!-- HEADER -->
-  <div class="header">
-    <span class="jh-logo">JH</span>
-    <div class="header-title">JOHOOD MACRO</div>
-    <div class="header-sub">ماكرو فورت نايت الاحترافي</div>
-    <div class="header-line"></div>
-  </div>
-
-  <!-- AHK WARNING -->
-  <div class="ahk-warn" id="ahkWarn">
-    <p>⚠️ AutoHotkey غير مثبّت على جهازك.<br>الماكرو يحتاجه للعمل. نزّله مجاناً:</p>
-    <button class="ahk-link" onclick="api.openAhkSite()">تحميل AutoHotkey</button>
-  </div>
-
-  <!-- MASTER CARD -->
-  <div class="card card-master">
-    <div class="card-row">
-      <div>
-        <div class="card-label">⚡ تحكم الماكرو</div>
-        <div class="card-desc">تشغيل وإيقاف مباشر من هنا</div>
-        <div class="macro-status off" id="macroStatus">
-          <div class="status-dot"></div>
-          <span id="macroStatusText">متوقف</span>
+    <!-- Master toggle -->
+    <div class="master" id="master">
+      <div class="master-label">⚡ تحكّم الماكرو</div>
+      <div class="ring">
+        <div class="ring-core">
+          <div class="ring-dot"></div>
+          <div class="ring-state" id="ringState">متوقف</div>
         </div>
       </div>
+      <button class="master-btn" id="masterBtn" onclick="toggleMacro()">▶ تشغيل الماكرو</button>
     </div>
-    <button class="macro-btn start" id="macroBtn" onclick="toggleMacro()">
-      ▶ تشغيل الماكرو
-    </button>
-  </div>
 
-  <!-- FEATURE 1 -->
-  <div class="card">
-    <div class="badge">الميزة الأولى</div>
-    <div class="card-row">
-      <div>
-        <div class="card-label">🎯 أديت عند الرفع</div>
-        <div class="card-desc">Hold الزر لتحديد • ارفع الإصبع للتأكيد</div>
+    <!-- Discord -->
+    <div class="dc-card">
+      <div class="dc-head"><span class="dc-brand">🎮</span> حساب ديسكورد</div>
+      <div id="dcGuest" class="dc-guest">
+        <div class="dc-ava-ph">👤</div>
+        <p>اربط حسابك عشان تفعّل التطبيق وتوصل لمزايا سيرفر JoHood</p>
+        <button class="dc-btn" onclick="discordLogin()"><span>🔗</span> تسجيل الدخول بديسكورد</button>
       </div>
-      <label class="toggle">
-        <input type="checkbox" id="eorToggle" checked>
-        <span class="track"></span>
-      </label>
-    </div>
-    <div class="divider"></div>
-    <div class="key-row">
-      <span class="key-label">🔑 زر الأديت</span>
-      <button class="key-btn" id="editKeyBtn" onclick="startListen('editKey',this)">F</button>
-    </div>
-    <div class="divider"></div>
-    <div class="card-row">
-      <div>
-        <div class="card-label" style="font-size:14px">🖱️ تحديد قبل الأديت (Select)</div>
-        <div class="card-desc">يبعت كبسة قبل ما يفتح الإديت لتحديد المربع تحت التصويبة</div>
-      </div>
-      <label class="toggle">
-        <input type="checkbox" id="selectToggle">
-        <span class="track"></span>
-      </label>
-    </div>
-    <div class="key-row">
-      <span class="key-label">🔑 زر/كبسة السيليكت</span>
-      <button class="key-btn" id="selectKeyBtn" onclick="startListen('selectKey',this)">LButton</button>
-    </div>
-    <div class="note">
-      💡 افتراضياً Left Click — هو نفسه اللي بيحدد المربع بفورت نايت. اضغط الزر وكبس ماوس أو لوحة مفاتيح لتغييره
-    </div>
-    <div class="divider"></div>
-    <div class="ping-top">
-      <div>
-        <div class="card-desc">توقيت السيليكت: <strong id="selectDelayVal" style="color:var(--red)">45ms</strong></div>
+      <div id="dcUser" class="dc-user" style="display:none">
+        <img class="dc-ava" id="dcAva" src="" alt="">
+        <div class="dc-meta">
+          <div class="dc-name" id="dcName">—</div>
+          <div class="dc-tag"><span class="dc-online"></span> <span id="dcHandle">متصل</span></div>
+        </div>
+        <button class="dc-logout" onclick="discordLogout()" title="تسجيل خروج">⎋</button>
       </div>
     </div>
-    <input type="range" id="selectDelaySlider" min="0" max="150" value="45" oninput="onSelectDelay(this.value)">
-    <div class="ping-ticks"><span>0</span><span>40</span><span>80</span><span>120</span><span>150</span></div>
-    <div class="note">
-      💡 لو السيليكت أحياناً ما بينحسب، زوّد الرقم شوي. لو حاسس فيه تأخير واضح، نزّله
-    </div>
-  </div>
 
-  <!-- FEATURE 2 -->
-  <div class="card">
-    <div class="badge">الميزة الثانية</div>
-    <div class="card-row">
-      <div>
-        <div class="card-label">🔄 ريسيت الأديت</div>
-        <div class="card-desc">يريسيت الأديت الموجود ويحدد من جديد</div>
-      </div>
-      <label class="toggle">
-        <input type="checkbox" id="resetToggle">
-        <span class="track"></span>
-      </label>
+    <!-- F9 hint -->
+    <div class="hint">
+      <span class="kbd">F9</span>
+      <div class="hint-txt"><b>تشغيل/إيقاف سريع</b><br>يشتغل داخل اللعبة مباشرة</div>
     </div>
-    <div class="divider"></div>
-    <div class="key-row">
-      <span class="key-label">🔑 زر الريسيت</span>
-      <button class="key-btn" id="resetKeyBtn" onclick="startListen('resetKey',this)">G</button>
-    </div>
-    <div class="note">
-      💡 لما تكبس الأديت على بناء فيه أديت — بيريسيته ويفتح من جديد تلقائياً
-    </div>
-  </div>
+  </aside>
 
-  <!-- PING -->
-  <div class="card">
-    <div class="badge">ضبط التأخير</div>
-    <div class="card-label" style="margin-bottom:12px">📡 تعويض البنق</div>
-    <div class="ping-top">
-      <div>
-        <div class="ping-ms" id="pingVal">30<span> ms</span></div>
-        <div class="card-desc">تأخير: <strong id="delayVal" style="color:var(--red)">24ms</strong></div>
-      </div>
-      <div id="pingStatus" style="font-size:12px;font-weight:700;color:#2E7D32">🟢 منخفض</div>
-    </div>
-    <input type="range" id="pingSlider" min="0" max="200" value="30" oninput="onPing(this.value)">
-    <div class="ping-ticks"><span>0</span><span>50</span><span>100</span><span>150</span><span>200</span></div>
-  </div>
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main">
+    <div class="grid">
 
-  <!-- HOTKEY INFO -->
-  <div class="card" style="padding:12px 18px">
-    <div style="display:flex;align-items:center;gap:10px">
-      <span style="font-size:22px">⌨️</span>
-      <div>
-        <div class="card-label" style="font-size:13px">F9 — إيقاف / تشغيل سريع</div>
-        <div class="card-desc">يشتغل داخل اللعبة مباشرة</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- UPDATE -->
-  <div class="card" style="padding:12px 18px">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:22px">🔄</span>
-        <div>
-          <div class="card-label" style="font-size:13px">التحديثات</div>
-          <div class="card-desc" id="updateStatusText">اضغط للتحقق من وجود نسخة أحدث</div>
+      <!-- Feature 1: Edit on Release -->
+      <div class="card">
+        <span class="card-tag">الميزة الأساسية</span>
+        <div class="card-head">
+          <div>
+            <div class="card-title"><span class="emo">🎯</span> أديت عند الرفع</div>
+            <div class="card-desc">Hold الزر لفتح الأديت • ارفع إصبعك ليتأكّد تلقائياً</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="eorToggle" checked><span class="track"></span></label>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <span class="row-label">🔑 زر الأديت</span>
+          <button class="keybtn" id="editKeyBtn" onclick="startListen('editKey',this)">F</button>
         </div>
       </div>
-      <button class="key-btn" id="updateBtn" onclick="checkUpdates()" style="white-space:nowrap">تحقق</button>
-    </div>
-  </div>
 
-  <!-- FOOTER -->
-  <div class="footer">
-    صُنع بـ ❤️ من <strong>JoHood</strong> — سيرفر فورت نايت العربي
-  </div>
+      <!-- Select -->
+      <div class="card">
+        <span class="card-tag">تحديد</span>
+        <div class="card-head">
+          <div>
+            <div class="card-title"><span class="emo">🖱️</span> السيليكت التلقائي</div>
+            <div class="card-desc">يمسك زر التحديد طول الهولد ويطبّق عند الرفع</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="selectToggle"><span class="track"></span></label>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <span class="row-label">🔑 زر / كبسة السيليكت</span>
+          <button class="keybtn" id="selectKeyBtn" onclick="startListen('selectKey',this)">LButton</button>
+        </div>
+        <div style="margin-top:15px">
+          <div class="slider-sub" style="margin-bottom:6px">توقيت السيليكت: <b id="selDelayVal">45ms</b></div>
+          <input type="range" id="selDelay" min="0" max="150" value="45" oninput="onSelDelay(this.value)">
+          <div class="ticks"><span>0</span><span>40</span><span>80</span><span>120</span><span>150</span></div>
+        </div>
+        <div class="note">💡 لو السيليكت ما ينحسب أحياناً — زوّد الرقم شوي. لو فيه تأخير واضح — نزّله.</div>
+      </div>
+
+      <!-- Reset -->
+      <div class="card">
+        <span class="card-tag">إضافي</span>
+        <div class="card-head">
+          <div>
+            <div class="card-title"><span class="emo">🔄</span> ريسيت الأديت</div>
+            <div class="card-desc">يريسيت البناء المعدّل مسبقاً ويفتحه من جديد</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="resetToggle"><span class="track"></span></label>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <span class="row-label">🔑 زر الريسيت</span>
+          <button class="keybtn" id="resetKeyBtn" onclick="startListen('resetKey',this)">G</button>
+        </div>
+      </div>
+
+      <!-- Ping -->
+      <div class="card">
+        <span class="card-tag">أداء</span>
+        <div class="card-title"><span class="emo">📡</span> تعويض البنق</div>
+        <div class="slider-top" style="margin-top:14px">
+          <div>
+            <div class="slider-val" id="pingVal">30<small> ms</small></div>
+            <div class="slider-sub">تأخير داخلي: <b id="delayVal">24ms</b></div>
+          </div>
+          <span class="pill low" id="pingPill">منخفض</span>
+        </div>
+        <input type="range" id="pingSlider" min="0" max="200" value="30" oninput="onPing(this.value)">
+        <div class="ticks"><span>0</span><span>50</span><span>100</span><span>150</span><span>200</span></div>
+      </div>
+
+      <!-- Startup options -->
+      <div class="card">
+        <span class="card-tag">النظام</span>
+        <div class="card-title"><span class="emo">⚙️</span> خيارات التشغيل</div>
+        <div style="margin-top:12px">
+          <div class="opt">
+            <div class="opt-txt"><div class="t">🚀 تشغيل مع الويندوز</div><div class="d">يفتح تلقائياً عند بدء الجهاز</div></div>
+            <label class="sw"><input type="checkbox" id="bootToggle"><span class="track"></span></label>
+          </div>
+          <div class="opt">
+            <div class="opt-txt"><div class="t">🫥 يبدأ مصغّر</div><div class="d">يفتح بالخلفية عند الـ Tray</div></div>
+            <label class="sw"><input type="checkbox" id="minStartToggle"><span class="track"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Updates -->
+      <div class="card">
+        <span class="card-tag">تحديثات</span>
+        <div class="upd-row">
+          <span class="upd-ico">🔄</span>
+          <div class="upd-main">
+            <div class="card-title" style="font-size:14px">التحديثات</div>
+            <div class="upd-status" id="updStatus">اضغط للتحقق من نسخة أحدث</div>
+          </div>
+          <button class="btn-ghost" id="updBtn" onclick="checkUpdates()">تحقّق</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── State ─────────────────────────────────────────
-const keys  = { editKey: 'F', resetKey: 'G', selectKey: 'LButton' }
+const keys = { editKey:'F', resetKey:'G', selectKey:'LButton' }
 let macroOn = false
 let listen  = null
 
-// ── Load settings on start ────────────────────────
-window.api.getSettings().then(s => applySettings(s))
-window.api.onSettingsLoaded(s => applySettings(s))
-window.api.onMacroStatus(running => setMacroUI(running))
+/* ── load settings ── */
+window.api.getSettings().then(applySettings)
+window.api.onSettingsLoaded(applySettings)
+window.api.onMacroStatus(setMacroUI)
 
 function applySettings(s) {
-  document.getElementById('eorToggle').checked    = s.eorEnabled    ?? true
-  document.getElementById('resetToggle').checked  = s.resetEnabled  ?? false
-  document.getElementById('selectToggle').checked = s.selectEnabled ?? false
+  document.getElementById('eorToggle').checked      = s.eorEnabled     ?? true
+  document.getElementById('selectToggle').checked   = s.selectEnabled  ?? false
+  document.getElementById('resetToggle').checked    = s.resetEnabled   ?? false
+  document.getElementById('bootToggle').checked     = s.launchOnBoot   ?? false
+  document.getElementById('minStartToggle').checked = s.startMinimized ?? false
   keys.editKey   = s.editKey   ?? 'F'
   keys.resetKey  = s.resetKey  ?? 'G'
   keys.selectKey = s.selectKey ?? 'LButton'
   document.getElementById('editKeyBtn').textContent   = keys.editKey
   document.getElementById('resetKeyBtn').textContent  = keys.resetKey
   document.getElementById('selectKeyBtn').textContent = keys.selectKey
-  onPing(s.ping ?? 30)
-  document.getElementById('pingSlider').value = s.ping ?? 30
-  onSelectDelay(s.selectDelay ?? 45)
-  document.getElementById('selectDelaySlider').value = s.selectDelay ?? 45
+  onPing(s.ping ?? 30);        document.getElementById('pingSlider').value = s.ping ?? 30
+  onSelDelay(s.selectDelay ?? 45); document.getElementById('selDelay').value = s.selectDelay ?? 45
+  setTheme(s.theme ?? 'dark', false)
+  if (s.discord && s.discord.id) renderDiscord(s.discord)
+  if (s.version) document.getElementById('verChip').textContent = 'v' + s.version
 }
 
-// ── Key listening ─────────────────────────────────
-function startListen(keyName, btn) {
-  if (listen) {
-    listen.btn.classList.remove('listen')
-    listen.btn.textContent = keys[listen.name]
-  }
-  listen = { name: keyName, btn }
-  btn.classList.add('listen')
-  btn.textContent = '... (أو كبسة ماوس)'
-  // small delay so the click that opened listening mode doesn't get captured as the mouse button
+/* ── theme ── */
+function setTheme(mode, save=true) {
+  document.documentElement.setAttribute('data-theme', mode)
+  document.getElementById('themeBtn').textContent = mode === 'dark' ? '🌙' : '☀️'
+  if (save) window.api.saveSettings({ theme: mode })
+}
+document.getElementById('themeBtn').onclick = () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+  setTheme(next)
+}
+
+/* ── window controls ── */
+document.getElementById('minBtn').onclick   = () => window.api.windowMinimize()
+document.getElementById('closeBtn').onclick = () => window.api.windowClose()
+
+/* ── key capture (keyboard + mouse) ── */
+function startListen(name, btn) {
+  if (listen) { listen.btn.classList.remove('listen'); listen.btn.textContent = keys[listen.name] }
+  listen = { name, btn }
+  btn.classList.add('listen'); btn.textContent = '...'
   setTimeout(() => {
-    document.addEventListener('keydown', captureKey)
-    document.addEventListener('mousedown', captureMouse)
-    document.addEventListener('contextmenu', preventMenu)
+    document.addEventListener('keydown', capKey)
+    document.addEventListener('mousedown', capMouse)
+    document.addEventListener('contextmenu', prevent)
   }, 150)
 }
-
-function preventMenu(e) { e.preventDefault() }
-
-function stopListening() {
-  document.removeEventListener('keydown', captureKey)
-  document.removeEventListener('mousedown', captureMouse)
-  document.removeEventListener('contextmenu', preventMenu)
+function prevent(e){ e.preventDefault() }
+function stopListen() {
+  document.removeEventListener('keydown', capKey)
+  document.removeEventListener('mousedown', capMouse)
+  document.removeEventListener('contextmenu', prevent)
 }
-
-function captureKey(e) {
-  e.preventDefault()
-  if (!listen) return
+function capKey(e) {
+  e.preventDefault(); if (!listen) return
   const { name, btn } = listen
-  if (e.key === 'Escape') {
-    stopListening()
-    listen = null
-    btn.classList.remove('listen')
-    btn.textContent = keys[name]
-    return
-  }
+  if (e.key === 'Escape') { stopListen(); listen=null; btn.classList.remove('listen'); btn.textContent = keys[name]; return }
   let k = e.key
   if (k.length === 1) k = k.toUpperCase()
   else k = e.code.replace('Key','').replace('Digit','').replace('Numpad','Num').replace('Arrow','')
-  finishCapture(name, btn, k)
+  finishCap(name, btn, k)
 }
-
-function captureMouse(e) {
-  e.preventDefault()
-  if (!listen) return
+function capMouse(e) {
+  e.preventDefault(); if (!listen) return
   const { name, btn } = listen
-  const mouseNames = { 0: 'LButton', 1: 'MButton', 2: 'RButton' }
-  const k = mouseNames[e.button] ?? 'LButton'
-  finishCapture(name, btn, k)
+  finishCap(name, btn, ({0:'LButton',1:'MButton',2:'RButton'})[e.button] ?? 'LButton')
+}
+function finishCap(name, btn, k) {
+  stopListen(); listen=null
+  keys[name]=k; btn.textContent=k; btn.classList.remove('listen')
+  toast(`✅ تم تحديد "${k}"`); saveAll()
 }
 
-function finishCapture(name, btn, k) {
-  stopListening()
-  listen = null
-  keys[name] = k
-  btn.textContent = k
-  btn.classList.remove('listen')
-  toast(`✅ تم تحديد "${k}"`)
-  saveAll()
-}
-
-// ── Ping ──────────────────────────────────────────
-function onPing(val) {
-  val = parseInt(val)
-  const delay = Math.max(10, Math.round(val * 0.25) + 15)
-  document.getElementById('pingVal').innerHTML = val + '<span> ms</span>'
-  document.getElementById('delayVal').textContent = delay + 'ms'
-  const st = document.getElementById('pingStatus')
-  if (val < 60)       { st.textContent='🟢 منخفض'; st.style.color='#2E7D32' }
-  else if (val < 120) { st.textContent='🟡 متوسط';  st.style.color='#E65100' }
-  else                { st.textContent='🔴 عالي';   st.style.color='#B71C1C' }
-  const pct = (val/200)*100
+/* ── ping ── */
+function onPing(v) {
+  v = parseInt(v)
+  const d = Math.max(10, Math.round(v*0.25)+15)
+  document.getElementById('pingVal').innerHTML = v + '<small> ms</small>'
+  document.getElementById('delayVal').textContent = d + 'ms'
+  const p = document.getElementById('pingPill')
+  if (v < 60)       { p.textContent='منخفض'; p.className='pill low' }
+  else if (v < 120) { p.textContent='متوسط'; p.className='pill mid' }
+  else              { p.textContent='عالي';  p.className='pill high' }
+  const pct = v/200*100
   document.getElementById('pingSlider').style.background =
-    `linear-gradient(to right,#9B0000 0%,#9B0000 ${pct}%,#E0E0E0 ${pct}%)`
+    `linear-gradient(to left, var(--red) 0%, var(--red) ${pct}%, var(--track) ${pct}%)`
+}
+function onSelDelay(v) {
+  v = parseInt(v)
+  document.getElementById('selDelayVal').textContent = v + 'ms'
+  const pct = v/150*100
+  document.getElementById('selDelay').style.background =
+    `linear-gradient(to left, var(--red) 0%, var(--red) ${pct}%, var(--track) ${pct}%)`
 }
 
-// ── Select Delay ──────────────────────────────────
-function onSelectDelay(val) {
-  val = parseInt(val)
-  document.getElementById('selectDelayVal').textContent = val + 'ms'
-  const pct = (val/150)*100
-  document.getElementById('selectDelaySlider').style.background =
-    `linear-gradient(to right,#9B0000 0%,#9B0000 ${pct}%,#E0E0E0 ${pct}%)`
-}
-
-// ── Save ──────────────────────────────────────────
+/* ── save ── */
 function getSettings() {
   return {
-    eorEnabled:    document.getElementById('eorToggle').checked,
-    resetEnabled:  document.getElementById('resetToggle').checked,
-    selectEnabled: document.getElementById('selectToggle').checked,
-    selectDelay:   parseInt(document.getElementById('selectDelaySlider').value),
-    editKey:       keys.editKey,
-    resetKey:      keys.resetKey,
-    selectKey:     keys.selectKey,
-    ping:          parseInt(document.getElementById('pingSlider').value)
+    eorEnabled:     document.getElementById('eorToggle').checked,
+    selectEnabled:  document.getElementById('selectToggle').checked,
+    resetEnabled:   document.getElementById('resetToggle').checked,
+    launchOnBoot:   document.getElementById('bootToggle').checked,
+    startMinimized: document.getElementById('minStartToggle').checked,
+    editKey: keys.editKey, resetKey: keys.resetKey, selectKey: keys.selectKey,
+    ping:        parseInt(document.getElementById('pingSlider').value),
+    selectDelay: parseInt(document.getElementById('selDelay').value)
   }
 }
+function saveAll() { window.api.saveSettings(getSettings()) }
 
-function saveAll() {
-  window.api.saveSettings(getSettings())
-}
-
-// Auto-save on toggle changes
-['eorToggle','resetToggle','selectToggle'].forEach(id =>
+;['eorToggle','selectToggle','resetToggle','minStartToggle'].forEach(id =>
   document.getElementById(id).addEventListener('change', saveAll))
-document.getElementById('pingSlider').addEventListener('change', () => saveAll())
-document.getElementById('selectDelaySlider').addEventListener('change', () => saveAll())
+document.getElementById('bootToggle').addEventListener('change', (e) => {
+  saveAll(); window.api.setAutoLaunch(e.target.checked)
+})
+document.getElementById('pingSlider').addEventListener('change', saveAll)
+document.getElementById('selDelay').addEventListener('change', saveAll)
 
-// ── Macro toggle ──────────────────────────────────
+/* ── macro toggle ── */
 async function toggleMacro() {
   const s = getSettings()
   if (!macroOn) {
-    const result = await window.api.startMacro(s)
-    if (!result.ok) {
-      document.getElementById('ahkWarn').classList.add('show')
-      toast('⚠️ ' + result.error)
-      return
-    }
-    document.getElementById('ahkWarn').classList.remove('show')
-    setMacroUI(true)
-    toast('✅ الماكرو شغّال!')
+    const r = await window.api.startMacro(s)
+    if (r.ok) { setMacroUI(true); toast('🟢 الماكرو شغّال') }
+    else toast('⚠️ ' + (r.error || 'تعذّر التشغيل'))
   } else {
-    await window.api.stopMacro()
-    setMacroUI(false)
-    toast('⏹ الماكرو متوقف')
+    await window.api.stopMacro(); setMacroUI(false); toast('🔴 تم الإيقاف')
   }
 }
-
 function setMacroUI(on) {
   macroOn = on
-  const btn = document.getElementById('macroBtn')
-  const st  = document.getElementById('macroStatus')
-  const stT = document.getElementById('macroStatusText')
-  if (on) {
-    btn.textContent = '⏹ إيقاف الماكرو'
-    btn.className   = 'macro-btn stop'
-    st.className    = 'macro-status on'
-    stT.textContent = 'شغّال ✓'
-  } else {
-    btn.textContent = '▶ تشغيل الماكرو'
-    btn.className   = 'macro-btn start'
-    st.className    = 'macro-status off'
-    stT.textContent = 'متوقف'
-  }
+  const m = document.getElementById('master')
+  const b = document.getElementById('masterBtn')
+  const st = document.getElementById('ringState')
+  if (on) { m.classList.add('on'); b.textContent='■ إيقاف الماكرو'; st.textContent='شغّال' }
+  else    { m.classList.remove('on'); b.textContent='▶ تشغيل الماكرو'; st.textContent='متوقف' }
 }
 
-// ── Toast ─────────────────────────────────────────
-let toastT = null
-function toast(msg) {
-  const el = document.getElementById('toast')
-  el.textContent = msg
-  el.classList.add('show')
-  clearTimeout(toastT)
-  toastT = setTimeout(() => el.classList.remove('show'), 2200)
+/* ── discord ── */
+async function discordLogin() {
+  toast('🔗 جاري فتح ديسكورد...')
+  const r = await window.api.discordLogin()
+  if (r && r.ok && r.user) { renderDiscord(r.user); toast('✅ تم ربط ديسكورد') }
+  else if (r && r.error === 'not-configured') toast('⚙️ ربط ديسكورد لسا ما تفعّل')
+  else toast('⚠️ تعذّر تسجيل الدخول')
+}
+async function discordLogout() {
+  await window.api.discordLogout()
+  document.getElementById('dcUser').style.display='none'
+  document.getElementById('dcGuest').style.display='flex'
+  toast('تم تسجيل الخروج')
+}
+function renderDiscord(u) {
+  document.getElementById('dcGuest').style.display='none'
+  document.getElementById('dcUser').style.display='flex'
+  document.getElementById('dcName').textContent = u.globalName || u.username || 'مستخدم'
+  document.getElementById('dcHandle').textContent = '@' + (u.username || '')
+  const ava = u.avatar
+    ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=128`
+    : `https://cdn.discordapp.com/embed/avatars/0.png`
+  document.getElementById('dcAva').src = ava
 }
 
-// ── Updates ───────────────────────────────────────
-function setUpdateText(t) {
-  document.getElementById('updateStatusText').textContent = t
-}
-
-async function checkUpdates() {
-  setUpdateText('بيتحقق...')
-  await window.api.checkForUpdates()
-}
-
-window.api.onUpdateStatus(async (data) => {
-  const btn = document.getElementById('updateBtn')
-  if (data.status === 'checking') {
-    setUpdateText('بيتحقق من وجود تحديث...')
-  } else if (data.status === 'not-available') {
-    setUpdateText('عندك آخر نسخة ✅')
-  } else if (data.status === 'available') {
-    setUpdateText(`في نسخة جديدة (v${data.version}) — بينزّل...`)
-    await window.api.downloadUpdate()
-  } else if (data.status === 'downloading') {
-    setUpdateText(`بينزّل التحديث... ${data.percent}%`)
-  } else if (data.status === 'downloaded') {
-    setUpdateText('التحديث جاهز — بيتثبت عند إعادة التشغيل')
-    btn.textContent = 'إعادة التشغيل الآن'
-    btn.onclick = () => window.api.installUpdate()
-  } else if (data.status === 'error') {
-    setUpdateText('ما قدر يتحقق من التحديث (يشتغل بس مع نسخة Setup.exe)')
-  }
+/* ── updates ── */
+function setUpd(t){ document.getElementById('updStatus').textContent = t }
+async function checkUpdates(){ setUpd('بيتحقق...'); await window.api.checkForUpdates() }
+window.api.onUpdateStatus(async (d) => {
+  const btn = document.getElementById('updBtn')
+  if (d.status==='checking') setUpd('بيتحقق من وجود تحديث...')
+  else if (d.status==='not-available') setUpd('عندك آخر نسخة ✅')
+  else if (d.status==='available') { setUpd(`في نسخة جديدة (v${d.version}) — بينزّل...`); await window.api.downloadUpdate() }
+  else if (d.status==='downloading') setUpd(`بينزّل... ${d.percent}%`)
+  else if (d.status==='downloaded') { setUpd('جاهز — بيتثبّت عند إعادة التشغيل'); btn.textContent='إعادة تشغيل'; btn.onclick=()=>window.api.installUpdate() }
+  else if (d.status==='error') setUpd('يشتغل بس مع نسخة Setup.exe')
 })
 
-// init
-onPing(30)
-onSelectDelay(45)
+/* ── toast ── */
+let tT
+function toast(msg) {
+  const el = document.getElementById('toast')
+  el.textContent = msg; el.classList.add('show')
+  clearTimeout(tT); tT = setTimeout(()=>el.classList.remove('show'), 2200)
+}
+
+/* init */
+onPing(30); onSelDelay(45)
 </script>
 </body>
 </html>
