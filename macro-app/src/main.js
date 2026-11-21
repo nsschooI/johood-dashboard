@@ -196,8 +196,9 @@ let settings   = loadSettings()
 let isQuitting = false
 
 function createTrayIcon() {
-  // Simple 16x16 red square as tray icon (fallback if no ico)
-  const icon = nativeImage.createEmpty()
+  const icoPath = path.join(__dirname, '..', 'assets', 'icon.ico')
+  let icon = nativeImage.createFromPath(icoPath)
+  if (icon.isEmpty()) icon = nativeImage.createEmpty()
   tray = new Tray(icon)
   tray.setToolTip('JoHood Macro')
   updateTrayMenu()
@@ -227,14 +228,14 @@ function showWindow() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width:  980,
-    height: 648,
+    width:  1000,
+    height: 660,
     minWidth:  900,
-    minHeight: 580,
+    minHeight: 600,
     resizable: true,
     frame: false,          // custom title bar
     transparent: false,
-    backgroundColor: '#0c0c11',
+    backgroundColor: settings.theme === 'light' ? '#eef0f6' : '#08080c',
     icon: path.join(__dirname, '..', 'assets', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -297,7 +298,7 @@ function discordLogin() {
         const code = u.searchParams.get('code')
         const retState = u.searchParams.get('state')
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
-        res.end('<html dir="rtl"><body style="font-family:sans-serif;background:#0c0c11;color:#fff;display:grid;place-items:center;height:100vh;margin:0"><div style="text-align:center"><h2 style="color:#ff2e4d">✅ تم الربط بنجاح</h2><p>ترجع للتطبيق الآن</p></div></body></html>')
+        res.end('<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>JoHood</title></head><body style="margin:0;height:100vh;display:grid;place-items:center;font-family:Segoe UI,system-ui,sans-serif;color:#f5f5f7;background:radial-gradient(60vmax 60vmax at 20% 0%,rgba(255,55,95,.35),transparent 60%),radial-gradient(60vmax 60vmax at 100% 100%,rgba(94,92,230,.3),transparent 60%),#08080c"><div style="text-align:center;padding:36px 44px;border-radius:24px;background:rgba(28,28,36,.55);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,.1)"><div style="font-size:44px">✅</div><h2 style="margin:10px 0 6px;font-weight:600">تم ربط ديسكورد</h2><p style="margin:0;color:rgba(235,235,245,.62)">ارجع للتطبيق، تقدر تسكّر هالصفحة.</p></div></body></html>')
         server.close()
         if (settled) return
         settled = true

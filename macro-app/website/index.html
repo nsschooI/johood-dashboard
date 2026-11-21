@@ -1,345 +1,866 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="dark">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JoHood Macro | ماكرو فورت نايت الاحترافي</title>
-<meta name="description" content="ماكرو JoHood لفورت نايت — أديت فوري، سيليكت تلقائي، وتحكّم كامل. مجاناً للأبد.">
+<title>JoHood Macro</title>
+<meta name="description" content="ماكرو JoHood لفورت نايت: امسك زر الأديت، عدّل، وارفع إصبعك والبناء يتأكّد لحاله. مجاني لويندوز 10 و 11.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* Layout: floating glass nav → split hero with a live "hold F" edit demo → app replica → bento → steps → FAQ → download */
+:root {
+  --font-d: 'Readex Pro', 'IBM Plex Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+  --font-b: 'IBM Plex Sans Arabic', 'Readex Pro', 'Segoe UI', system-ui, sans-serif;
+  --ease:   cubic-bezier(.22,.8,.24,1);
+  --spring: cubic-bezier(.34,1.5,.64,1);
+
+  /* light palette */
+  --bg:        #f1f2f7;
+  --ink:       #1d1d1f;
+  --ink-2:     rgba(60,60,67,.70);
+  --ink-3:     rgba(60,60,67,.42);
+  --glass:     rgba(255,255,255,.58);
+  --glass-2:   rgba(255,255,255,.72);
+  --edge:      rgba(255,255,255,.95);
+  --edge-2:    rgba(20,20,40,.07);
+  --fill:      rgba(120,120,128,.18);
+  --fill-2:    rgba(120,120,128,.08);
+  --sep:       rgba(60,60,67,.11);
+  --accent:    #f0234b;
+  --accent-2:  #ff7a45;
+  --accent-soft: rgba(240,35,75,.11);
+  --edit:      #0a7cff;
+  --edit-soft: rgba(10,124,255,.12);
+  --green:     #1f9e46;
+  --green-soft:rgba(52,199,89,.15);
+  --blurple:   #5865f2;
+  --blob-1:    rgba(255,45,85,.22);
+  --blob-2:    rgba(94,92,230,.18);
+  --blob-3:    rgba(255,159,10,.20);
+  --shadow:    0 30px 70px -36px rgba(40,40,90,.35), 0 2px 8px -3px rgba(40,40,90,.10);
+  --cap-top:   #ffffff;
+  --cap-bot:   #e9eaf0;
+  --cap-side:  #c9cbd6;
+  --cap-ink:   #1d1d1f;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg:#07070b; --ink:#f5f5f7; --ink-2:rgba(235,235,245,.64); --ink-3:rgba(235,235,245,.36);
+    --glass:rgba(28,28,38,.50); --glass-2:rgba(40,40,52,.62); --edge:rgba(255,255,255,.17); --edge-2:rgba(255,255,255,.06);
+    --fill:rgba(120,120,135,.26); --fill-2:rgba(120,120,135,.12); --sep:rgba(255,255,255,.08);
+    --accent:#ff375f; --accent-2:#ff7a45; --accent-soft:rgba(255,55,95,.17);
+    --edit:#3d9bff; --edit-soft:rgba(61,155,255,.16); --green:#30d158; --green-soft:rgba(48,209,88,.16);
+    --blob-1:rgba(255,55,95,.32); --blob-2:rgba(94,92,230,.30); --blob-3:rgba(255,122,69,.18);
+    --shadow:0 34px 80px -34px rgba(0,0,0,.85), 0 2px 8px -3px rgba(0,0,0,.4);
+    --cap-top:#2c2c36; --cap-bot:#1d1d25; --cap-side:#0d0d12; --cap-ink:#f5f5f7;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:#07070b; --ink:#f5f5f7; --ink-2:rgba(235,235,245,.64); --ink-3:rgba(235,235,245,.36);
+  --glass:rgba(28,28,38,.50); --glass-2:rgba(40,40,52,.62); --edge:rgba(255,255,255,.17); --edge-2:rgba(255,255,255,.06);
+  --fill:rgba(120,120,135,.26); --fill-2:rgba(120,120,135,.12); --sep:rgba(255,255,255,.08);
+  --accent:#ff375f; --accent-2:#ff7a45; --accent-soft:rgba(255,55,95,.17);
+  --edit:#3d9bff; --edit-soft:rgba(61,155,255,.16); --green:#30d158; --green-soft:rgba(48,209,88,.16);
+  --blob-1:rgba(255,55,95,.32); --blob-2:rgba(94,92,230,.30); --blob-3:rgba(255,122,69,.18);
+  --shadow:0 34px 80px -34px rgba(0,0,0,.85), 0 2px 8px -3px rgba(0,0,0,.4);
+  --cap-top:#2c2c36; --cap-bot:#1d1d25; --cap-side:#0d0d12; --cap-ink:#f5f5f7;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root, [data-theme="dark"] {
-  --bg:#0a0a0f; --bg-2:#111118; --surface:#16161f; --surface-2:#1c1c27;
-  --border:#262633; --border-soft:#1f1f29;
-  --text:#f4f4f8; --text-2:#b4b4c4; --muted:#6c6c7c;
-  --red:#ff2e4d; --red-2:#e01e3c; --red-soft:rgba(255,46,77,0.12); --red-line:rgba(255,46,77,0.3);
-  --green:#31d07f;
-  --glow: 0 0 80px rgba(255,46,77,0.25);
-  --card-sh: 0 20px 60px rgba(0,0,0,0.5);
-}
-[data-theme="light"] {
-  --bg:#f3f4f9; --bg-2:#ffffff; --surface:#ffffff; --surface-2:#f6f7fb;
-  --border:#e5e7f0; --border-soft:#eef0f6;
-  --text:#14141e; --text-2:#4e4e60; --muted:#9090a2;
-  --red:#e01e3c; --red-2:#c0162f; --red-soft:rgba(224,30,60,0.08); --red-line:rgba(224,30,60,0.2);
-  --green:#17a35c;
-  --glow: 0 0 80px rgba(224,30,60,0.14);
-  --card-sh: 0 20px 60px rgba(30,30,60,0.1);
-}
-
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scroll-padding-top: 96px; }
 body {
-  font-family:'Cairo',system-ui,sans-serif; background:var(--bg); color:var(--text);
-  overflow-x:hidden; line-height:1.6; transition:background-color .35s, color .25s;
+  font-family: var(--font-b); font-size: 16px; line-height: 1.7;
+  background: var(--bg); color: var(--ink);
+  overflow-x: hidden; -webkit-font-smoothing: antialiased;
+  transition: background-color .5s var(--ease), color .3s;
 }
-a { color:inherit; text-decoration:none; }
-.wrap { max-width:1180px; margin:0 auto; padding:0 24px; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; color: inherit; }
+img, svg { max-width: 100%; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+h1, h2, h3 { font-family: var(--font-d); text-wrap: balance; font-weight: 600; }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+.ltr { direction: ltr; unicode-bidi: isolate; }
 
-/* glow backdrop */
-body::before {
-  content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
-  background:
-    radial-gradient(900px 500px at 85% -5%, var(--red-soft), transparent 60%),
-    radial-gradient(700px 500px at 0% 40%, var(--red-soft), transparent 55%);
+/* ambient mesh */
+.ambient { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.ambient i { position: absolute; display: block; border-radius: 50%; will-change: transform; }
+.ambient .b1 { width: 70vmax; height: 70vmax; top: -40vmax; right: -16vmax; background: radial-gradient(closest-side, var(--blob-1), transparent 70%); animation: d1 30s var(--ease) infinite alternate; }
+.ambient .b2 { width: 64vmax; height: 64vmax; top: 30vh; left: -30vmax; background: radial-gradient(closest-side, var(--blob-2), transparent 70%); animation: d2 36s var(--ease) infinite alternate; }
+.ambient .b3 { width: 44vmax; height: 44vmax; bottom: -20vmax; right: 20vw; background: radial-gradient(closest-side, var(--blob-3), transparent 70%); animation: d3 26s var(--ease) infinite alternate; }
+@keyframes d1 { to { transform: translate(-12vmax, 12vmax) scale(1.1); } }
+@keyframes d2 { to { transform: translate(14vmax, -10vmax) scale(.92); } }
+@keyframes d3 { to { transform: translate(-10vmax, -14vmax) scale(1.15); } }
+
+/* glass */
+.glass {
+  position: relative; background: var(--glass); border: 1px solid var(--edge-2);
+  backdrop-filter: blur(30px) saturate(170%); -webkit-backdrop-filter: blur(30px) saturate(170%);
+  box-shadow: var(--shadow);
+}
+.glass::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(165deg, var(--edge), transparent 36%, transparent 70%, var(--edge-2));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.tile {
+  --c: var(--accent);
+  width: 42px; height: 42px; flex: none; border-radius: 12px;
+  display: grid; place-items: center; font-size: 21px; line-height: 1;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--c) 32%, transparent), color-mix(in srgb, var(--c) 12%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent), inset 0 1px 0 rgba(255,255,255,.22);
 }
 
-/* ─── NAV ─── */
-nav {
-  position:fixed; top:0; width:100%; z-index:50; height:66px;
-  display:flex; align-items:center;
-  background:color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter:blur(16px); border-bottom:1px solid var(--border-soft);
+/* buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  height: 52px; padding: 0 28px; border-radius: 99px; border: none; cursor: pointer;
+  font: 600 16px var(--font-d); white-space: nowrap;
+  transition: transform .35s var(--spring), box-shadow .3s, filter .2s, background .3s;
 }
-.nav-in { display:flex; align-items:center; justify-content:space-between; width:100%; }
-.brand { display:flex; align-items:center; gap:11px; font-weight:900; font-size:18px; }
-.brand .jh {
-  width:36px; height:36px; border-radius:10px; display:grid; place-items:center;
-  background:linear-gradient(135deg,var(--red),var(--red-2)); color:#fff; font-size:15px;
-  box-shadow:0 6px 18px var(--red-soft);
+.btn:active { transform: scale(.96); }
+.btn-primary {
+  color: #fff; background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 16px 36px -14px var(--accent);
 }
-.brand span { color:var(--red); }
-.nav-links { display:flex; align-items:center; gap:28px; font-size:14px; font-weight:600; color:var(--text-2); }
-.nav-links a:hover { color:var(--text); }
-.nav-right { display:flex; align-items:center; gap:12px; }
-.tbtn {
-  width:40px; height:40px; border-radius:11px; border:1px solid var(--border);
-  background:var(--surface); color:var(--text); cursor:pointer; font-size:17px;
-  display:grid; place-items:center; transition:border-color .2s, transform .1s;
-}
-.tbtn:hover { border-color:var(--red-line); }
-.tbtn:active { transform:scale(.92); }
-.nav-cta {
-  padding:10px 20px; border-radius:11px; font-weight:800; font-size:13.5px; color:#fff;
-  background:linear-gradient(135deg,var(--red),var(--red-2)); box-shadow:0 8px 22px var(--red-soft);
-  transition:filter .2s, transform .1s;
-}
-.nav-cta:hover { filter:brightness(1.08); }
-.nav-cta:active { transform:scale(.97); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 22px 44px -14px var(--accent); }
+.btn-ghost { color: var(--ink); background: var(--glass-2); border: 1px solid var(--edge-2); backdrop-filter: blur(20px); }
+.btn-ghost:hover { transform: translateY(-2px); }
 
-/* ─── HERO ─── */
-.hero { padding:140px 0 90px; text-align:center; position:relative; }
-.badge {
-  display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:700;
-  color:var(--red); background:var(--red-soft); border:1px solid var(--red-line);
-  padding:7px 16px; border-radius:30px; margin-bottom:26px;
+/* ═════════ NAV ═════════ */
+.nav { position: fixed; top: 14px; inset-inline: 0; z-index: 50; padding: 0 16px; }
+.nav-in {
+  max-width: 1040px; margin: 0 auto; height: 60px; border-radius: 99px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 10px 0 10px;
 }
-.hero h1 { font-size:58px; font-weight:900; line-height:1.15; letter-spacing:-1px; margin-bottom:20px; }
-.hero h1 .g { background:linear-gradient(135deg,var(--red),var(--red-2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
-.hero p { font-size:19px; color:var(--text-2); max-width:620px; margin:0 auto 38px; }
-.hero-cta { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
-.btn-main {
-  display:inline-flex; align-items:center; gap:10px; padding:16px 34px; border-radius:14px;
-  font-weight:800; font-size:16px; color:#fff;
-  background:linear-gradient(135deg,var(--red),var(--red-2)); box-shadow:0 14px 36px var(--red-soft);
-  transition:transform .12s, filter .2s;
+.brand { display: flex; align-items: center; gap: 10px; padding-inline-start: 6px; }
+.logo {
+  width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center;
+  font: 700 14px var(--font-d); color: #fff; letter-spacing: -.3px;
+  background: linear-gradient(145deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 18px -6px var(--accent), inset 0 1px 0 rgba(255,255,255,.35);
 }
-.btn-main:hover { filter:brightness(1.08); transform:translateY(-2px); }
-.btn-main:active { transform:translateY(0); }
-.btn-sub {
-  display:inline-flex; align-items:center; gap:9px; padding:16px 28px; border-radius:14px;
-  font-weight:800; font-size:15px; color:var(--text);
-  background:var(--surface); border:1px solid var(--border); transition:border-color .2s, transform .12s;
+.brand-name { font: 600 16px var(--font-d); direction: ltr; letter-spacing: -.2px; }
+.brand-name span { color: var(--ink-2); font-weight: 400; }
+.nav-links { display: flex; gap: 4px; font: 500 14px var(--font-d); }
+.nav-links a { padding: 8px 14px; border-radius: 99px; color: var(--ink-2); transition: color .2s, background .2s; }
+.nav-links a:hover { color: var(--ink); background: var(--fill-2); }
+.nav-end { display: flex; align-items: center; gap: 8px; }
+.icon-btn {
+  width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--edge-2); cursor: pointer;
+  background: var(--fill-2); font-size: 17px; display: grid; place-items: center;
+  transition: transform .4s var(--spring), background .2s;
 }
-.btn-sub:hover { border-color:var(--red-line); transform:translateY(-2px); }
-.hero-note { margin-top:20px; font-size:13px; color:var(--muted); }
+.icon-btn:hover { background: var(--fill); }
+.icon-btn:active { transform: scale(.88) rotate(-20deg); }
+.nav .btn { height: 42px; padding: 0 20px; font-size: 14px; }
 
-/* app mockup */
+/* ═════════ HERO ═════════ */
+.hero { padding: 150px 0 60px; }
+.hero-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: 56px; align-items: center; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 99px;
+  font: 500 13.5px var(--font-d); color: var(--ink-2); background: var(--glass-2); border: 1px solid var(--edge-2);
+}
+.eyebrow b { font-weight: 600; color: #fff; background: linear-gradient(140deg, var(--accent), var(--accent-2)); padding: 2px 10px; border-radius: 99px; font-size: 12px; }
+.hero h1 {
+  font-size: clamp(48px, 7.2vw, 92px); line-height: 1.02; letter-spacing: -2.5px; font-weight: 600;
+  margin: 22px 0 22px;
+}
+.hero h1 .w { display: inline-block; animation: word .9s var(--ease) both; }
+.hero h1 .w:nth-child(2) { animation-delay: .12s; }
+.hero h1 .w:nth-child(3) { animation-delay: .24s; }
+@keyframes word { from { opacity: .001; transform: translateY(28px); filter: blur(8px); } }
+.grad {
+  background: linear-gradient(120deg, var(--accent) 10%, var(--accent-2) 60%, #ffb347);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  padding-bottom: .08em;
+}
+.lead { font-size: 19px; color: var(--ink-2); max-width: 30em; line-height: 1.8; }
+.lead b { color: var(--ink); font-weight: 600; }
+.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 26px; font: 500 13.5px var(--font-d); color: var(--ink-2); }
+.meta span { display: inline-flex; align-items: center; gap: 7px; }
+
+/* live demo card */
+.demo { border-radius: 32px; padding: 26px; animation: float-in 1s .2s var(--ease) both; }
+@keyframes float-in { from { opacity: .001; transform: translateY(30px) scale(.97); } }
+.demo-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+.demo-title { font: 600 15px var(--font-d); }
+.demo-next { font: 500 12.5px var(--font-d); color: var(--ink-2); background: var(--fill-2); padding: 5px 12px; border-radius: 99px; }
+.demo-next b { color: var(--ink); font-weight: 600; }
+.demo-stage { display: grid; grid-template-columns: auto 1fr; gap: 26px; align-items: center; }
+
+.wall { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; width: 186px; padding: 10px; border-radius: 20px; background: var(--fill-2); border: 1px solid var(--edge-2); transition: background .3s, box-shadow .3s; }
+.wall i {
+  display: block; aspect-ratio: 1; border-radius: 10px;
+  background: linear-gradient(160deg, var(--glass-2), var(--fill-2));
+  border: 1px solid var(--edge-2);
+  transition: transform .45s var(--spring), opacity .35s var(--ease), background .2s, border-color .2s, box-shadow .2s;
+}
+.wall.editing { background: var(--edit-soft); box-shadow: 0 0 0 2px color-mix(in srgb, var(--edit) 45%, transparent); }
+.wall.editing i { border-color: color-mix(in srgb, var(--edit) 40%, transparent); }
+.wall i.sel { background: linear-gradient(150deg, var(--accent), var(--accent-2)); border-color: transparent; box-shadow: 0 8px 18px -8px var(--accent); transform: scale(.92); }
+.wall i.gone { opacity: 0; transform: scale(.4) rotate(-8deg); }
+.wall.flash i:not(.gone) { animation: flash .6s var(--ease); }
+@keyframes flash { 40% { background: var(--green-soft); border-color: var(--green); } }
+
+.cap-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.cap {
+  width: 132px; height: 132px; border-radius: 30px; border: none; cursor: pointer; position: relative;
+  background: linear-gradient(180deg, var(--cap-top), var(--cap-bot));
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.4), inset 0 -2px 0 rgba(0,0,0,.08), 0 12px 0 var(--cap-side), 0 30px 40px -12px rgba(0,0,0,.45);
+  transition: transform .1s ease, box-shadow .1s ease;
+  touch-action: none; -webkit-user-select: none; user-select: none;
+  margin-bottom: 12px;
+}
+.cap::before {
+  content: ''; position: absolute; inset: 14px; border-radius: 20px;
+  background: linear-gradient(0deg, var(--cap-top), var(--cap-bot));
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+}
+.cap span { position: relative; font: 600 54px/1 var(--font-d); color: var(--cap-ink); }
+.cap.down { transform: translateY(10px); box-shadow: inset 0 2px 0 rgba(255,255,255,.35), 0 2px 0 var(--cap-side), 0 10px 18px -8px rgba(0,0,0,.45); }
+.cap.down span { color: var(--accent); }
+.cap-hint { font: 500 12.5px var(--font-d); color: var(--ink-2); text-align: center; }
+.timer { font: 600 13px var(--font-d); color: var(--ink-2); font-variant-numeric: tabular-nums; min-height: 20px; direction: ltr; }
+
+.steps-live { list-style: none; display: flex; flex-direction: column; gap: 4px; margin-top: 22px; padding: 6px; border-radius: 18px; background: var(--fill-2); }
+.steps-live li { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 13px; font: 500 14px var(--font-d); color: var(--ink-3); transition: background .3s, color .3s; }
+.steps-live .n {
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  font: 600 12px var(--font-d); background: var(--fill); color: var(--ink-2); transition: background .3s, color .3s, transform .4s var(--spring);
+}
+.steps-live .k { margin-inline-start: auto; font-size: 12px; color: var(--ink-3); }
+.steps-live li.on { background: var(--glass-2); color: var(--ink); box-shadow: 0 6px 18px -12px rgba(0,0,0,.4); }
+.steps-live li.on .n { background: linear-gradient(140deg, var(--accent), var(--accent-2)); color: #fff; transform: scale(1.08); }
+.steps-live li.done { color: var(--ink-2); }
+.steps-live li.done .n { background: var(--green); color: #fff; }
+.demo-status { margin-top: 14px; min-height: 26px; font: 500 14px var(--font-d); color: var(--ink-2); text-align: center; transition: color .3s; }
+.demo-status.ok { color: var(--green); }
+
+/* ═════════ FACTS STRIP ═════════ */
+.facts { padding: 30px 0 40px; }
+.facts-in { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.fact { display: flex; align-items: center; gap: 13px; padding: 16px 18px; border-radius: 20px; }
+.fact b { display: block; font: 600 15px var(--font-d); }
+.fact small { font-size: 12.5px; color: var(--ink-2); }
+
+/* ═════════ SECTIONS ═════════ */
+section { padding: 90px 0; }
+.sec-head { max-width: 640px; margin-bottom: 46px; }
+.kicker { font: 600 13.5px var(--font-d); color: var(--accent); display: flex; align-items: center; gap: 8px; }
+.sec-head h2 { font-size: clamp(34px, 4.6vw, 54px); line-height: 1.12; letter-spacing: -1.2px; margin: 10px 0 14px; }
+.sec-head p { font-size: 17.5px; color: var(--ink-2); }
+
+/* ═════════ APP SHOWCASE ═════════ */
+.show-stage { perspective: 1800px; }
 .mock {
-  margin:64px auto 0; max-width:900px; border-radius:22px; overflow:hidden;
-  border:1px solid var(--border); background:var(--surface); box-shadow:var(--card-sh), var(--glow);
+  border-radius: 26px; overflow: hidden; max-width: 1000px; margin: 0 auto;
+  transform: rotateX(8deg) scale(.98); transform-origin: 50% 100%;
+  transition: transform 1s var(--ease);
 }
-.mock-bar { height:40px; display:flex; align-items:center; gap:7px; padding:0 16px; border-bottom:1px solid var(--border-soft); background:var(--surface-2); }
-.mock-bar i { width:11px; height:11px; border-radius:50%; display:block; }
-.mock-bar i:nth-child(1){ background:#ff5f57 } .mock-bar i:nth-child(2){ background:#febc2e } .mock-bar i:nth-child(3){ background:#28c840 }
-.mock-body { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:14px; padding:22px; }
-.mk-card { border-radius:14px; border:1px solid var(--border); background:var(--surface-2); padding:16px; min-height:120px; }
-.mk-card .t { font-size:13px; font-weight:800; margin-bottom:10px; display:flex; align-items:center; gap:7px; }
-.mk-ring { width:64px; height:64px; border-radius:50%; margin:6px auto; background:conic-gradient(var(--red) 0 100%, var(--border) 0); display:grid; place-items:center; }
-.mk-ring::after { content:''; width:48px; height:48px; border-radius:50%; background:var(--surface-2); }
-.mk-pill { height:34px; border-radius:9px; background:var(--surface); border:1px solid var(--border); margin-top:8px; }
-.mk-line { height:7px; border-radius:6px; background:var(--border); margin-top:10px; }
-.mk-line.sh { width:60%; }
-.mk-sw { width:40px; height:23px; border-radius:20px; background:linear-gradient(135deg,var(--red),var(--red-2)); float:left; }
-
-/* ─── SECTION ─── */
-section { padding:84px 0; }
-.sec-head { text-align:center; margin-bottom:54px; }
-.sec-tag { font-size:13px; font-weight:800; color:var(--red); letter-spacing:.5px; text-transform:uppercase; }
-.sec-head h2 { font-size:40px; font-weight:900; margin:10px 0 12px; letter-spacing:-.5px; }
-.sec-head p { font-size:16px; color:var(--text-2); max-width:560px; margin:0 auto; }
-
-/* features grid */
-.feat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
-.feat {
-  border-radius:18px; background:var(--surface); border:1px solid var(--border);
-  padding:28px 24px; transition:transform .18s, border-color .18s;
+.show-stage:hover .mock { transform: rotateX(0) scale(1); }
+.mk-bar { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; }
+.mk-brand { display: flex; align-items: center; gap: 9px; font: 600 14px var(--font-d); }
+.mk-brand .logo { width: 28px; height: 28px; border-radius: 8px; font-size: 11px; }
+.mk-brand span { color: var(--ink-2); font-weight: 400; }
+.mk-ver { font: 500 10.5px var(--font-d); color: var(--ink-2); background: var(--fill-2); padding: 2px 8px; border-radius: 99px; }
+.lights { display: flex; gap: 8px; direction: ltr; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.mk-body { display: grid; grid-template-columns: 250px 1fr 1fr; gap: 14px; padding: 4px 16px 18px; }
+.mk-card { border-radius: 20px; padding: 16px; }
+.mk-power { text-align: center; }
+.mk-top { display: flex; justify-content: space-between; align-items: center; font: 500 11.5px var(--font-d); color: var(--ink-2); }
+.mk-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; font-weight: 600; background: var(--fill-2); transition: all .4s; }
+.mk-chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); }
+.mk-power.on .mk-chip { background: var(--green-soft); color: var(--green); }
+.mk-power.on .mk-chip i { background: var(--green); }
+.mk-ring { position: relative; width: 112px; height: 112px; margin: 16px auto 12px; display: grid; place-items: center; }
+.mk-ring::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(var(--fill) 0 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px));
 }
-.feat:hover { transform:translateY(-4px); border-color:var(--red-line); }
-.feat-ico {
-  width:54px; height:54px; border-radius:14px; display:grid; place-items:center; font-size:26px;
-  background:var(--red-soft); border:1px solid var(--red-line); margin-bottom:18px;
+.mk-power.on .mk-ring::before { background: conic-gradient(var(--accent), var(--accent-2), transparent 70%, var(--accent)); animation: spin 3.2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.mk-pw {
+  width: 86px; height: 86px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  border: 1px solid var(--edge-2); background: var(--glass-2); color: var(--ink-2);
+  box-shadow: inset 0 1px 0 var(--edge), 0 12px 24px -12px rgba(0,0,0,.5);
+  transition: transform .4s var(--spring), background .5s, color .3s;
 }
-.feat h3 { font-size:18px; font-weight:800; margin-bottom:9px; }
-.feat p { font-size:14px; color:var(--text-2); }
+.mk-pw:active { transform: scale(.9); }
+.mk-pw svg { width: 32px; height: 32px; }
+.mk-power.on .mk-pw { color: #fff; border-color: transparent; background: linear-gradient(145deg, var(--accent), var(--accent-2)); box-shadow: 0 14px 30px -10px var(--accent); }
+.mk-title { font: 600 16px var(--font-d); }
+.mk-sub { font-size: 11.5px; color: var(--ink-2); }
+.mk-dc { margin-top: 12px; }
+.mk-dc-btn { margin-top: 10px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; gap: 7px; color: #fff; font: 600 12.5px var(--font-d); background: linear-gradient(145deg, #6875ff, var(--blurple)); }
+.mk-dc-btn svg { width: 16px; height: 16px; }
+.mk-gh { font: 600 12px var(--font-d); color: var(--ink-2); margin: 2px 6px 8px; }
+.mk-list { border-radius: 20px; overflow: hidden; }
+.mk-row { display: flex; align-items: center; gap: 11px; padding: 12px 14px; position: relative; }
+.mk-row + .mk-row::before { content: ''; position: absolute; top: 0; left: 14px; right: 60px; height: 1px; background: var(--sep); }
+.mk-row .tile { width: 34px; height: 34px; border-radius: 10px; font-size: 17px; }
+.mk-t { flex: 1; min-width: 0; }
+.mk-t b { display: block; font: 600 13px var(--font-d); }
+.mk-t small { display: block; font-size: 11px; color: var(--ink-2); line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sw { width: 44px; height: 27px; border-radius: 99px; background: var(--fill); position: relative; flex: none; cursor: pointer; border: none; transition: background .35s; }
+.sw::after { content: ''; position: absolute; top: 2px; right: 2px; width: 23px; height: 23px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.16); transition: transform .45s var(--spring); }
+.sw[aria-checked="true"] { background: linear-gradient(145deg, var(--accent), var(--accent-2)); }
+.sw[aria-checked="true"]::after { transform: translateX(-17px); }
+.mk-inset { margin: 0 14px 12px; padding: 8px 12px; border-radius: 13px; background: var(--fill-2); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-2); }
+.mk-key { font: 600 12px var(--font-d); color: var(--ink); background: var(--glass-2); border: 1px solid var(--edge-2); padding: 4px 12px; border-radius: 8px; box-shadow: 0 2px 0 var(--edge-2); }
+.mk-slider { height: 6px; border-radius: 99px; background: linear-gradient(to left, var(--accent), var(--accent-2) 22%, var(--fill) 22%); margin: 10px 14px 4px; position: relative; }
+.mk-slider::after { content: ''; position: absolute; top: 50%; right: 22%; width: 20px; height: 20px; border-radius: 50%; background: #fff; transform: translate(50%, -50%); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.mk-big { font: 600 30px/1 var(--font-d); letter-spacing: -1px; direction: ltr; text-align: right; padding: 0 14px; }
+.mk-big small { font-size: 12px; color: var(--ink-2); letter-spacing: 0; }
+.pill { font: 600 11px var(--font-d); padding: 3px 10px; border-radius: 99px; color: var(--green); background: var(--green-soft); }
+.mk-col { display: flex; flex-direction: column; }
 
-/* steps */
-.steps { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
-.step { position:relative; border-radius:18px; background:var(--surface); border:1px solid var(--border); padding:28px 24px; }
+/* ═════════ BENTO ═════════ */
+.bento { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(210px, auto); gap: 14px; }
+.b { border-radius: 28px; padding: 26px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; transition: transform .5s var(--spring); }
+.b:hover { transform: translateY(-4px); }
+.b h3 { font-size: 20px; letter-spacing: -.3px; line-height: 1.3; margin-top: 6px; }
+.b p { font-size: 14.5px; color: var(--ink-2); line-height: 1.75; }
+.b-hero { grid-column: span 2; grid-row: span 2; }
+.b-wide { grid-column: span 2; }
+.b-hero h3 { font-size: 30px; letter-spacing: -.8px; }
+.b-hero p { font-size: 16px; max-width: 28em; }
+.timeline { margin-top: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.tl { border-radius: 18px; padding: 14px; background: var(--fill-2); border: 1px solid var(--edge-2); }
+.tl .e { font-size: 22px; }
+.tl b { display: block; font: 600 14px var(--font-d); margin-top: 6px; }
+.tl small { font-size: 12px; color: var(--ink-2); }
+.tl.hot { background: linear-gradient(150deg, var(--accent-soft), transparent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+.kbd-big {
+  margin-top: auto; align-self: flex-start; font: 600 34px/1 var(--font-d); padding: 14px 22px; border-radius: 16px; direction: ltr;
+  background: linear-gradient(180deg, var(--cap-top), var(--cap-bot)); color: var(--cap-ink);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 6px 0 var(--cap-side), 0 16px 24px -10px rgba(0,0,0,.4);
+}
+.ping-viz { margin-top: auto; }
+.ping-num { font: 600 44px/1 var(--font-d); letter-spacing: -1.5px; direction: ltr; text-align: right; font-variant-numeric: tabular-nums; }
+.ping-num small { font-size: 15px; color: var(--ink-2); letter-spacing: 0; }
+.ping-bar { height: 6px; border-radius: 99px; background: var(--fill); margin-top: 14px; overflow: hidden; }
+.ping-bar i { display: block; height: 100%; width: 22%; margin-inline-start: 0; border-radius: 99px; background: linear-gradient(to left, var(--accent), var(--accent-2)); animation: ping 6s var(--ease) infinite alternate; }
+@keyframes ping { 0% { width: 12%; } 50% { width: 46%; } 100% { width: 26%; } }
+.theme-viz { margin-top: auto; display: flex; gap: 8px; }
+.theme-viz span { flex: 1; height: 58px; border-radius: 14px; border: 1px solid var(--edge-2); display: grid; place-items: center; font-size: 22px; }
+.theme-viz .l { background: linear-gradient(160deg, #ffffff, #e9eaf2); }
+.theme-viz .d { background: linear-gradient(160deg, #2a2a34, #0d0d12); }
+.mouse-row { margin-top: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+.mouse-row span { font: 600 12px var(--font-d); padding: 5px 11px; border-radius: 99px; background: var(--fill-2); border: 1px solid var(--edge-2); }
+
+/* ═════════ STEPS ═════════ */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; counter-reset: s; }
+.step { border-radius: 28px; padding: 28px; position: relative; }
 .step-n {
-  width:40px; height:40px; border-radius:11px; display:grid; place-items:center; font-weight:900; font-size:17px;
-  color:#fff; background:linear-gradient(135deg,var(--red),var(--red-2)); margin-bottom:16px; box-shadow:0 6px 16px var(--red-soft);
+  width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;
+  font: 600 20px var(--font-d); color: #fff; background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  box-shadow: 0 12px 24px -10px var(--accent), inset 0 1px 0 rgba(255,255,255,.35); margin-bottom: 20px;
 }
-.step h3 { font-size:17px; font-weight:800; margin-bottom:8px; }
-.step p { font-size:14px; color:var(--text-2); }
+.step h3 { font-size: 20px; margin-bottom: 8px; }
+.step p { font-size: 14.5px; color: var(--ink-2); }
+.step p a { color: var(--accent); font-weight: 600; }
 
-/* discord banner */
-.dc-banner {
-  border-radius:22px; padding:44px; text-align:center;
-  background:linear-gradient(135deg,#5865F2,#4752c4); color:#fff; box-shadow:0 20px 50px rgba(88,101,242,.3);
+/* ═════════ DISCORD ═════════ */
+.dc { border-radius: 36px; padding: 52px; display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; overflow: hidden; }
+.dc::after {
+  content: ''; position: absolute; width: 520px; height: 520px; left: -140px; top: -200px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(88,101,242,.42), transparent);
 }
-.dc-banner h2 { font-size:30px; font-weight:900; margin-bottom:10px; }
-.dc-banner p { font-size:16px; opacity:.92; max-width:540px; margin:0 auto 24px; }
-.dc-banner a {
-  display:inline-flex; align-items:center; gap:9px; padding:14px 30px; border-radius:12px;
-  background:#fff; color:#4752c4; font-weight:800; font-size:15px; transition:transform .12s;
+.dc > * { position: relative; z-index: 1; }
+.dc h2 { font-size: clamp(30px, 3.8vw, 44px); letter-spacing: -1px; line-height: 1.15; margin: 10px 0 12px; }
+.dc p { color: var(--ink-2); font-size: 17px; max-width: 34em; }
+.dc .kicker { color: var(--blurple); }
+.dc-logo {
+  width: 150px; height: 150px; border-radius: 40px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(145deg, #7984ff, var(--blurple)); box-shadow: 0 30px 60px -20px var(--blurple), inset 0 1px 0 rgba(255,255,255,.35);
+  animation: bob 5s ease-in-out infinite;
 }
-.dc-banner a:hover { transform:translateY(-2px); }
+.dc-logo svg { width: 78px; height: 78px; }
+@keyframes bob { 50% { transform: translateY(-10px) rotate(-3deg); } }
 
-/* download */
-.dl {
-  border-radius:24px; padding:60px 40px; text-align:center; position:relative; overflow:hidden;
-  background:linear-gradient(135deg,var(--red),var(--red-2)); box-shadow:0 24px 60px var(--red-soft);
+/* ═════════ FAQ ═════════ */
+.faq { display: grid; grid-template-columns: .8fr 1.2fr; gap: 50px; align-items: start; }
+.faq-list { display: flex; flex-direction: column; gap: 10px; }
+.faq details { border-radius: 22px; padding: 0 22px; }
+.faq summary {
+  list-style: none; cursor: pointer; padding: 20px 0; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  font: 600 16.5px var(--font-d);
 }
-.dl::before { content:'JH'; position:absolute; inset:0; display:grid; place-items:center; font-size:340px; font-weight:900; color:rgba(255,255,255,.06); }
-.dl > * { position:relative; z-index:1; }
-.dl h2 { font-size:38px; font-weight:900; color:#fff; margin-bottom:12px; }
-.dl p { font-size:16px; color:rgba(255,255,255,.9); margin-bottom:30px; }
-.dl-btn {
-  display:inline-flex; align-items:center; gap:11px; padding:18px 44px; border-radius:15px;
-  background:#fff; color:var(--red-2); font-weight:900; font-size:18px; transition:transform .12s;
-  box-shadow:0 14px 30px rgba(0,0,0,.2);
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: '+'; width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  font: 400 20px/1 var(--font-d); background: var(--fill-2); transition: transform .4s var(--spring), background .3s;
 }
-.dl-btn:hover { transform:translateY(-3px); }
-.dl-meta { margin-top:22px; font-size:13px; color:rgba(255,255,255,.85); }
-.dl-meta a { text-decoration:underline; }
-.dl-alt { margin-top:12px; font-size:12.5px; }
-.dl-alt a { color:rgba(255,255,255,.8); text-decoration:underline; }
+.faq details[open] summary::after { transform: rotate(45deg); background: var(--accent-soft); color: var(--accent); }
+.faq details p { padding: 0 0 20px; color: var(--ink-2); font-size: 15px; }
+.faq details p a { color: var(--accent); font-weight: 600; }
 
-/* footer */
-footer { padding:40px 0; text-align:center; border-top:1px solid var(--border-soft); color:var(--text-2); font-size:14px; }
-footer b { color:var(--red); }
+/* ═════════ DOWNLOAD ═════════ */
+.dl { border-radius: 40px; padding: 70px 40px; text-align: center; overflow: hidden; }
+.dl::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(60% 80% at 50% 120%, var(--accent-soft), transparent 70%),
+    radial-gradient(40% 60% at 90% -10%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 70%);
+}
+.dl > * { position: relative; z-index: 1; }
+.dl-icon {
+  width: 92px; height: 92px; margin: 0 auto 24px; border-radius: 26px; display: grid; place-items: center;
+  font: 700 32px var(--font-d); color: #fff; letter-spacing: -1px;
+  background: linear-gradient(145deg, var(--accent), var(--accent-2));
+  box-shadow: 0 26px 50px -18px var(--accent), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.dl h2 { font-size: clamp(36px, 5vw, 60px); letter-spacing: -1.6px; line-height: 1.1; }
+.dl > p { font-size: 18px; color: var(--ink-2); margin: 14px auto 34px; max-width: 32em; }
+.dl .cta-row { justify-content: center; margin-top: 0; }
+.dl-req {
+  display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-top: 28px;
+  font: 500 13.5px var(--font-d); color: var(--ink-2);
+}
+.dl-req a { color: var(--accent); font-weight: 600; }
 
-@media (max-width:860px) {
-  .nav-links { display:none; }
-  .hero h1 { font-size:40px; }
-  .hero p { font-size:16px; }
-  .mock-body, .feat-grid, .steps { grid-template-columns:1fr; }
-  .sec-head h2 { font-size:30px; }
+footer { padding: 40px 0 50px; }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--ink-2); border-top: 1px solid var(--sep); padding-top: 28px; }
+.foot b { color: var(--ink); font-family: var(--font-d); font-weight: 600; }
+
+/* ═════════ RESPONSIVE ═════════ */
+@media (max-width: 1000px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+  .mk-body { grid-template-columns: 220px 1fr; }
+  .mk-body > .mk-col:last-child { display: none; }
+  .bento { grid-template-columns: repeat(2, 1fr); }
+  .facts-in { grid-template-columns: repeat(2, 1fr); }
+  .faq { grid-template-columns: 1fr; gap: 10px; }
+}
+@media (max-width: 760px) {
+  .nav-links { display: none; }
+  .hero { padding-top: 120px; }
+  .hero h1 { letter-spacing: -1.5px; }
+  .demo { padding: 20px; }
+  .demo-stage { grid-template-columns: 1fr; justify-items: center; }
+  .mk-body { grid-template-columns: 1fr; }
+  .mk-body > .mk-col:nth-child(2) { display: none; }
+  .mock { transform: none; }
+  .bento, .steps { grid-template-columns: 1fr; }
+  .b-hero, .b-wide { grid-column: auto; grid-row: auto; }
+  .timeline { grid-template-columns: 1fr; }
+  .dc { grid-template-columns: 1fr; padding: 34px 26px; }
+  .dc-logo { width: 96px; height: 96px; border-radius: 28px; order: -1; }
+  .dc-logo svg { width: 50px; height: 50px; }
+  .dl { padding: 50px 22px; border-radius: 30px; }
+  section { padding: 64px 0; }
+}
+@media (max-width: 420px) {
+  .wrap { padding: 0 16px; }
+  .facts-in { grid-template-columns: 1fr; }
+  .nav .btn span.lbl { display: none; }
+  .btn { padding: 0 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="wrap nav-in">
-    <div class="brand"><span class="jh">JH</span> JoHood <span>Macro</span></div>
+<div class="ambient" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
+
+<!-- ═════════ NAV ═════════ -->
+<nav class="nav">
+  <div class="nav-in glass">
+    <a href="#top" class="brand" aria-label="JoHood Macro">
+      <span class="logo">JH</span>
+      <span class="brand-name">JoHood <span>Macro</span></span>
+    </a>
     <div class="nav-links">
+      <a href="#demo">جرّبها</a>
+      <a href="#app">التطبيق</a>
       <a href="#features">المميزات</a>
-      <a href="#how">الاستخدام</a>
-      <a href="#discord">ديسكورد</a>
-      <a href="#download">تحميل</a>
+      <a href="#faq">أسئلة</a>
     </div>
-    <div class="nav-right">
-      <button class="tbtn" id="themeBtn" title="الوضع">🌙</button>
-      <a href="#download" class="nav-cta">⬇️ تحميل مجاني</a>
+    <div class="nav-end">
+      <button class="icon-btn" id="themeBtn" aria-label="تبديل الوضع الليلي والصباحي" title="الوضع الليلي / الصباحي">🌙</button>
+      <a href="#download" class="btn btn-primary">⬇️ <span class="lbl">تحميل</span></a>
     </div>
   </div>
 </nav>
 
-<!-- HERO -->
-<header class="hero">
-  <div class="wrap">
-    <div class="badge">🎮 ماكرو فورت نايت الاحترافي</div>
-    <h1>عدّل أسرع.<br><span class="g">ابنِ أذكى.</span></h1>
-    <p>ماكرو JoHood يختصر الأديت كله بزر واحد — فتح، تحديد، وتأكيد فوري. بدون اشتراك، بدون تعقيد.</p>
-    <div class="hero-cta">
-      <a href="#download" class="btn-main">⬇️ حمّل الآن مجاناً</a>
-      <a href="#features" class="btn-sub">✨ شوف المميزات</a>
+<!-- ═════════ HERO ═════════ -->
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow"><b>v1.1</b> 🎮 ماكرو فورت نايت من مجتمع JoHood</span>
+      <h1><span class="w">امسك.</span> <span class="w">عدّل.</span> <span class="w grad">ارفع.</span></h1>
+      <p class="lead">امسك زر الأديت، اسحب على التعديل، وارفع إصبعك. <b>البناء يتأكّد لحاله</b> بدون كبسة زيادة، وكل التوقيت مضبوط على بنقك.</p>
+      <div class="cta-row">
+        <a href="https://github.com/nsschooI/johood-dashboard/releases/latest/download/JoHood_Macro_Setup.exe" class="btn btn-primary">⬇️ حمّل مجاناً لويندوز</a>
+        <a href="#demo" class="btn btn-ghost">👆 جرّب الديمو</a>
+      </div>
+      <div class="meta">
+        <span>🆓 مجاني بالكامل</span>
+        <span>💻 <span class="ltr">Windows 10 / 11</span></span>
+        <span>✨ يتحدّث لحاله</span>
+      </div>
     </div>
-    <div class="hero-note">مجاناً للأبد • Windows 10 / 11 • تحديثات تلقائية</div>
 
-    <!-- mockup -->
-    <div class="mock">
-      <div class="mock-bar"><i></i><i></i><i></i></div>
-      <div class="mock-body">
-        <div class="mk-card">
-          <div class="t">⚡ تحكّم الماكرو</div>
-          <div class="mk-ring"></div>
-          <div class="mk-pill" style="background:linear-gradient(135deg,var(--red),var(--red-2))"></div>
+    <!-- Live demo -->
+    <div class="demo glass" id="demo" aria-labelledby="demoTitle">
+      <div class="demo-top">
+        <div class="demo-title" id="demoTitle">👇 جرّبها بنفسك</div>
+        <div class="demo-next">التعديل: <b id="patName">باب 🚪</b></div>
+      </div>
+      <div class="demo-stage">
+        <div class="cap-wrap">
+          <button class="cap" id="cap" aria-label="زر الأديت F: امسكه ثم ارفعه"><span>F</span></button>
+          <div class="timer" id="timer">0ms</div>
         </div>
-        <div class="mk-card">
-          <div class="t"><span class="mk-sw"></span>🎯 أديت عند الرفع</div>
-          <div class="mk-line"></div><div class="mk-line sh"></div>
-          <div class="mk-pill"></div>
-        </div>
-        <div class="mk-card">
-          <div class="t"><span class="mk-sw"></span>🖱️ السيليكت</div>
-          <div class="mk-line"></div><div class="mk-line sh"></div>
-          <div class="mk-pill"></div>
+        <div>
+          <div class="wall" id="wall" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="cap-hint" style="margin-top:10px">امسك الزر أو حرف <b class="ltr">F</b> من الكيبورد</div>
         </div>
       </div>
+      <ol class="steps-live" id="stepsLive">
+        <li><span class="n">1</span>يفتح الأديت<span class="k">لما تكبس</span></li>
+        <li><span class="n">2</span>يمسك السيليكت<span class="k">طول الهولد</span></li>
+        <li><span class="n">3</span>يتأكّد البناء<span class="k">لما ترفع</span></li>
+      </ol>
+      <div class="demo-status" id="demoStatus" role="status" aria-live="polite">جاهز. امسك F وارفعه.</div>
     </div>
   </div>
 </header>
 
-<!-- FEATURES -->
+<!-- ═════════ FACTS ═════════ -->
+<div class="facts">
+  <div class="wrap facts-in">
+    <div class="fact glass"><span class="tile" style="--c:#30d158">🎯</span><div><b>بس داخل فورت نايت</b><small>برا اللعبة أزرارك طبيعية</small></div></div>
+    <div class="fact glass"><span class="tile" style="--c:#ff9f0a">⌨️</span><div><b>F9 للتشغيل</b><small>شغّل وطفّي وانت باللعبة</small></div></div>
+    <div class="fact glass"><span class="tile" style="--c:#0a84ff">🖱️</span><div><b>أي زر تبيه</b><small>كيبورد أو ماوس، حتى الجانبية</small></div></div>
+    <div class="fact glass"><span class="tile" style="--c:#bf5af2">✨</span><div><b>تحديث تلقائي</b><small>آخر نسخة توصلك لحالها</small></div></div>
+  </div>
+</div>
+
+<!-- ═════════ APP SHOWCASE ═════════ -->
+<section id="app">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">🪄 التطبيق</div>
+      <h2>كل شي بمكانه، وبنظرة وحدة.</h2>
+      <p>زر تشغيل واحد، إعدادات مرتّبة بمجموعات واضحة، ووضع ليلي وصباحي. اضغط زر التشغيل بالصورة وشوف.</p>
+    </div>
+    <div class="show-stage">
+      <div class="mock glass" role="img" aria-label="صورة لواجهة تطبيق JoHood Macro">
+        <div class="mk-bar">
+          <div class="mk-brand"><span class="logo">JH</span><span class="ltr">JoHood <span>Macro</span></span><span class="mk-ver ltr">v1.1.0</span></div>
+          <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i></div>
+        </div>
+        <div class="mk-body">
+          <div class="mk-col">
+            <div class="mk-card glass mk-power on" id="mkPower">
+              <div class="mk-top"><span>⚡ حالة الماكرو</span><span class="mk-chip"><i></i><span id="mkChip">شغّال</span></span></div>
+              <div class="mk-ring"><button class="mk-pw" id="mkPw" aria-label="جرّب زر التشغيل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.6 6.6a7.5 7.5 0 1 0 10.8 0"/></svg></button></div>
+              <div class="mk-title" id="mkTitle">الماكرو شغّال</div>
+              <div class="mk-sub">F9 للإيقاف داخل اللعبة</div>
+            </div>
+            <div class="mk-card glass mk-dc">
+              <div class="mk-row" style="padding:0"><span class="tile" style="--c:#5865f2">🎮</span><div class="mk-t"><b>حساب ديسكورد</b><small>سيرفر JoHood</small></div></div>
+              <div class="mk-dc-btn"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#dcPath"/></svg>تسجيل الدخول بديسكورد</div>
+            </div>
+          </div>
+          <div class="mk-col">
+            <div class="mk-gh">✏️ الأديت</div>
+            <div class="mk-list glass">
+              <div class="mk-row"><span class="tile" style="--c:#ff375f">🎯</span><div class="mk-t"><b>أديت عند الرفع</b><small>امسك لتفتح، ارفع ليتأكّد</small></div><button class="sw" role="switch" aria-checked="true" aria-label="أديت عند الرفع"></button></div>
+              <div class="mk-inset"><span>زر الأديت</span><span class="mk-key">F</span></div>
+              <div class="mk-row"><span class="tile" style="--c:#0a84ff">🖱️</span><div class="mk-t"><b>السيليكت التلقائي</b><small>يمسك التحديد طول الهولد</small></div><button class="sw" role="switch" aria-checked="true" aria-label="السيليكت التلقائي"></button></div>
+              <div class="mk-inset"><span>زر السيليكت</span><span class="mk-key">🖱️ يسار</span></div>
+              <div class="mk-row"><span class="tile" style="--c:#bf5af2">🔄</span><div class="mk-t"><b>ريسيت الأديت</b><small>يرجّع البناء لأصله</small></div><button class="sw" role="switch" aria-checked="false" aria-label="ريسيت الأديت"></button></div>
+            </div>
+          </div>
+          <div class="mk-col">
+            <div class="mk-gh">⚡ الأداء</div>
+            <div class="mk-list glass" style="padding-bottom:16px">
+              <div class="mk-row"><span class="tile" style="--c:#30d158">📡</span><div class="mk-t"><b>تعويض البنق</b><small>حط بنقك الفعلي</small></div><span class="pill">🟢 منخفض</span></div>
+              <div class="mk-big">45<small> ms</small></div>
+              <div class="mk-slider"></div>
+            </div>
+            <div class="mk-gh" style="margin-top:14px">⚙️ النظام</div>
+            <div class="mk-list glass">
+              <div class="mk-row"><span class="tile" style="--c:#ff9f0a">🚀</span><div class="mk-t"><b>تشغيل مع الويندوز</b></div><button class="sw" role="switch" aria-checked="true" aria-label="تشغيل مع الويندوز"></button></div>
+              <div class="mk-row"><span class="tile" style="--c:#64d2ff">📥</span><div class="mk-t"><b>يبدأ مصغّر</b></div><button class="sw" role="switch" aria-checked="false" aria-label="يبدأ مصغّر"></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ FEATURES ═════════ -->
 <section id="features">
   <div class="wrap">
     <div class="sec-head">
-      <div class="sec-tag">المميزات</div>
-      <h2>كل اللي تحتاجه للأديت</h2>
-      <p>مصمّم من لاعبين عرب، لأداء سريع وثبات كامل داخل اللعبة.</p>
+      <div class="kicker">✨ المميزات</div>
+      <h2>كل اللي تحتاجه للأديت، ولا شي زيادة.</h2>
+      <p>مصمّم من لاعبين بالمجتمع العربي، وكل خيار فيه له سبب.</p>
     </div>
-    <div class="feat-grid">
-      <div class="feat"><div class="feat-ico">🎯</div><h3>أديت عند الرفع</h3><p>اضغط زر الأديت، عدّل، وارفع إصبعك — يتأكّد البناء تلقائياً بأقل حركة ممكنة.</p></div>
-      <div class="feat"><div class="feat-ico">🖱️</div><h3>سيليكت تلقائي</h3><p>يمسك زر التحديد طول فترة الهولد ويطبّقه عند الرفع — تحديد دقيق كل مرة.</p></div>
-      <div class="feat"><div class="feat-ico">🔄</div><h3>ريسيت الأديت</h3><p>يريسيت البناء المعدّل مسبقاً ويفتحه من جديد — جاهز لتعديل سريع.</p></div>
-      <div class="feat"><div class="feat-ico">📡</div><h3>تعويض البنق</h3><p>اضبط التوقيت الداخلي حسب بنقك لأداء سلس بدون تأخير ملحوظ.</p></div>
-      <div class="feat"><div class="feat-ico">⌨️</div><h3>مفاتيح قابلة للتخصيص</h3><p>غيّر أي زر — كيبورد أو ماوس — وزر F9 للتشغيل السريع داخل اللعبة.</p></div>
-      <div class="feat"><div class="feat-ico">🛡️</div><h3>يشتغل بس داخل اللعبة</h3><p>الماكرو يفعّل فقط لما نافذة فورت نايت نشطة — باقي برامجك طبيعية 100%.</p></div>
+    <div class="bento">
+      <article class="b b-hero glass">
+        <span class="tile" style="--c:#ff375f">🎯</span>
+        <h3>أديت عند الرفع</h3>
+        <p>الماكرو يمسك زر السيليكت طول ما انت ماسك الأديت، وأول ما ترفع إصبعك يرفعه وفورت نايت تأكّد البناء. نفس حركتك، بس أسرع وأنظف.</p>
+        <div class="timeline">
+          <div class="tl"><div class="e">👇</div><b>تكبس F</b><small>ينفتح الأديت</small></div>
+          <div class="tl"><div class="e">🖱️</div><b>تسحب</b><small>السيليكت ممسوك</small></div>
+          <div class="tl hot"><div class="e">✅</div><b>ترفع</b><small>يتأكّد لحاله</small></div>
+        </div>
+      </article>
+      <article class="b glass">
+        <span class="tile" style="--c:#0a84ff">🖱️</span>
+        <h3>سيليكت تلقائي</h3>
+        <p>اختار زر السيليكت اللي تلعب فيه وعدّل توقيته بالمللي ثانية.</p>
+        <div class="mouse-row"><span>يسار</span><span>يمين</span><span>وسط</span><span>جانبي</span></div>
+      </article>
+      <article class="b glass">
+        <span class="tile" style="--c:#bf5af2">🔄</span>
+        <h3>ريسيت الأديت</h3>
+        <p>يرجّع البناء المعدّل لأصله ويفتحه من جديد بكبسة وحدة.</p>
+      </article>
+      <article class="b glass">
+        <span class="tile" style="--c:#ff9f0a">⌨️</span>
+        <h3>تشغيل سريع</h3>
+        <p>شغّل وطفّي الماكرو وانت داخل الماتش.</p>
+        <span class="kbd-big">F9</span>
+      </article>
+      <article class="b glass">
+        <span class="tile" style="--c:#30d158">🛡️</span>
+        <h3>بس داخل اللعبة</h3>
+        <p>يشتغل لما تكون نافذة فورت نايت نشطة. باقي برامجك ما يلمسها.</p>
+      </article>
+      <article class="b b-wide glass">
+        <span class="tile" style="--c:#64d2ff">📡</span>
+        <h3>تعويض البنق</h3>
+        <p>حط بنقك، والتطبيق يحسب التأخير الداخلي المناسب عشان الكونفيرم ما يسبق السيليكت.</p>
+        <div class="ping-viz">
+          <div class="ping-num">45<small> ms</small></div>
+          <div class="ping-bar"><i></i></div>
+        </div>
+      </article>
+      <article class="b glass">
+        <span class="tile" style="--c:#ffd60a">🌗</span>
+        <h3>ليلي وصباحي</h3>
+        <p>اختار اللي يريّح عينك.</p>
+        <div class="theme-viz"><span class="l">☀️</span><span class="d">🌙</span></div>
+      </article>
+      <article class="b glass">
+        <span class="tile" style="--c:#ff375f">✨</span>
+        <h3>تحديث تلقائي</h3>
+        <p>نسخة Setup تنزّل التحديثات لحالها وتثبّتها عند إعادة التشغيل.</p>
+      </article>
     </div>
   </div>
 </section>
 
-<!-- HOW -->
-<section id="how" style="background:var(--bg-2); border-top:1px solid var(--border-soft); border-bottom:1px solid var(--border-soft)">
+<!-- ═════════ HOW ═════════ -->
+<section id="how">
   <div class="wrap">
     <div class="sec-head">
-      <div class="sec-tag">طريقة الاستخدام</div>
-      <h2>جاهز بثلاث خطوات</h2>
+      <div class="kicker">🧭 طريقة الاستخدام</div>
+      <h2>جاهز بثلاث خطوات.</h2>
     </div>
     <div class="steps">
-      <div class="step"><div class="step-n">1</div><h3>نزّل التطبيق</h3><p>حمّل JoHood Macro من زر التحميل وثبّته على جهازك خلال ثواني.</p></div>
-      <div class="step"><div class="step-n">2</div><h3>اضبط إعداداتك</h3><p>فعّل الأديت والسيليكت، حدّد أزرارك، واضبط البنق حسب جهازك.</p></div>
-      <div class="step"><div class="step-n">3</div><h3>شغّل والعب</h3><p>اضغط تشغيل أو F9 داخل اللعبة، وابدأ تعدّل بسرعة الاحتراف.</p></div>
+      <div class="step glass"><div class="step-n">1</div><h3>⬇️ نزّل وثبّت</h3><p>حمّل JoHood Macro وثبّته. الماكرو يحتاج <a href="https://www.autohotkey.com" target="_blank" rel="noopener">AutoHotkey v2</a> على جهازك.</p></div>
+      <div class="step glass"><div class="step-n">2</div><h3>🎛️ اضبط أزرارك</h3><p>فعّل الأديت والسيليكت، اختار أزرارك، وحط بنقك الفعلي.</p></div>
+      <div class="step glass"><div class="step-n">3</div><h3>🎮 شغّل والعب</h3><p>اضغط زر التشغيل أو F9 داخل اللعبة، وابدأ تعدّل.</p></div>
     </div>
   </div>
 </section>
 
-<!-- DISCORD -->
-<section id="discord">
+<!-- ═════════ DISCORD ═════════ -->
+<section id="discord" style="padding-top:20px">
   <div class="wrap">
-    <div class="dc-banner">
-      <h2>🎮 انضم لمجتمع JoHood</h2>
-      <p>اربط حسابك بديسكورد داخل التطبيق، وكن جزء من أكبر سيرفر فورت نايت عربي — تحديثات، دعم، ومزايا حصرية قادمة.</p>
-      <a href="#download">🔗 حمّل واربط حسابك</a>
+    <div class="dc glass">
+      <div>
+        <div class="kicker">🎮 مجتمع JoHood</div>
+        <h2>اربط ديسكورد، وخلّيك قريب من السيرفر.</h2>
+        <p>سجّل دخولك بديسكورد من داخل التطبيق. تحديثات، دعم، ومزايا حصرية للمشتركين جاية قريباً.</p>
+      </div>
+      <div class="dc-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path id="dcPath" d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.85a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.48 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.88 1.52.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.3 1.23-2a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.9.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01 14.2 14.2 0 0 0 12.06 0 .07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.9a.08.08 0 0 0-.04.1c.36.7.78 1.37 1.23 2a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.05c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03ZM8.02 15.33c-1.18 0-2.16-1.08-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.34-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.15-1.08-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.34-.95 2.42-2.16 2.42Z"/></svg>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- DOWNLOAD -->
+<!-- ═════════ FAQ ═════════ -->
+<section id="faq">
+  <div class="wrap faq">
+    <div class="sec-head">
+      <div class="kicker">💬 أسئلة شائعة</div>
+      <h2>عندك سؤال؟</h2>
+      <p>هاي أكثر الأسئلة اللي توصلنا. لو سؤالك مش هون، اسأل بسيرفر الديسكورد.</p>
+    </div>
+    <div class="faq-list">
+      <details class="glass" open>
+        <summary>هل الماكرو مجاني؟</summary>
+        <p>إيه، التطبيق مجاني بالكامل، وكل التحديثات مجانية.</p>
+      </details>
+      <details class="glass">
+        <summary>ليش لازم أنزّل AutoHotkey v2؟</summary>
+        <p>التطبيق يولّد سكربت الماكرو ويشغّله عن طريق AutoHotkey v2. نزّله من <a href="https://www.autohotkey.com" target="_blank" rel="noopener">autohotkey.com</a> وثبّته قبل ما تشغّل الماكرو.</p>
+      </details>
+      <details class="glass">
+        <summary>شغّلت الماكرو بس ما صار شي داخل اللعبة؟</summary>
+        <p>تأكّد إن نافذة فورت نايت هي النشطة، وإن الماكرو مش موقّف بـ F9. لو السيليكت ما ينحسب أحياناً، زوّد توقيت السيليكت شوي من الإعدادات.</p>
+      </details>
+      <details class="glass">
+        <summary>شو الفرق بين نسخة Setup والنسخة المحمولة؟</summary>
+        <p>نسخة Setup تتثبّت على جهازك وتتحدّث تلقائياً. النسخة المحمولة تشتغل مباشرة بدون تثبيت، بس لازم تنزّل كل تحديث بنفسك.</p>
+      </details>
+      <details class="glass">
+        <summary>هل أقدر أستخدم أزرار الماوس؟</summary>
+        <p>إيه. اضغط على خانة الزر بالتطبيق، وبعدها اكبس أي زر بالكيبورد أو الماوس، حتى الأزرار الجانبية.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ DOWNLOAD ═════════ -->
 <section id="download">
   <div class="wrap">
-    <div class="dl">
-      <h2>حمّل الماكرو مجاناً</h2>
-      <p>بدون اشتراك • بدون تسجيل • تحديثات تلقائية مدى الحياة</p>
-      <a class="dl-btn" id="dlBtn" href="https://github.com/nsschooI/johood-dashboard/releases/latest/download/JoHood_Macro_Setup.exe">⬇️ تحميل JoHood Macro</a>
-      <div class="dl-meta">⚠️ يتطلب AutoHotkey v2 — <a href="https://www.autohotkey.com" target="_blank">تحميله من هنا</a> • Windows 10 / 11 x64</div>
-      <div class="dl-alt"><a href="https://github.com/nsschooI/johood-dashboard/releases/latest/download/JoHood_Macro_Portable.exe">تحميل النسخة المحمولة (بدون تثبيت)</a></div>
+    <div class="dl glass">
+      <div class="dl-icon">JH</div>
+      <h2>جاهز تعدّل أسرع؟</h2>
+      <p>حمّل JoHood Macro، ثبّته، واضبط أزرارك خلال دقيقة.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/nsschooI/johood-dashboard/releases/latest/download/JoHood_Macro_Setup.exe">⬇️ تحميل Setup (مستحسن)</a>
+        <a class="btn btn-ghost" href="https://github.com/nsschooI/johood-dashboard/releases/latest/download/JoHood_Macro_Portable.exe">📦 النسخة المحمولة</a>
+      </div>
+      <div class="dl-req">
+        <span>💻 <span class="ltr">Windows 10 / 11 (64-bit)</span></span>
+        <span>⚙️ يتطلب <a href="https://www.autohotkey.com" target="_blank" rel="noopener">AutoHotkey v2</a></span>
+        <span>✨ تحديثات تلقائية مع Setup</span>
+      </div>
     </div>
   </div>
 </section>
 
 <footer>
-  <div class="wrap">صُنع بـ ❤️ من <b>JoHood</b> — سيرفر فورت نايت العربي الأول</div>
+  <div class="wrap foot">
+    <span>صُنع بـ ❤️ من <b>JoHood</b> للمجتمع العربي بفورت نايت.</span>
+    <span class="ltr">JoHood Macro · v1.1</span>
+  </div>
 </footer>
 
 <script>
-// theme
-const THEME_KEY = 'johood-theme'
-function setTheme(m) {
-  document.documentElement.setAttribute('data-theme', m)
-  document.getElementById('themeBtn').textContent = m === 'dark' ? '🌙' : '☀️'
-  try { localStorage.setItem(THEME_KEY, m) } catch {}
-}
-setTheme((() => { try { return localStorage.getItem(THEME_KEY) || 'dark' } catch { return 'dark' } })())
-document.getElementById('themeBtn').onclick = () =>
-  setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark')
+const $ = (id) => document.getElementById(id)
 
-// smooth anchor scroll with nav offset
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener('click', e => {
-    const id = a.getAttribute('href').slice(1)
-    const t = document.getElementById(id); if (!t) return
-    e.preventDefault()
-    const top = t.getBoundingClientRect().top + window.scrollY - 80
-    window.scrollTo({ top, behavior:'smooth' })
-  })
+/* ── theme ── */
+const THEME_KEY = 'johood-theme'
+const mq = window.matchMedia('(prefers-color-scheme: dark)')
+function effectiveTheme() {
+  const a = document.documentElement.getAttribute('data-theme')
+  return a || (mq.matches ? 'dark' : 'light')
+}
+function paintThemeBtn() { $('themeBtn').textContent = effectiveTheme() === 'dark' ? '🌙' : '☀️' }
+try { const saved = localStorage.getItem(THEME_KEY); if (saved) document.documentElement.setAttribute('data-theme', saved) } catch (e) {}
+paintThemeBtn()
+mq.addEventListener?.('change', paintThemeBtn)
+new MutationObserver(paintThemeBtn).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+$('themeBtn').addEventListener('click', () => {
+  const next = effectiveTheme() === 'dark' ? 'light' : 'dark'
+  document.documentElement.setAttribute('data-theme', next)
+  try { localStorage.setItem(THEME_KEY, next) } catch (e) {}
 })
+
+/* ── live edit demo ── */
+const PATTERNS = [
+  { name: 'باب 🚪',  tiles: [4, 7] },
+  { name: 'نص جدار', tiles: [0, 1, 2] },
+  { name: 'شبّاك',   tiles: [4] },
+  { name: 'زاوية',   tiles: [0, 1, 3] }
+]
+const cap = $('cap'), wall = $('wall'), tiles = [...wall.children]
+const stepEls = [...$('stepsLive').children]
+let pi = 0, held = false, busy = false, t0 = 0, raf = 0, timers = [], selected = []
+
+function setStep(n) { // n: 0 idle, 1..3 active step
+  stepEls.forEach((li, i) => {
+    li.classList.toggle('on', i + 1 === n)
+    li.classList.toggle('done', i + 1 < n)
+  })
+}
+function status(t, ok) { const s = $('demoStatus'); s.textContent = t; s.classList.toggle('ok', !!ok) }
+function tick() { $('timer').textContent = Math.round(performance.now() - t0) + 'ms'; raf = requestAnimationFrame(tick) }
+
+function press() {
+  if (held || busy) return               // ignore key-repeat, like the real macro
+  held = true; t0 = performance.now(); tick()
+  cap.classList.add('down'); wall.classList.add('editing')
+  setStep(1); status('الأديت مفتوح… اسحب على التعديل')
+  selected = []
+  PATTERNS[pi].tiles.forEach((ti, k) => timers.push(setTimeout(() => {
+    tiles[ti].classList.add('sel'); selected.push(ti); setStep(2)
+    status('السيليكت ممسوك… ارفع لما تخلص')
+  }, 180 + k * 150)))
+}
+function release() {
+  if (!held) return
+  held = false; cancelAnimationFrame(raf)
+  timers.forEach(clearTimeout); timers = []
+  cap.classList.remove('down')
+  const ms = Math.round(performance.now() - t0)
+  if (!selected.length) {
+    wall.classList.remove('editing'); setStep(0)
+    status('سريعة كثير 😄 امسك شوي أطول')
+    return
+  }
+  busy = true
+  setStep(3)
+  selected.forEach(i => { tiles[i].classList.remove('sel'); tiles[i].classList.add('gone') })
+  wall.classList.remove('editing'); wall.classList.add('flash')
+  status(`✅ ${PATTERNS[pi].name} تأكّد لحاله بعد ${ms}ms`, true)
+  setTimeout(() => {
+    tiles.forEach(t => t.classList.remove('gone', 'sel')); wall.classList.remove('flash')
+    pi = (pi + 1) % PATTERNS.length; $('patName').textContent = PATTERNS[pi].name
+    setStep(0); $('timer').textContent = '0ms'; busy = false
+    status('جرّب مرة ثانية بتعديل جديد 👆')
+  }, 1700)
+}
+cap.addEventListener('pointerdown', (e) => { e.preventDefault(); cap.setPointerCapture(e.pointerId); press() })
+cap.addEventListener('pointerup', release)
+cap.addEventListener('pointercancel', release)
+cap.addEventListener('lostpointercapture', release)
+cap.addEventListener('contextmenu', (e) => e.preventDefault())
+cap.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) press() } })
+cap.addEventListener('keyup',   (e) => { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); release() } })
+document.addEventListener('keydown', (e) => {
+  if (e.code !== 'KeyF' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return
+  if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '')) return
+  e.preventDefault(); press()
+})
+document.addEventListener('keyup', (e) => { if (e.code === 'KeyF') release() })
+window.addEventListener('blur', release)
+
+/* ── app replica: power + switches ── */
+$('mkPw').addEventListener('click', () => {
+  const on = !$('mkPower').classList.contains('on')
+  $('mkPower').classList.toggle('on', on)
+  $('mkChip').textContent  = on ? 'شغّال' : 'متوقف'
+  $('mkTitle').textContent = on ? 'الماكرو شغّال' : 'الماكرو متوقف'
+})
+document.querySelectorAll('.mock .sw').forEach(s => s.addEventListener('click', () =>
+  s.setAttribute('aria-checked', String(s.getAttribute('aria-checked') !== 'true'))))
 </script>
 </body>
 </html>
