@@ -1,0 +1,25 @@
+const { contextBridge, ipcRenderer } = require('electron')
+
+contextBridge.exposeInMainWorld('api', {
+  getSettings:  ()  => ipcRenderer.invoke('get-settings'),
+  saveSettings: (s) => ipcRenderer.invoke('save-settings', s),
+  startMacro:   (s) => ipcRenderer.invoke('start-macro', s),
+  stopMacro:    ()  => ipcRenderer.invoke('stop-macro'),
+  macroStatus:  ()  => ipcRenderer.invoke('macro-status'),
+  openAhkSite:  ()  => ipcRenderer.invoke('open-ahk-site'),
+
+  windowMinimize: () => ipcRenderer.send('window-minimize'),
+  windowClose:    () => ipcRenderer.send('window-close'),
+
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate:  () => ipcRenderer.invoke('download-update'),
+  installUpdate:   () => ipcRenderer.invoke('install-update'),
+
+  discordLogin:  () => ipcRenderer.invoke('discord-login'),
+  discordLogout: () => ipcRenderer.invoke('discord-logout'),
+  setAutoLaunch: (v) => ipcRenderer.invoke('set-auto-launch', v),
+
+  onSettingsLoaded: (cb) => ipcRenderer.on('settings-loaded', (_, data) => cb(data)),
+  onMacroStatus:    (cb) => ipcRenderer.on('macro-status',    (_, data) => cb(data)),
+  onUpdateStatus:   (cb) => ipcRenderer.on('update-status',   (_, data) => cb(data))
+})
